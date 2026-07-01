@@ -1,0 +1,86 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[RequireComponent(typeof(AudioSource))]
+public class CalibrationManager : SceneSingleton<CalibrationManager>
+{
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip metronomeClip;
+
+    private List<NoteData> notes;
+    private HashSet<int> resolvedIds;
+    private bool isRunning;
+
+    /// <summary>CalibrationNoteSpawner에서 노트를 받아 Play Test를 시작. HUD에서 호출.</summary>
+    public void StartPlayTest(List<NoteData> spawnedNotes)
+    {
+        if (spawnedNotes == null || spawnedNotes.Count == 0) return;
+        StopAllCoroutines();
+        notes = spawnedNotes;
+        resolvedIds = new HashSet<int>();
+        isRunning = true;
+        StartCoroutine(PlayMetronome(notes));
+    }
+
+    /// <summary>offsetMs를 기준으로 피드백 문자열을 반환. CalibrationManager에서 호출.</summary>
+    public static string GetFeedback(double offsetMs)
+    {
+        if (offsetMs > 30.0) return "Too Late";
+        if (offsetMs > 10.0) return "A bit Late";
+        if (offsetMs >= -10.0) return "Perfect!";
+        if (offsetMs >= -30.0) return "A bit Early";
+        return "Too Early";
+    }
+
+    /// <summary>Tap 액션 입력 시 가장 가까운 노트의 offset을 계산해 피드백을 표시. PlayerInput(SendMessages)에서 호출.</summary>
+    public void OnTap()
+    {
+        if (!isRunning) return;
+        var note = FindClosestUnresolved(AudioSettings.dspTime);
+        if (note == null) return;
+        double offsetMs = (AudioSettings.dspTime - note.judgeTime) * 1000.0;
+        resolvedIds.Add(note.noteId);
+        HUD.Instance.ShowCalibrationFeedback(GetFeedback(offsetMs));
+        NoteRenderer.Instance.RemoveNote(note.noteId);
+    }
+
+    private void Update()
+    {
+        if (!isRunning) return;
+        if (notes != null && notes.Count > 0 &&
+            AudioSettings.dspTime > notes[notes.Count - 1].judgeTime + 1.0)
+            CompleteCalibration();
+    }
+
+    private NoteData FindClosestUnresolved(double tapTime)
+    {
+        NoteData closest = null;
+        double minDiff = double.MaxValue;
+        foreach (var note in notes)
+        {
+            if (resolvedIds.Contains(note.noteId)) continue;
+            double diff = Math.Abs(tapTime - note.judgeTime);
+            if (diff < minDiff) { minDiff = diff; closest = note; }
+        }
+        return closest;
+    }
+
+    private void CompleteCalibration()
+    {
+        isRunning = false;
+        NoteRenderer.Instance.ClearAll();
+    }
+
+    private IEnumerator PlayMetronome(List<NoteData> noteList)
+    {
+        foreach (var note in noteList)
+        {
+            float delay = (float)(note.judgeTime - AudioSettings.dspTime);
+            if (delay > 0f) yield return new WaitForSecondsRealtime(delay);
+            if (audioSource != null && metronomeClip != null)
+                audioSource.PlayOneShot(metronomeClip);
+        }
+    }
+}
