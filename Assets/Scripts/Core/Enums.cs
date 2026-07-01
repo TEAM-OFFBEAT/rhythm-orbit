@@ -1,0 +1,8 @@
+public enum Judgment { PERFECT, GOOD, MISS }
+public enum SnapType { BEAT, HALF_BEAT }
+public enum GameState { ATTACK, DEFENSE, TURN_CHANGE, END }
+public enum PacketType
+{
+    GAME_START, NOTE_CREATED, ATTACK_END, DEFENSE_START,
+    DEFENSE_INPUT, DEFENSE_RESULT, SANITY_UPDATE, TURN_CHANGE, GAME_END
+}
