@@ -1,6 +1,63 @@
 {
-    "version": 0,
+    "version": 1,
     "name": "New Actions",
-    "maps": [],
+    "maps": [
+        {
+            "name": "HUD",
+            "id": "8c876dda-aa2c-4fb0-9f22-378dc43787ab",
+            "actions": [
+                {
+                    "name": "ToggleSettings",
+                    "type": "Button",
+                    "id": "c0d9cc6a-84f0-4d8f-834a-6b2755438b8b",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "66d525ab-085b-4358-aad4-29f63f492317",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSettings",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "GameLoop",
+            "id": "2d18c840-5053-4011-9af4-6c88e56f5797",
+            "actions": [
+                {
+                    "name": "Tap",
+                    "type": "Button",
+                    "id": "4fb2acaa-2a0d-4b44-bd83-ca27fcd0daae",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "bd6101f2-bbd0-40d5-8e61-cd19b761efe4",
+                    "path": "<Keyboard>/anyKey",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Tap",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
     "controlSchemes": []
 }
