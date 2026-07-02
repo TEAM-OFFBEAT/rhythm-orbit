@@ -1,0 +1,67 @@
+using UnityEngine;
+
+public class RhythmClock : SceneSingleton<RhythmClock>
+{
+    [SerializeField] private float bpm = 120f;
+
+    public float Bpm => bpm;
+
+    public double GameStartDspTime { get; private set; }
+    public bool IsRunning { get; private set; }
+
+
+    /// <summary>게임 시작 이후 흐른 시간을 초 단위로 반환. AttackTurn, DefenseTurn, NoteRenderer에서 호출.</summary>
+    public double GetGameTime()
+    {
+        if (!IsRunning)
+        {
+            return 0.0;
+        }
+
+        double gameTime = AudioSettings.dspTime - GameStartDspTime;
+        return System.Math.Max(0.0, gameTime);
+    }
+
+    /// <summary>현재 bpm 기준 반박 격자의 길이를 초 단위로 반환. BeatCalculator, GameManager에서 호출.</summary>
+    public double GetNoteDuration()
+    {
+        if (bpm <= 0f)
+        {
+            Debug.LogWarning("BPM은 0보다 커야 합니다. 기본값 120으로 계산합니다.");
+            return 30.0 / 120.0;
+        }
+
+        return 30.0 / bpm;
+    }
+
+    /// <summary>bpm 값을 변경. 턴 전환 시 GameManager에서 호출.</summary>
+    public void SetBpm(float newBpm)
+    {
+        if (newBpm <= 0f)
+        {
+            Debug.LogWarning("BPM은 0보다 커야 합니다.");
+            return;
+        }
+
+        bpm = newBpm;
+    }
+
+    /// <summary>지정한 dspTime을 게임 시작 시간으로 설정하고 시계를 시작. TimeSyncManager, GameManager에서 호출.</summary>
+    public void StartClock(double startDspTime)
+    {
+        GameStartDspTime = startDspTime;
+        IsRunning = true;
+    }
+
+    /// <summary>현재 AudioSettings.dspTime을 기준으로 즉시 시계를 시작. 로컬 테스트 또는 싱글 실행 테스트에서 호출.</summary>
+    public void StartClockNow()
+    {
+        StartClock(AudioSettings.dspTime);
+    }
+    
+    /// <summary>시계 동작을 정지. 게임 종료 또는 재시작 처리 시 GameManager에서 호출.</summary>
+    public void StopClock()
+    {
+        IsRunning = false;
+    }
+}
