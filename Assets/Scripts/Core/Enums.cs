@@ -1,5 +1,4 @@
 public enum Judgment { PERFECT, GOOD, MISS }
-public enum SnapType { BEAT, HALF_BEAT }
 public enum GameState { ATTACK, DEFENSE, TURN_CHANGE, END }
 public enum PacketType
 {

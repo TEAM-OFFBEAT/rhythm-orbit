@@ -75,12 +75,14 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
 
     private IEnumerator PlayMetronome(List<NoteData> noteList)
     {
+        if (audioSource == null || metronomeClip == null) yield break;
+        audioSource.clip = metronomeClip;
         foreach (var note in noteList)
         {
-            float delay = (float)(note.judgeTime - AudioSettings.dspTime);
-            if (delay > 0f) yield return new WaitForSecondsRealtime(delay);
-            if (audioSource != null && metronomeClip != null)
-                audioSource.PlayOneShot(metronomeClip);
+            // DSP 정확도 보장: judgeTime 100ms 전까지 매 프레임 대기 후 PlayScheduled로 예약
+            while (AudioSettings.dspTime < note.judgeTime - 0.1)
+                yield return null;
+            audioSource.PlayScheduled(note.judgeTime);
         }
     }
 }

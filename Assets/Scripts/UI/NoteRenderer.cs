@@ -14,6 +14,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
 
     private struct NoteEntry { public RectTransform rect; public double judgeTime; public int noteId; }
     private readonly List<NoteEntry> activeNotes = new();
+    public double LeadTime => leadTime;
     private bool isMoving;
 
     protected override void Awake()

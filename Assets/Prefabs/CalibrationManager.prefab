@@ -144,7 +144,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: RhythmOrbit.Runtime::CalibrationManager
   audioSource: {fileID: 5087980873428537591}
-  metronomeClip: {fileID: 0}
+  metronomeClip: {fileID: 8300000, guid: 3c450153aa5e63540a711757e87d2b19, type: 3}
 --- !u!114 &2772309519243709102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -172,6 +172,6 @@ MonoBehaviour:
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
-  m_DefaultActionMap: 2d18c840-5053-4011-9af4-6c88e56f5797
+  m_DefaultActionMap: GameLoop
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}

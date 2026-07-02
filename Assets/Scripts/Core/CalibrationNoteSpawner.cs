@@ -5,13 +5,12 @@ public class CalibrationNoteSpawner : SceneSingleton<CalibrationNoteSpawner>
 {
     private const double BeatDuration = 0.5; // 120 BPM
     private const int NoteCount = 4;
-    private const double LeadTime = 2.0;     // 첫 노트까지의 준비 시간(초)
 
     /// <summary>120BPM 기준 0.5초 간격의 NoteData 4개를 생성하고 NoteRenderer에 전달해 반환. HUD에서 호출.</summary>
     public List<NoteData> SpawnNotes()
     {
         NoteRenderer.Instance.ClearAll();
-        double firstJudgeTime = AudioSettings.dspTime + LeadTime;
+        double firstJudgeTime = AudioSettings.dspTime + NoteRenderer.Instance.LeadTime;
         var result = new List<NoteData>();
 
         for (int i = 0; i < NoteCount; i++)
