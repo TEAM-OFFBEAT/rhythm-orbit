@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class CalibrationNoteSpawner : SceneSingleton<CalibrationNoteSpawner>
 {
-    private const double BeatDuration = 0.5; // 120 BPM
+    private double BeatDuration = RhythmClock.Instance.GetNoteDuration();// RhythmeClock 참조
     private const int NoteCount = 4;
 
     /// <summary>120BPM 기준 0.5초 간격의 NoteData 4개를 생성하고 NoteRenderer에 전달해 반환. HUD에서 호출.</summary>
