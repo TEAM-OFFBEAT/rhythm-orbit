@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5349611656894862043}
   - component: {fileID: 5082261578518569677}
   - component: {fileID: 3221796485719918226}
+  - component: {fileID: 6030005440964628210}
   m_Layer: 0
   m_Name: Core
   m_TagString: Untagged
@@ -158,3 +159,16 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &6030005440964628210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5176468647633228088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d053f8c545f000040a4f2b3a425a07ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RhythmClock
+  bpm: 120
