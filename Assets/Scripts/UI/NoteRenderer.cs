@@ -87,7 +87,9 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
                 activeNotes.RemoveAt(i);
                 continue;
             }
-            float t = Mathf.Clamp01((float)((entry.judgeTime - now) / leadTime));
+            double remainingTime = System.Math.Max(0.0, entry.judgeTime - now);
+            float t = Mathf.Clamp01((float)(remainingTime / leadTime));
+            
             var pos = entry.rect.anchoredPosition;
             pos.x = Mathf.Lerp(judgeLineX, spawnX, t);
             entry.rect.anchoredPosition = pos;
