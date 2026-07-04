@@ -19,21 +19,6 @@ public class HUD : SceneSingleton<HUD>
     protected override void Awake()
     {
         base.Awake();
-        keyInputOffsetSlider.minValue = -200f;
-        keyInputOffsetSlider.maxValue = 200f;
-        keyInputOffsetSlider.wholeNumbers = true;
-        keyInputOffsetSlider.onValueChanged.AddListener(OnKeyInputOffsetSliderChanged);
-
-        audioOffsetSlider.minValue = -200f;
-        audioOffsetSlider.maxValue = 200f;
-        audioOffsetSlider.wholeNumbers = true;
-        audioOffsetSlider.onValueChanged.AddListener(OnAudioOffsetSliderChanged);
-
-        keyInputDecrementButton.onClick.AddListener(OnDecrementKeyInputOffset);
-        keyInputIncrementButton.onClick.AddListener(OnIncrementKeyInputOffset);
-        audioDecrementButton.onClick.AddListener(OnDecrementAudioOffset);
-        audioIncrementButton.onClick.AddListener(OnIncrementAudioOffset);
-        playTestButton.onClick.AddListener(OnPlayTest);
         settingsPanel.SetActive(false);
         feedbackLabel.text = string.Empty;
     }
@@ -115,9 +100,9 @@ public class HUD : SceneSingleton<HUD>
     }
 
     /// <summary>
-    /// Play Test 결과 피드백 문자열을 화면에 표시.
+    /// 탭 입력마다 캘리브레이션 피드백 문자열을 갱신.
     /// </summary>
-    public void ShowCalibrationFeedback(string feedback)
+    public void UpdateCalibrationFeedback(string feedback)
     {
         feedbackLabel.text = feedback;
     }

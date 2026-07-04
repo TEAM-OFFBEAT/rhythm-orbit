@@ -5,11 +5,9 @@ using UnityEngine.UI;
 public class NoteRenderer : SceneSingleton<NoteRenderer>
 {
     [SerializeField] private RectTransform noteContainer;
+    [SerializeField] private RectTransform notePrefab;
     [SerializeField] private RectTransform judgeLine;
     [SerializeField] private float spawnX = 700f;
-    [SerializeField] private float judgeLineX = -600f;
-    [SerializeField] private float noteSize = 60f;
-    [SerializeField] private Color noteColor = Color.cyan;
     [SerializeField] private double leadTime = 2.0;
 
     private struct NoteEntry { public RectTransform rect; public double judgeTime; public int noteId; }
@@ -17,41 +15,24 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     public double LeadTime => leadTime;
     private bool isMoving;
 
-    protected override void Awake()
-    {
-        base.Awake();
-        if (noteContainer == null) noteContainer = GetComponent<RectTransform>();
-        if (judgeLine != null)
-        {
-            var pos = judgeLine.anchoredPosition;
-            pos.x = judgeLineX;
-            judgeLine.anchoredPosition = pos;
-            judgeLine.gameObject.SetActive(false);
-        }
-    }
-
     /// <summary>
-    /// NoteData를 받아 spawnX 위치에 UI 노트 Image를 생성.
+    /// NoteData를 받아 spawnX 위치에 노트 프리팹을 생성.
     /// </summary>
     public void SpawnNote(NoteData note)
     {
         // TODO: DefenseTurn 구현 시 Instantiate/Destroy 대신 오브젝트 풀링으로 교체.
-        var go = new GameObject($"Note_{note.noteId}", typeof(Image));
-        go.GetComponent<Image>().color = noteColor;
-        var rect = go.GetComponent<RectTransform>();
-        rect.SetParent(noteContainer, false);
-        rect.sizeDelta = new Vector2(noteSize, noteSize);
-        rect.anchoredPosition = new Vector2(spawnX, 0f);
+        var rect = Instantiate(notePrefab, noteContainer);
+        Vector2 judgeLocalPos = (Vector2)noteContainer.InverseTransformPoint(judgeLine.position);
+        rect.anchoredPosition = new Vector2(spawnX, judgeLocalPos.y);
         activeNotes.Add(new NoteEntry { rect = rect, judgeTime = note.judgeTime, noteId = note.noteId });
     }
 
     /// <summary>
-    /// 노트 이동을 활성화하고 판정선을 표시.
+    /// 노트 이동을 활성화.
     /// </summary>
     public void StartMoving()
     {
         isMoving = true;
-        if (judgeLine != null) judgeLine.gameObject.SetActive(true);
     }
 
     /// <summary>
@@ -70,12 +51,11 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     }
 
     /// <summary>
-    /// 모든 활성 노트를 제거하고 판정선을 숨기며 상태를 초기화.
+    /// 모든 활성 노트를 제거하고 상태를 초기화.
     /// </summary>
     public void ClearAll()
     {
         isMoving = false;
-        if (judgeLine != null) judgeLine.gameObject.SetActive(false);
         foreach (var entry in activeNotes)
         {
             // TODO: DefenseTurn 구현 시 Instantiate/Destroy 대신 오브젝트 풀링으로 교체.
@@ -88,6 +68,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     {
         if (!isMoving || activeNotes.Count == 0) return;
         double now = AudioSettings.dspTime;
+        float judgeLineX = judgeLine.anchoredPosition.x;
         for (int i = activeNotes.Count - 1; i >= 0; i--)
         {
             var entry = activeNotes[i];
@@ -101,7 +82,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
             }
             double remainingTime = System.Math.Max(0.0, entry.judgeTime - now);
             float t = Mathf.Clamp01((float)(remainingTime / leadTime));
-            
+
             var pos = entry.rect.anchoredPosition;
             pos.x = Mathf.Lerp(judgeLineX, spawnX, t);
             entry.rect.anchoredPosition = pos;

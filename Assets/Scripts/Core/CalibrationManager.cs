@@ -43,13 +43,14 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
     /// </summary>
     public void OnTap()
     {
+        // TODO: OnTap을 CalibrationManager에서 처리하지 않도록 변경하기
         if (!isRunning) return;
         var note = FindClosestUnresolved(AudioSettings.dspTime);
         if (note == null) return;
         double rawOffset = (AudioSettings.dspTime - note.judgeTime) * 1000.0;
         double offsetMs = JudgeSystem.Instance.CalcOffsetMs(AudioSettings.dspTime, note.judgeTime);
         resolvedIds.Add(note.noteId);
-        HUD.Instance.ShowCalibrationFeedback(GetFeedback(offsetMs));
+        HUD.Instance.UpdateCalibrationFeedback(GetFeedback(offsetMs));
         NoteRenderer.Instance.RemoveNote(note.noteId);
     }
 
