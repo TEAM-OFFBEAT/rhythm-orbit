@@ -40,7 +40,8 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
         if (!isRunning) return;
         var note = FindClosestUnresolved(AudioSettings.dspTime);
         if (note == null) return;
-        double offsetMs = (AudioSettings.dspTime - note.judgeTime) * 1000.0;
+        double rawOffset = (AudioSettings.dspTime - note.judgeTime) * 1000.0;
+        double offsetMs = JudgeSystem.Instance.CalcOffsetMs(AudioSettings.dspTime, note.judgeTime);
         resolvedIds.Add(note.noteId);
         HUD.Instance.ShowCalibrationFeedback(GetFeedback(offsetMs));
         NoteRenderer.Instance.RemoveNote(note.noteId);
@@ -83,17 +84,17 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
             double audioOffsetSec = JudgeSystem.Instance.AudioOffsetMs / 1000.0;
             double scheduledTime = note.judgeTime + audioOffsetSec; // 메트로놈 재생 시각 = 노트 판정 시각 + 오디오 오프셋
             
-            // DSP 정확도 보장: judgeTime 100ms 전까지 매 프레임 대기 후 PlayScheduled로 예약
-            while (AudioSettings.dspTime < note.judgeTime - 0.1)
+            // DSP 정확도 보장: scheduledTime 100ms 전까지 매 프레임 대기 후 PlayScheduled로 예약
+            while (AudioSettings.dspTime < scheduledTime - 0.1)
                 yield return null;
-            
+
             if (scheduledTime <= AudioSettings.dspTime)
             {
                 audioSource.Play();
             }
             else
             {
-                audioSource.PlayScheduled(note.judgeTime);
+                audioSource.PlayScheduled(scheduledTime);
             }
         }
     }
