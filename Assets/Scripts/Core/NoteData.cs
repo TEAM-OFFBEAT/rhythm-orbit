@@ -5,6 +5,8 @@ public class NoteData
     public double judgeTime; // DefenseTurn.Begin()에서 설정: defenseStartTime + noteRelativeTime
 
 
-    /// <summary>화면 표시 시작 시각을 반환. NoteRenderer에서 호출.</summary>
+    /// <summary>
+    /// 화면 표시 시작 시각을 반환.
+    /// </summary>
     public double GetDisplayTime(double travelTime) => judgeTime - travelTime;
 }

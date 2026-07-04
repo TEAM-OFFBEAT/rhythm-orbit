@@ -13,7 +13,9 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
     private HashSet<int> resolvedIds;
     private bool isRunning;
 
-    /// <summary>CalibrationNoteSpawner에서 노트를 받아 Play Test를 시작. HUD에서 호출.</summary>
+    /// <summary>
+    /// 노트 목록을 받아 Play Test를 시작.
+    /// </summary>
     public void StartPlayTest(List<NoteData> spawnedNotes)
     {
         if (spawnedNotes == null || spawnedNotes.Count == 0) return;
@@ -24,7 +26,9 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
         StartCoroutine(PlayMetronome(notes));
     }
 
-    /// <summary>offsetMs를 기준으로 피드백 문자열을 반환. CalibrationManager에서 호출.</summary>
+    /// <summary>
+    /// offsetMs를 기준으로 피드백 문자열을 반환.
+    /// </summary>
     public static string GetFeedback(double offsetMs)
     {
         if (offsetMs > 30.0) return "Too Late";
@@ -34,7 +38,9 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
         return "Too Early";
     }
 
-    /// <summary>Tap 액션 입력 시 가장 가까운 노트의 offset을 계산해 피드백을 표시. PlayerInput(SendMessages)에서 호출.</summary>
+    /// <summary>
+    /// Tap 입력 시 가장 가까운 노트의 타이밍 오차를 계산해 피드백을 표시.
+    /// </summary>
     public void OnTap()
     {
         if (!isRunning) return;
