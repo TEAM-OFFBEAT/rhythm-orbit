@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class HUD : SceneSingleton<HUD>
+public class HUD : MonoBehaviour
 {
     [SerializeField] private Slider keyInputOffsetSlider;
     [SerializeField] private Slider audioOffsetSlider;
@@ -16,9 +16,8 @@ public class HUD : SceneSingleton<HUD>
     [SerializeField] private Button playTestButton;
     [SerializeField] private TMP_Text feedbackLabel;
 
-    protected override void Awake()
+    private void Awake()
     {
-        base.Awake();
         settingsPanel.SetActive(false);
         feedbackLabel.text = string.Empty;
     }
@@ -94,9 +93,9 @@ public class HUD : SceneSingleton<HUD>
     /// </summary>
     public void OnPlayTest()
     {
-        if (CalibrationManager.Instance == null || CalibrationNoteSpawner.Instance == null) return;
+        if (CalibrationManager.Instance == null) return;
         feedbackLabel.text = string.Empty;
-        CalibrationManager.Instance.StartPlayTest(CalibrationNoteSpawner.Instance.SpawnNotes());
+        CalibrationManager.Instance.StartPlayTest(UpdateCalibrationFeedback);
     }
 
     /// <summary>
