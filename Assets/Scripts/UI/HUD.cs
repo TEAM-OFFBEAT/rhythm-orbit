@@ -4,7 +4,6 @@ using TMPro;
 
 public class HUD : SceneSingleton<HUD>
 {
-    [SerializeField] private JudgeSystem judgeSystem;
     [SerializeField] private Slider keyInputOffsetSlider;
     [SerializeField] private Slider audioOffsetSlider;
     [SerializeField] private TMP_Text keyInputOffsetLabel;
@@ -16,51 +15,48 @@ public class HUD : SceneSingleton<HUD>
     [SerializeField] private Button audioIncrementButton;
     [SerializeField] private Button playTestButton;
     [SerializeField] private TMP_Text feedbackLabel;
-    [SerializeField] private CalibrationManager calibrationManager;
 
     protected override void Awake()
     {
         base.Awake();
-        if (judgeSystem == null) judgeSystem = FindAnyObjectByType<JudgeSystem>();
-        if (calibrationManager == null) calibrationManager = FindAnyObjectByType<CalibrationManager>();
-        
         keyInputOffsetSlider.minValue = -200f;
         keyInputOffsetSlider.maxValue = 200f;
         keyInputOffsetSlider.wholeNumbers = true;
-        keyInputOffsetSlider.value = (float)judgeSystem.KeyInputOffsetMs;
-        UpdateKeyInputOffsetLabel(keyInputOffsetSlider.value);
         keyInputOffsetSlider.onValueChanged.AddListener(OnKeyInputOffsetSliderChanged);
 
         audioOffsetSlider.minValue = -200f;
         audioOffsetSlider.maxValue = 200f;
         audioOffsetSlider.wholeNumbers = true;
-        audioOffsetSlider.value = (float)judgeSystem.AudioOffsetMs;
-        UpdateAudioOffsetLabel(audioOffsetSlider.value);
         audioOffsetSlider.onValueChanged.AddListener(OnAudioOffsetSliderChanged);
 
         keyInputDecrementButton.onClick.AddListener(OnDecrementKeyInputOffset);
         keyInputIncrementButton.onClick.AddListener(OnIncrementKeyInputOffset);
-
         audioDecrementButton.onClick.AddListener(OnDecrementAudioOffset);
         audioIncrementButton.onClick.AddListener(OnIncrementAudioOffset);
         playTestButton.onClick.AddListener(OnPlayTest);
         settingsPanel.SetActive(false);
         feedbackLabel.text = string.Empty;
+    }
 
-        
+    private void Start()
+    {
+        keyInputOffsetSlider.value = (float)JudgeSystem.Instance.KeyInputOffsetMs;
+        UpdateKeyInputOffsetLabel(keyInputOffsetSlider.value);
+        audioOffsetSlider.value = (float)JudgeSystem.Instance.AudioOffsetMs;
+        UpdateAudioOffsetLabel(audioOffsetSlider.value);
     }
 
     /// <summary>입력 오프셋 슬라이더 값 변경 시 JudgeSystem의 InputOffsetMs를 갱신하고 레이블을 업데이트. Slider.onValueChanged에서 호출.</summary>
     public void OnKeyInputOffsetSliderChanged(float value)
     {
-        judgeSystem.SetKeyInputOffset(value);
+        JudgeSystem.Instance.SetKeyInputOffset(value);
         UpdateKeyInputOffsetLabel(value);
     }
 
     /// <summary>오디오 오프셋 슬라이더 값 변경 시 JudgeSystem의 AudioOffsetMs를 갱신하고 레이블을 업데이트. Slider.onValueChanged에서 호출.</summary>
     public void OnAudioOffsetSliderChanged(float value)
     {
-        judgeSystem.SetAudioOffset(value);
+        JudgeSystem.Instance.SetAudioOffset(value);
         UpdateAudioOffsetLabel(value);
     }
 
@@ -96,10 +92,10 @@ public class HUD : SceneSingleton<HUD>
 
     /// <summary>Play Test를 시작. playTestButton.onClick에서 호출.</summary>
     public void OnPlayTest()
-    {   
-        if (calibrationManager == null || CalibrationNoteSpawner.Instance == null) return;
+    {
+        if (CalibrationManager.Instance == null || CalibrationNoteSpawner.Instance == null) return;
         feedbackLabel.text = string.Empty;
-        calibrationManager.StartPlayTest(CalibrationNoteSpawner.Instance.SpawnNotes());
+        CalibrationManager.Instance.StartPlayTest(CalibrationNoteSpawner.Instance.SpawnNotes());
     }
 
     /// <summary>Play Test 결과 피드백 문자열을 화면에 표시. CalibrationManager에서 호출.</summary>
