@@ -9,20 +9,30 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip metronomeClip;
 
+    private CalibrationNoteSpawner spawner;
     private List<NoteData> notes;
     private HashSet<int> resolvedIds;
     private bool isRunning;
+    private Action<string> onFeedback;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        spawner = FindAnyObjectByType<CalibrationNoteSpawner>();
+    }
 
     /// <summary>
-    /// 노트 목록을 받아 Play Test를 시작.
+    /// 피드백 콜백을 받아 Play Test를 시작. 노트 스폰은 내부에서 처리.
     /// </summary>
-    public void StartPlayTest(List<NoteData> spawnedNotes)
+    public void StartPlayTest(Action<string> onFeedback)
     {
+        var spawnedNotes = spawner.SpawnNotes();
         if (spawnedNotes == null || spawnedNotes.Count == 0) return;
         StopAllCoroutines();
         notes = spawnedNotes;
         resolvedIds = new HashSet<int>();
         isRunning = true;
+        this.onFeedback = onFeedback;
         StartCoroutine(PlayMetronome(notes));
     }
 
@@ -47,10 +57,9 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
         if (!isRunning) return;
         var note = FindClosestUnresolved(AudioSettings.dspTime);
         if (note == null) return;
-        double rawOffset = (AudioSettings.dspTime - note.judgeTime) * 1000.0;
         double offsetMs = JudgeSystem.Instance.CalcOffsetMs(AudioSettings.dspTime, note.judgeTime);
         resolvedIds.Add(note.noteId);
-        HUD.Instance.UpdateCalibrationFeedback(GetFeedback(offsetMs));
+        onFeedback?.Invoke(GetFeedback(offsetMs));
         NoteRenderer.Instance.RemoveNote(note.noteId);
     }
 

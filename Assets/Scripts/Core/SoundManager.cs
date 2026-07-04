@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class SoundManager : SceneSingleton<SoundManager>
+public class SoundManager : MonoBehaviour
 {
     [SerializeField] private AudioSource audioSource;
 
@@ -9,6 +9,7 @@ public class SoundManager : SceneSingleton<SoundManager>
     /// </summary>
     public void PlayBGM(AudioClip clip)
     {
+        if (clip == null) return;
         audioSource.clip = clip;
         audioSource.PlayScheduled(AudioSettings.dspTime + 0.1);
     }

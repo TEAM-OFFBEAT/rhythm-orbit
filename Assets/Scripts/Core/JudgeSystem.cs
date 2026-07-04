@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class JudgeSystem : SceneSingleton<JudgeSystem>
 {
-    public double perfectWindowMs = 50.0;
-    public double goodWindowMs = 100.0;
+    [SerializeField] private double perfectWindowMs = 50.0;
+    [SerializeField] private double goodWindowMs = 100.0;
     public double KeyInputOffsetMs { get; private set; } //키 입력 오프셋
     public double AudioOffsetMs { get; private set; } //오디오 출력 오프셋
     protected override void Awake()

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CalibrationNoteSpawner : SceneSingleton<CalibrationNoteSpawner>
+public class CalibrationNoteSpawner : MonoBehaviour
 {
-    private double BeatDuration; // RhythmeClock 참조
+    private double BeatDuration;
     private const int NoteCount = 4;
 
     /// <summary>
@@ -11,7 +11,7 @@ public class CalibrationNoteSpawner : SceneSingleton<CalibrationNoteSpawner>
     /// </summary>
     public List<NoteData> SpawnNotes()
     {   
-        BeatDuration = RhythmClock.Instance.GetNoteDuration()*2.0;
+        BeatDuration = RhythmClock.Instance.GetNoteDuration() * 2.0;
         NoteRenderer.Instance.ClearAll();
         double firstJudgeTime = AudioSettings.dspTime + NoteRenderer.Instance.LeadTime;
         var result = new List<NoteData>();
