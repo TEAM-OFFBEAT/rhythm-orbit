@@ -13,7 +13,9 @@ public class JudgeSystem : SceneSingleton<JudgeSystem>
         AudioOffsetMs = PlayerPrefs.GetFloat("audioOffsetMs", 0f);
     }
 
-    /// <summary>입력 오프셋 보정 후 타이밍 오차를 계산해 Perfect/Good/Miss를 반환. DefenseTurn에서 호출.</summary>
+    /// <summary>
+    /// 입력 오프셋 보정 후 타이밍 오차를 계산해 Perfect/Good/Miss를 반환.
+    /// </summary>
     public Judgment Judge(double inputTime, double judgeTime)
     {
         double adj = System.Math.Abs(CalcOffsetMs(inputTime, judgeTime));
@@ -22,20 +24,26 @@ public class JudgeSystem : SceneSingleton<JudgeSystem>
         return Judgment.MISS;
     }
 
-    /// <summary>InputOffsetMs를 적용한 조정 타이밍 오차(ms)를 반환. DefenseTurn, JudgeSystem에서 호출.</summary>
+    /// <summary>
+    /// KeyInputOffsetMs를 적용한 타이밍 오차(ms)를 반환.
+    /// </summary>
     public double CalcOffsetMs(double inputTime, double judgeTime)
     {
         return (inputTime - judgeTime) * 1000.0 - KeyInputOffsetMs;
     }
 
-    /// <summary>keyInputOffsetMs를 PlayerPrefs에 저장하고 즉시 적용. HUD에서 호출.</summary>
+    /// <summary>
+    /// KeyInputOffsetMs를 PlayerPrefs에 저장하고 즉시 적용.
+    /// </summary>
     public void SetKeyInputOffset(double offsetMs)
     {
         KeyInputOffsetMs = offsetMs;
         PlayerPrefs.SetFloat("keyInputOffsetMs", (float)offsetMs);
     }
 
-    /// <summary>오디오 출력 오프셋을 PlayerPrefs에 저장하고 즉시 적용. HUD에서 호출.</summary>
+    /// <summary>
+    /// AudioOffsetMs를 PlayerPrefs에 저장하고 즉시 적용.
+    /// </summary>
     public void SetAudioOffset(double offsetMs)
     {
         AudioOffsetMs = offsetMs;
