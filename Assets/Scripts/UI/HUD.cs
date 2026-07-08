@@ -125,6 +125,16 @@ public class HUD : MonoBehaviour
     /// 턴 전환 배너 텍스트를 화면에 표시.
     /// </summary>
     public void ShowTurnBanner(string label) { }
+    
+    /// <summary>
+    /// Tap Action 입력 시 AttackTurn에 입력을 전달. PlayerInput Send Messages에서 호출.
+    /// </summary>
+    public void OnTap()
+    {
+        if (AttackTurn.Instance == null) return;
+        AttackTurn.Instance.OnTap();
+    }
+    
 
     private void UpdateKeyInputOffsetLabel(float value)
     {
