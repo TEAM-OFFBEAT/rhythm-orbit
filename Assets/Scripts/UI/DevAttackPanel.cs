@@ -8,8 +8,10 @@ public class DevAttackPanel : MonoBehaviour
     [SerializeField] private Button startP1AttackButton;
     [SerializeField] private Button startP2AttackButton;
     [SerializeField] private TMP_Text attackStatusLabel;
+    [SerializeField] private TMP_Text attackPenaltyLabel;
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
-
+    [SerializeField] private AttackTurn attackTurn;
+    
     private void Awake()
     {
         if (startP1AttackButton != null)
@@ -40,9 +42,9 @@ public class DevAttackPanel : MonoBehaviour
             startP2AttackButton.onClick.RemoveListener(OnStartP2Attack);
         }
 
-        if (AttackTurn.Instance != null)
+        if (attackTurn != null)
         {
-            AttackTurn.Instance.UnregisterView(attackTurnRenderer, attackStatusLabel);
+            attackTurn.UnregisterView(attackTurnRenderer, attackStatusLabel, attackPenaltyLabel);
         }
     }
 
@@ -51,13 +53,13 @@ public class DevAttackPanel : MonoBehaviour
     /// </summary>
     private void RegisterViewToAttackTurn()
     {
-        if (AttackTurn.Instance == null)
+        if (attackTurn == null)
         {
-            Debug.LogWarning("AttackTurn.Instance가 없습니다.");
+            Debug.LogWarning("AttackTurn이 연결되지 않았습니다.");
             return;
         }
 
-        AttackTurn.Instance.RegisterView(attackTurnRenderer, attackStatusLabel);
+        attackTurn.RegisterView(attackTurnRenderer, attackStatusLabel, attackPenaltyLabel);
     }
 
     /// <summary>
@@ -65,13 +67,13 @@ public class DevAttackPanel : MonoBehaviour
     /// </summary>
     private void OnStartP1Attack()
     {
-        if (AttackTurn.Instance == null)
+        if (attackTurn == null)
         {
-            Debug.LogWarning("AttackTurn.Instance가 없습니다.");
+            Debug.LogWarning("AttackTurn이 연결되지 않았습니다.");
             return;
         }
 
-        AttackTurn.Instance.StartLocalPlayerAttack();
+        attackTurn.StartLocalPlayerAttack();
     }
 
     /// <summary>
@@ -79,12 +81,12 @@ public class DevAttackPanel : MonoBehaviour
     /// </summary>
     private void OnStartP2Attack()
     {
-        if (AttackTurn.Instance == null)
+        if (attackTurn == null)
         {
-            Debug.LogWarning("AttackTurn.Instance가 없습니다.");
+            Debug.LogWarning("AttackTurn이 연결되지 않았습니다.");
             return;
         }
 
-        AttackTurn.Instance.StartOpponentAttackDemo();
+        attackTurn.StartOpponentAttackDemo();
     }
 }
