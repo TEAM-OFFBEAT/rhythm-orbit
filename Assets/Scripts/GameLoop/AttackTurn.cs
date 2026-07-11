@@ -1,24 +1,44 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using System.Collections;
 
-public class AttackTurn : SceneSingleton<AttackTurn>
+public class AttackTurn : MonoBehaviour
 {
     private const int HalfBeatStepsPerMeasure = 8;
     private const int FirstPlayableGridStep=1;
 
-    [Header("Attack Settings")]
+    [Header("Attack Settings [공격 설정]")]
     [SerializeField] private int minTargetTapCount = 2;
     [SerializeField] private int maxTargetTapCount = 4;
     [SerializeField] private int attackMeasureCount = 1;
-    [SerializeField] private double gridToleranceMs = 100.0;
-    [SerializeField] private bool blockInputAfterFailure = true;
+    
+    [Header("Attack Penalty [공격 패널티] ")]
+    [SerializeField] private double attackInputWindowMs = 100.0;
+    [SerializeField] private int offGridSanityPenalty = 1;
+    [SerializeField] private int missingNoteSanityPenaltyPerNote = 1;
+    [SerializeField] private int extraNoteSanityPenaltyPerNote = 1;
+
+    [Header("Duplicate Input [중복 입력 처리]")]
+    [SerializeField] private bool penalizeDuplicateInput = false;
+    [SerializeField] private int duplicateInputSanityPenalty = 1;
+    
+    [Header("Penalty Alert UI")]
+    [SerializeField] private float penaltyAlertDuration = 1.0f;
+    
+    [Header("References [참조]")]
+    [SerializeField] private RhythmClock rhythmClock;
+
+    private int pendingAttackSanityPenalty;
+    private int extraNoteCount;
 
     private readonly List<NoteData> createdNotes = new();
     private readonly List<double> opponentDemoRelativeTimes = new();
-
+    private readonly HashSet<int> createdGridSteps = new();
     private AttackTurnRenderer attackTurnRenderer;
     private TMP_Text attackStatusLabel;
+    private TMP_Text attackPenaltyLabel;
+    private Coroutine penaltyAlertCoroutine;
 
     private AttackSide currentSide;
     private double attackStartDspTime;
@@ -29,8 +49,7 @@ public class AttackTurn : SceneSingleton<AttackTurn>
     private int nextOpponentDemoIndex;
     private bool isRunning;
     private bool isLocalPlayerAttack;
-    private bool hasFailed;
-
+    
     private readonly int[] opponentDemoGridSteps =
     {
         2,
@@ -42,30 +61,38 @@ public class AttackTurn : SceneSingleton<AttackTurn>
     {
         get
         {
-            if (RhythmClock.Instance == null)
+            if (rhythmClock == null)
             {
-                Debug.LogWarning("RhythmClock.Instance가 없습니다. 기본 BPM 120 기준으로 계산합니다.");
+                Debug.LogWarning("RhythmClock이 연결되지 않았습니다. 기본 BPM 120 기준으로 계산합니다.");
                 return 30.0 / 120.0;
             }
 
-            return RhythmClock.Instance.GetNoteDuration();
+            return rhythmClock.GetNoteDuration();
         }
     }
 
     /// <summary>
     /// DevAttackPanel에서 공격 테스트 UI를 등록.
     /// </summary>
-    public void RegisterView(AttackTurnRenderer renderer, TMP_Text statusLabel)
+    public void RegisterView(AttackTurnRenderer renderer, TMP_Text statusLabel, TMP_Text penaltyLabel)
     {
         attackTurnRenderer = renderer;
         attackStatusLabel = statusLabel;
+        attackPenaltyLabel = penaltyLabel;
+
+        if (attackPenaltyLabel != null)
+        {
+            attackPenaltyLabel.text = string.Empty;
+            attackPenaltyLabel.gameObject.SetActive(false);
+        }
+
         ShowStatus("ATTACK TEST READY");
     }
 
     /// <summary>
     /// DevAttackPanel 제거 시 등록된 UI 참조를 해제.
     /// </summary>
-    public void UnregisterView(AttackTurnRenderer renderer, TMP_Text statusLabel)
+    public void UnregisterView(AttackTurnRenderer renderer, TMP_Text statusLabel, TMP_Text penaltyLabel)
     {
         if (attackTurnRenderer == renderer)
         {
@@ -76,6 +103,11 @@ public class AttackTurn : SceneSingleton<AttackTurn>
         {
             attackStatusLabel = null;
         }
+
+        if (attackPenaltyLabel == penaltyLabel)
+        {
+            attackPenaltyLabel = null;
+        }
     }
 
     /// <summary>
@@ -85,7 +117,6 @@ public class AttackTurn : SceneSingleton<AttackTurn>
     {
         int safeMin = Mathf.Max(1, minTargetTapCount);
         int safeMax = Mathf.Max(safeMin, maxTargetTapCount);
-        safeMax = Mathf.Min(safeMax, MaxPlayableTapCount);
 
         int randomTargetCount = Random.Range(safeMin, safeMax + 1);
 
@@ -124,52 +155,56 @@ public class AttackTurn : SceneSingleton<AttackTurn>
     public void OnTap()
     {
         if (!isRunning || !isLocalPlayerAttack) return;
-        if (blockInputAfterFailure && hasFailed) return;
 
-        double now = AudioSettings.dspTime;
-        double relativeTime = now - attackStartDspTime;
+        double noteDuration = NoteDuration;
+        double relativeTime = GetCorrectedRelativeInputTime();
 
         if (relativeTime < 0.0 || relativeTime > attackDuration)
         {
-            FailAttack("ATTACK FAILED: OUT OF TIME");
+            ApplyAttackSanityPenalty(offGridSanityPenalty, "OUT_OF_ATTACK_TIME");
+            ShowStatus("ATTACK INPUT OUT OF TIME / NOTE NOT CREATED");
             return;
         }
 
+        int nearestGridStep = GetNearestPlayableGridStep(relativeTime, noteDuration);
+        double snappedRelativeTime = nearestGridStep * noteDuration;
+
+        double offsetMs = System.Math.Abs(relativeTime - snappedRelativeTime) * 1000.0;
+
+        if (offsetMs > attackInputWindowMs)
+        {
+            ApplyAttackSanityPenalty(offGridSanityPenalty, $"OFF_GRID / {offsetMs:0}ms");
+            ShowStatus("NOTE NOT CREATED");
+            return;
+        }
+
+        if (createdGridSteps.Contains(nearestGridStep))
+        {
+            if (penalizeDuplicateInput)
+            {
+                ApplyAttackSanityPenalty(
+                    duplicateInputSanityPenalty,
+                    $"DUPLICATE_INPUT / gridStep: {nearestGridStep}"
+                );
+            }
+
+            ShowStatus(
+                $"DUPLICATE INPUT / STEP: {nearestGridStep} / NOTE NOT CREATED / PENALTY: {pendingAttackSanityPenalty}"
+            );
+
+            return;
+        }
+        
         if (createdNotes.Count >= targetTapCount)
         {
-            FailAttack("ATTACK FAILED: TOO MANY TAPS");
-            return;
-        }
-
-        double noteDuration = NoteDuration;
-
-        if (!BeatCalculator.IsOnGrid(relativeTime, noteDuration, gridToleranceMs))
-        {
-            FailAttack("ATTACK FAILED: OFF GRID");
-            return;
-        }
-
-        double snappedRelativeTime = BeatCalculator.SnapToBeat(relativeTime, noteDuration);
-        snappedRelativeTime = ClampToAttackDuration(snappedRelativeTime);
-
-        int gridStepIndex = GetGridStepIndex(snappedRelativeTime, noteDuration);
-
-        if (!IsPlayableGridStep(gridStepIndex))
-        {
-            FailAttack("ATTACK FAILED: EMPTY BEAT");
-            return;
-        }
-
-        if (HasDuplicateTiming(snappedRelativeTime))
-        {
-            FailAttack("ATTACK FAILED: DUPLICATE TIMING");
-            return;
+            extraNoteCount++;
+            ApplyAttackSanityPenalty(extraNoteSanityPenaltyPerNote, "EXTRA_NOTE");
         }
 
         CreateAttackNote(snappedRelativeTime);
+
         ShowStatus($"P1 ATTACK {createdNotes.Count} / {targetTapCount}");
     }
-
     private void Update()
     {
         if (!isRunning) return;
@@ -192,12 +227,14 @@ public class AttackTurn : SceneSingleton<AttackTurn>
         currentSide = side;
         isLocalPlayerAttack = localPlayerAttack;
         isRunning = true;
-        hasFailed = false;
         nextNoteId = 0;
         nextOpponentDemoIndex = 0;
         createdNotes.Clear();
+        createdGridSteps.Clear();
         opponentDemoRelativeTimes.Clear();
-
+        pendingAttackSanityPenalty = 0;
+        extraNoteCount = 0;
+        
         double noteDuration = NoteDuration;
         gridStepCount = Mathf.Max(1, attackMeasureCount) * HalfBeatStepsPerMeasure;
         attackDuration = noteDuration * gridStepCount;
@@ -242,6 +279,8 @@ public class AttackTurn : SceneSingleton<AttackTurn>
         };
 
         createdNotes.Add(note);
+        int gridStepIndex = GetNearestPlayableGridStep(noteRelativeTime, NoteDuration);
+        createdGridSteps.Add(gridStepIndex);        
 
         if (attackTurnRenderer != null)
         {
@@ -262,46 +301,23 @@ public class AttackTurn : SceneSingleton<AttackTurn>
             attackTurnRenderer.StopLine();
         }
 
-        if (!hasFailed && createdNotes.Count < targetTapCount)
+        int missingNoteCount = Mathf.Max(0, targetTapCount - createdNotes.Count);
+
+        if (missingNoteCount > 0)
         {
-            FailAttack("ATTACK FAILED: NOT ENOUGH TAPS");
+            int penalty = missingNoteCount * missingNoteSanityPenaltyPerNote;
+            ApplyAttackSanityPenalty(penalty, $"MISSING_NOTES / count: {missingNoteCount}");
         }
 
         string attackerLabel = currentSide == AttackSide.P1 ? "P1" : "P2";
-        string result = hasFailed ? "FAILED" : "COMPLETE";
 
-        ShowStatus($"{attackerLabel} ATTACK {result} / NOTES: {createdNotes.Count}");
-        Debug.Log($"Attack End / result: {result}, noteCount: {createdNotes.Count}");
+        ShowStatus($"{attackerLabel} ATTACK COMPLETE / NOTES: {createdNotes.Count}");
+
+        Debug.Log(
+            $"Attack End / noteCount: {createdNotes.Count}, target: {targetTapCount}, extra: {extraNoteCount}, sanityPenalty: {pendingAttackSanityPenalty}"
+        );
     }
 
-    private void FailAttack(string message)
-    {
-        hasFailed = true;
-        ShowStatus(message);
-        Debug.LogWarning(message);
-    }
-
-    private bool HasDuplicateTiming(double snappedRelativeTime)
-    {
-        const double epsilon = 0.001;
-
-        foreach (NoteData note in createdNotes)
-        {
-            if (System.Math.Abs(note.noteRelativeTime - snappedRelativeTime) <= epsilon)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private double ClampToAttackDuration(double relativeTime)
-    {
-        if (relativeTime < 0.0) return 0.0;
-        if (relativeTime > attackDuration) return attackDuration;
-        return relativeTime;
-    }
 
     private void ShowStatus(string message)
     {
@@ -315,16 +331,100 @@ public class AttackTurn : SceneSingleton<AttackTurn>
 
     private int MaxPlayableTapCount => LastPlayableGridStep - FirstPlayableGridStep + 1;
 
-    private int GetGridStepIndex(double relativeTime, double noteDuration)
+
+    private double GetCorrectedRelativeInputTime()
     {
-        if (noteDuration <= 0.0) return 0;
-        return Mathf.RoundToInt((float)(relativeTime / noteDuration));
+        double inputTime = AudioSettings.dspTime;
+
+        if (JudgeSystem.Instance != null)
+        {
+            inputTime -= JudgeSystem.Instance.KeyInputOffsetMs / 1000.0;
+        }
+
+        return inputTime - attackStartDspTime;
+    }
+    private int GetNearestPlayableGridStep(double relativeTime, double noteDuration)
+    {
+        if (noteDuration <= 0.0)
+        {
+            return FirstPlayableGridStep;
+        }
+
+        int nearestStep = Mathf.RoundToInt((float)(relativeTime / noteDuration));
+        return Mathf.Clamp(nearestStep, FirstPlayableGridStep, LastPlayableGridStep);
+    }
+    private void ApplyAttackSanityPenalty(int amount, string reason)
+    {
+        if (amount <= 0) return;
+
+        pendingAttackSanityPenalty += amount;
+
+        ShowPenaltyAlert(amount, reason);
+
+        Debug.LogWarning(
+            $"Attack Sanity Penalty / amount: {amount}, reason: {reason}, total: {pendingAttackSanityPenalty}"
+        );
+
+        // TODO:
+        // 나중에 SanitySystem 또는 GameManager 쪽으로 전달.
+    }
+    private void ShowPenaltyAlert(int amount, string reason)
+    {
+        if (attackPenaltyLabel == null) return;
+
+        string reasonText = ConvertPenaltyReasonToText(reason);
+
+        attackPenaltyLabel.text = $"정신력 -{amount}\n{reasonText}";
+        attackPenaltyLabel.gameObject.SetActive(true);
+
+        if (penaltyAlertCoroutine != null)
+        {
+            StopCoroutine(penaltyAlertCoroutine);
+        }
+
+        penaltyAlertCoroutine = StartCoroutine(HidePenaltyAlertAfterDelay());
     }
 
-    private bool IsPlayableGridStep(int gridStepIndex)
+    private IEnumerator HidePenaltyAlertAfterDelay()
     {
-        return gridStepIndex >= FirstPlayableGridStep &&
-            gridStepIndex <= LastPlayableGridStep;
+        yield return new WaitForSeconds(penaltyAlertDuration);
+
+        if (attackPenaltyLabel != null)
+        {
+            attackPenaltyLabel.text = string.Empty;
+            attackPenaltyLabel.gameObject.SetActive(false);
+        }
+
+        penaltyAlertCoroutine = null;
     }
 
+    private string ConvertPenaltyReasonToText(string reason)
+    {
+        if (reason.Contains("OFF_GRID"))
+        {
+            return "OFF GRID";
+        }
+
+        if (reason.Contains("OUT_OF_ATTACK_TIME"))
+        {
+            return "OUT OF ATTACK TIME";
+        }
+
+        if (reason.Contains("MISSING_NOTES"))
+        {
+            return "MISSING NOTES";
+        }
+
+        if (reason.Contains("EXTRA_NOTE"))
+        {
+            return "EXTRA NOTE";
+        }
+
+        if (reason.Contains("DUPLICATE_INPUT"))
+        {
+            return "DUPLICATE INPUT";
+        }
+
+        return "ATTACK PANELTY";
+    }
 }

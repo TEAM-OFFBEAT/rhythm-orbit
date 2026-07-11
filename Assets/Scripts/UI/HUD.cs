@@ -4,10 +4,16 @@ using TMPro;
 
 public class HUD : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private AttackTurn attackTurn;
+
+    [Header("Offset UI")]
     [SerializeField] private Slider keyInputOffsetSlider;
     [SerializeField] private Slider audioOffsetSlider;
     [SerializeField] private TMP_Text keyInputOffsetLabel;
     [SerializeField] private TMP_Text audioOffsetLabel;
+
+    [Header("Settings UI")]
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private Button keyInputDecrementButton;
     [SerializeField] private Button keyInputIncrementButton;
@@ -18,14 +24,28 @@ public class HUD : MonoBehaviour
 
     private void Awake()
     {
-        settingsPanel.SetActive(false);
-        feedbackLabel.text = string.Empty;
+        if (settingsPanel != null)
+        {
+            settingsPanel.SetActive(false);
+        }
+
+        if (feedbackLabel != null)
+        {
+            feedbackLabel.text = string.Empty;
+        }
     }
 
     private void Start()
     {
+        if (JudgeSystem.Instance == null)
+        {
+            Debug.LogWarning("JudgeSystem.Instance가 없습니다.");
+            return;
+        }
+
         keyInputOffsetSlider.value = (float)JudgeSystem.Instance.KeyInputOffsetMs;
         UpdateKeyInputOffsetLabel(keyInputOffsetSlider.value);
+
         audioOffsetSlider.value = (float)JudgeSystem.Instance.AudioOffsetMs;
         UpdateAudioOffsetLabel(audioOffsetSlider.value);
     }
@@ -35,6 +55,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void OnKeyInputOffsetSliderChanged(float value)
     {
+        if (JudgeSystem.Instance == null) return;
+
         JudgeSystem.Instance.SetKeyInputOffset(value);
         UpdateKeyInputOffsetLabel(value);
     }
@@ -44,6 +66,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void OnAudioOffsetSliderChanged(float value)
     {
+        if (JudgeSystem.Instance == null) return;
+
         JudgeSystem.Instance.SetAudioOffset(value);
         UpdateAudioOffsetLabel(value);
     }
@@ -53,6 +77,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void OnToggleSettings()
     {
+        if (settingsPanel == null) return;
+
         settingsPanel.SetActive(!settingsPanel.activeSelf);
     }
 
@@ -61,6 +87,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void OnDecrementKeyInputOffset()
     {
+        if (keyInputOffsetSlider == null) return;
+
         keyInputOffsetSlider.value -= 1f;
     }
 
@@ -69,6 +97,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void OnIncrementKeyInputOffset()
     {
+        if (keyInputOffsetSlider == null) return;
+
         keyInputOffsetSlider.value += 1f;
     }
 
@@ -77,6 +107,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void OnDecrementAudioOffset()
     {
+        if (audioOffsetSlider == null) return;
+
         audioOffsetSlider.value -= 1f;
     }
 
@@ -85,6 +117,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void OnIncrementAudioOffset()
     {
+        if (audioOffsetSlider == null) return;
+
         audioOffsetSlider.value += 1f;
     }
 
@@ -94,7 +128,12 @@ public class HUD : MonoBehaviour
     public void OnPlayTest()
     {
         if (CalibrationManager.Instance == null) return;
-        feedbackLabel.text = string.Empty;
+
+        if (feedbackLabel != null)
+        {
+            feedbackLabel.text = string.Empty;
+        }
+
         CalibrationManager.Instance.StartPlayTest(UpdateCalibrationFeedback);
     }
 
@@ -103,7 +142,10 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void UpdateCalibrationFeedback(string feedback)
     {
-        feedbackLabel.text = feedback;
+        if (feedbackLabel != null)
+        {
+            feedbackLabel.text = feedback;
+        }
     }
 
     /// <summary>
@@ -125,19 +167,25 @@ public class HUD : MonoBehaviour
     /// 턴 전환 배너 텍스트를 화면에 표시.
     /// </summary>
     public void ShowTurnBanner(string label) { }
-    
+
     /// <summary>
     /// Tap Action 입력 시 AttackTurn에 입력을 전달. PlayerInput Send Messages에서 호출.
     /// </summary>
     public void OnTap()
     {
-        if (AttackTurn.Instance == null) return;
-        AttackTurn.Instance.OnTap();
+        if (attackTurn == null)
+        {
+            Debug.LogWarning("AttackTurn이 HUD에 연결되지 않았습니다.");
+            return;
+        }
+
+        attackTurn.OnTap();
     }
-    
 
     private void UpdateKeyInputOffsetLabel(float value)
     {
+        if (keyInputOffsetLabel == null) return;
+
         keyInputOffsetLabel.text = value >= 0f
             ? $"Offset: +{value:0}ms"
             : $"Offset: {value:0}ms";
@@ -145,9 +193,10 @@ public class HUD : MonoBehaviour
 
     private void UpdateAudioOffsetLabel(float value)
     {
+        if (audioOffsetLabel == null) return;
+
         audioOffsetLabel.text = value >= 0f
             ? $"Audio Offset: +{value:0}ms"
             : $"Audio Offset: {value:0}ms";
     }
-    
 }
