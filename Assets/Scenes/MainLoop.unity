@@ -1130,6 +1130,146 @@ PrefabInstance:
       propertyPath: m_Name
       value: Attack
       objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[0].characterCount
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[1].characterCount
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[2].characterCount
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[3].characterCount
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[4].characterCount
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[5].characterCount
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[6].characterCount
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[0].messages.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[1].messages.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[2].messages.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[3].messages.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[4].messages.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[5].messages.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: messageGroups.Array.data[6].messages.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[0].messages.Array.data[0]'
+      value: "\uC751"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[0].messages.Array.data[1]'
+      value: "\uC65C"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[0].messages.Array.data[2]'
+      value: "\uC57C"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[1].messages.Array.data[0]'
+      value: "\uC548\uB155"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[1].messages.Array.data[1]'
+      value: "\uBB50\uD574"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[1].messages.Array.data[2]'
+      value: "\uBA54\uB871"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[2].messages.Array.data[0]'
+      value: "\uBC18\uAC00\uC6CC"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[2].messages.Array.data[1]'
+      value: "\uC798\uC9C0\uB0B4"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[2].messages.Array.data[2]'
+      value: "\uC0AC\uB791\uD574"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[3].messages.Array.data[0]'
+      value: "\uBCF4\uACE0\uC2F6\uC5B4"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[3].messages.Array.data[1]'
+      value: "\uC751\uB2F5\uD558\uB77C"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[3].messages.Array.data[2]'
+      value: "\uC798\uC548\uB4E4\uB824"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[4].messages.Array.data[0]'
+      value: "\uB108\uB294\uB204\uAD6C\uC57C"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[4].messages.Array.data[1]'
+      value: "\uC9C0\uAE08\uC5B4\uB514\uC57C"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[4].messages.Array.data[2]'
+      value: "\uB300\uB2F5\uD574\uC904\uB798"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[5].messages.Array.data[0]'
+      value: "\uC548\uB155\uD558\uC2ED\uB2C8\uAE4C"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[5].messages.Array.data[1]'
+      value: "\uC544\uC774\uB514\uC5B4\uACE0\uAC08"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[5].messages.Array.data[2]'
+      value: "\uAC00\uB098\uB2E4\uB77C\uB9C8\uBC14"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[6].messages.Array.data[0]'
+      value: "\uAC00\uB098\uB2E4\uB77C\uB9C8\uBC14\uC0AC"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[6].messages.Array.data[1]'
+      value: "\uC544\uC790\uCC28\uCE74\uD0C0\uD30C\uD558"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337751902119619183, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: 'messageGroups.Array.data[6].messages.Array.data[2]'
+      value: "\uC77C\uC774\uC0BC\uC0AC\uC624\uC721\uCE60"
+      objectReference: {fileID: 0}
     - target: {fileID: 3132197320252958204, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1174,6 +1314,14 @@ PrefabInstance:
       propertyPath: rhythmClock
       value: 
       objectReference: {fileID: 1980960818}
+    - target: {fileID: 5362042395865218281, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: maxTargetTapCount
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5362042395865218281, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: minTargetTapCount
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8940754824742537160, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
       propertyPath: p1StartX
       value: 5
