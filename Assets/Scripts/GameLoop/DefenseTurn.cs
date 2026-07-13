@@ -125,7 +125,7 @@ public class DefenseTurn : MonoBehaviour
             return;
         }
 
-        double inputTime = AudioSettings.dspTime - JudgeSystem.Instance.KeyInputOffsetMs / 1000.0;
+        double inputTime = AudioSettings.dspTime;
 
         NoteData target = GetNearestNote(inputTime);
         if (target == null) return;
