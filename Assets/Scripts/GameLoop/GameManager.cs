@@ -20,6 +20,12 @@ public class GameManager : MonoBehaviour
     
     [Header("Sanity Systems")]
     [SerializeField] private SanitySystem sanitySystem;
+    [Header("BPM Progression")]
+    [SerializeField] private int turnsPerBpmIncrease = 2;
+    [SerializeField] private float[] bpmStages = { 106f, 120f, 144f };
+
+    private int completedTurnCount;
+    private int currentBpmStageIndex;
 
     private GameState currentState;
     private int attackerPlayerId = 1;
@@ -75,6 +81,15 @@ public class GameManager : MonoBehaviour
             sanitySystem.ResetSanity();
         }
         if (RhythmClock.Instance != null) RhythmClock.Instance.StartClockNow();
+        StartAttackPhase();
+
+         ApplyCurrentBpm();
+
+        if (RhythmClock.Instance != null)
+        {
+            RhythmClock.Instance.StartClockNow();
+        }
+
         StartAttackPhase();
     }
 
@@ -169,22 +184,18 @@ public class GameManager : MonoBehaviour
     }
 
     private void HandleDefenseEnded(DefenseResult result)
-    {
-        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
+{
+    if (currentState == GameState.END) return;
 
-        //sanitySystem?.ApplyDefenseResult(defenderPlayerId, result);
+    int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
 
-        Debug.Log($"Turn End / attacker:P{attackerPlayerId}, defender:P{defenderPlayerId}, miss:{result.MissCount}");
+    Debug.Log($"Turn End / attacker:P{attackerPlayerId}, defender:P{defenderPlayerId}, miss:{result.MissCount}");
 
-        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(defenderPlayerId))
-        {
-            currentState = GameState.END;
-            Debug.Log($"Game End / P{defenderPlayerId} sanity depleted during defense.");
-            return;
-        }
+    completedTurnCount++;
+    UpdateBpmByTurnCount();
 
-        SwitchTurn();
-    }
+    SwitchTurn();
+}
 
     /// <summary>
     /// 턴을 전환하고 다음 공격 턴을 시작.
@@ -222,5 +233,42 @@ public class GameManager : MonoBehaviour
 
         AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
         hud.ShowAttackMessage(message, attackerSide);
+    }
+    private void ApplyCurrentBpm()
+    {
+        if (bpmStages == null || bpmStages.Length == 0)
+        {
+            Debug.LogWarning("BPM Stages가 비어 있습니다.");
+            return;
+        }
+
+        currentBpmStageIndex = Mathf.Clamp(currentBpmStageIndex, 0, bpmStages.Length - 1);
+        float bpm = bpmStages[currentBpmStageIndex];
+
+        if (RhythmClock.Instance != null)
+        {
+            RhythmClock.Instance.SetBpm(bpm);
+        }
+
+        if (hud != null)
+        {
+            hud.UpdateBpm(bpm);
+        }
+
+        Debug.Log($"BPM Changed / stage:{currentBpmStageIndex}, bpm:{bpm}");
+    }
+
+    private void UpdateBpmByTurnCount()
+    {
+        if (turnsPerBpmIncrease <= 0) return;
+        if (bpmStages == null || bpmStages.Length == 0) return;
+
+        int nextStageIndex = completedTurnCount / turnsPerBpmIncrease;
+        nextStageIndex = Mathf.Clamp(nextStageIndex, 0, bpmStages.Length - 1);
+
+        if (nextStageIndex == currentBpmStageIndex) return;
+
+        currentBpmStageIndex = nextStageIndex;
+        ApplyCurrentBpm();
     }
 }

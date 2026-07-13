@@ -18,6 +18,7 @@ public class HUD : MonoBehaviour
     [SerializeField] private Slider p2SanitySlider;
     //[SerializeField] private TMP_Text sanityDamageLabel;
     [SerializeField] private TMP_Text attackMessageLabel;
+    [SerializeField] private TMP_Text bpmText;
     
     /*
     private float sanityDamagePopupDuration = 1.0f;
@@ -85,7 +86,10 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void UpdateBpm(float bpm)
     {
-
+        if (bpmText != null)
+        {
+            bpmText.text = $"BPM {bpm:0}";
+        }
     }
 
     /// <summary>
