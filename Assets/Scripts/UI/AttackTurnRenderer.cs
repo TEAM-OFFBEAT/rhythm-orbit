@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public enum AttackSide
 {
@@ -11,31 +10,43 @@ public enum AttackSide
 public class AttackTurnRenderer : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private RectTransform attackLine;
-    [SerializeField] private RectTransform attackGridContainer;
-    [SerializeField] private RectTransform attackNoteContainer;
-    [SerializeField] private RectTransform attackNotePrefab;
+    [SerializeField] private Transform p1AttackLine;
+    [SerializeField] private Transform p2AttackLine;
+    // [SerializeField] private Transform attackGridContainer;
+    [SerializeField] private Transform attackNoteContainer;
+    [SerializeField] private Transform notePrefab;
 
     [Header("Positions")]
-    [SerializeField] private float p1StartX = 500f;
-    [SerializeField] private float p1EndX = -500f;
-    [SerializeField] private float p2StartX = -500f;
-    [SerializeField] private float p2EndX = 500f;
+    [SerializeField] private float p1StartX = 5f;
+    [SerializeField] private float p1EndX = -5f;
+    [SerializeField] private float p2StartX = -5f;
+    [SerializeField] private float p2EndX = 5f;
     [SerializeField] private float noteY = 0f;
 
-    [Header("Grid Visual")]
-    [SerializeField] private Vector2 gridLineSize = new Vector2(3f, 120f);
-    [SerializeField] private Color beatGridColor = new Color(1f, 0.82f, 0.36f, 0.65f);
-    [SerializeField] private Color halfBeatGridColor = new Color(1f, 1f, 1f, 0.22f);
+    [Header("Defense Lines")]
+    [SerializeField] private Transform p1DefenseLine;
+    [SerializeField] private Transform p2DefenseLine;
+
+    // [Header("Grid Visual")]
+    // [SerializeField] private Sprite gridLineSprite;
+    // [SerializeField] private Vector2 gridLineSize = new Vector2(0.03f, 1.2f);
+    // [SerializeField] private Color beatGridColor = new Color(1f, 0.82f, 0.36f, 0.65f);
+    // [SerializeField] private Color halfBeatGridColor = new Color(1f, 1f, 1f, 0.22f);
 
     [Header("Attack Visual")]
-    [SerializeField] private Vector2 fallbackNoteSize = new Vector2(36f, 36f);
+    // [SerializeField] private Sprite fallbackNoteSprite;
+    // [SerializeField] private Vector2 fallbackNoteSize = new Vector2(0.36f, 0.36f);
     [SerializeField] private Color p1LineColor = new Color(0.25f, 0.88f, 0.82f);
     [SerializeField] private Color p2LineColor = new Color(1.0f, 0.37f, 0.63f);
-    [SerializeField] private Color noteColor = new Color(1.0f, 0.82f, 0.36f);
+    // [SerializeField] private Color noteColor = new Color(1.0f, 0.82f, 0.36f);
 
-    private readonly List<RectTransform> spawnedNotes = new();
-    private readonly List<RectTransform> gridLines = new();
+    private struct NoteEntry { public Transform rect; public int noteId; public float initialX; public double judgeTime; }
+    private readonly List<NoteEntry> spawnedNotes = new();
+    // private readonly List<Transform> gridLines = new();
+
+    private bool isTransferring;
+    private float transferJudgeLineX;
+    private float transferSpeed;
 
     private AttackSide currentSide;
     private double attackStartDspTime;
@@ -45,25 +56,13 @@ public class AttackTurnRenderer : MonoBehaviour
     private void Awake()
     {
         if (attackNoteContainer == null)
-        {
-            attackNoteContainer = transform as RectTransform;
-        }
+            attackNoteContainer = transform;
 
-        if (attackGridContainer == null)
-        {
-            attackGridContainer = transform as RectTransform;
-        }
+        // if (attackGridContainer == null)
+        //     attackGridContainer = transform;
 
-        if (attackLine != null)
-        {
-            attackLine.gameObject.SetActive(false);
-
-            Image lineImage = attackLine.GetComponent<Image>();
-            if (lineImage != null)
-            {
-                lineImage.raycastTarget = false;
-            }
-        }
+        if (p1AttackLine != null) p1AttackLine.gameObject.SetActive(false);
+        if (p2AttackLine != null) p2AttackLine.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -78,17 +77,18 @@ public class AttackTurnRenderer : MonoBehaviour
         attackDuration = System.Math.Max(0.01, duration);
         isMoving = true;
 
-        BuildAttackGrid(side, gridStepCount);
+        // BuildAttackGrid(side, gridStepCount);
 
-        if (attackLine == null)
+        Transform line = GetAttackLine(side);
+        if (line == null)
         {
-            Debug.LogWarning("AttackLine이 연결되지 않았습니다.");
+            Debug.LogWarning($"{side}AttackLine이 연결되지 않았습니다.");
             return;
         }
 
-        attackLine.gameObject.SetActive(true);
+        line.gameObject.SetActive(true);
         SetLineColor(side);
-        SetLineX(GetStartX(side));
+        SetLineX(side, GetStartX(side));
     }
 
     /// <summary>
@@ -102,15 +102,16 @@ public class AttackTurnRenderer : MonoBehaviour
             return;
         }
 
-        RectTransform rect = CreateNoteRect(note.noteId);
-        rect.SetParent(attackNoteContainer, false);
+        Transform t = CreateNoteTransform(note.noteId);
+        if (t == null) return;
+        t.SetParent(attackNoteContainer, false);
 
         double safeDuration = System.Math.Max(0.01, duration);
-        float t = Mathf.Clamp01((float)(note.noteRelativeTime / safeDuration));
-        float x = Mathf.Lerp(GetStartX(side), GetEndX(side), t);
+        float ratio = Mathf.Clamp01((float)(note.noteRelativeTime / safeDuration));
+        float x = Mathf.Lerp(GetStartX(side), GetEndX(side), ratio);
 
-        rect.anchoredPosition = new Vector2(x, noteY);
-        spawnedNotes.Add(rect);
+        t.localPosition = new Vector3(x, noteY, 0f);
+        spawnedNotes.Add(new NoteEntry { rect = t, noteId = note.noteId, initialX = x });
     }
 
     /// <summary>
@@ -119,11 +120,8 @@ public class AttackTurnRenderer : MonoBehaviour
     public void StopLine()
     {
         isMoving = false;
-
-        if (attackLine != null)
-        {
-            attackLine.gameObject.SetActive(false);
-        }
+        Transform line = GetAttackLine(currentSide);
+        if (line != null) line.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -132,140 +130,178 @@ public class AttackTurnRenderer : MonoBehaviour
     public void ClearAll()
     {
         isMoving = false;
+        isTransferring = false;
 
-        if (attackLine != null)
+        if (p1AttackLine != null) p1AttackLine.gameObject.SetActive(false);
+        if (p2AttackLine != null) p2AttackLine.gameObject.SetActive(false);
+
+        foreach (NoteEntry entry in spawnedNotes)
         {
-            attackLine.gameObject.SetActive(false);
+            if (entry.rect != null)
+                Destroy(entry.rect.gameObject);
         }
-
-        foreach (RectTransform note in spawnedNotes)
-        {
-            if (note != null)
-            {
-                Destroy(note.gameObject);
-            }
-        }
-
         spawnedNotes.Clear();
-        ClearGrid();
+        // ClearGrid();
     }
 
     private void Update()
     {
-        if (!isMoving || attackLine == null) return;
-
-        double elapsed = AudioSettings.dspTime - attackStartDspTime;
-        float t = Mathf.Clamp01((float)(elapsed / attackDuration));
-        float x = Mathf.Lerp(GetStartX(currentSide), GetEndX(currentSide), t);
-
-        SetLineX(x);
-
-        if (t >= 1f)
+        if (isMoving && GetAttackLine(currentSide) != null)
         {
-            isMoving = false;
+            double elapsed = AudioSettings.dspTime - attackStartDspTime;
+            float t = Mathf.Clamp01((float)(elapsed / attackDuration));
+            float x = Mathf.Lerp(GetStartX(currentSide), GetEndX(currentSide), t);
+            SetLineX(currentSide, x);
+            if (t >= 1f) isMoving = false;
         }
+
+        if (isTransferring) UpdateTransferMovement();
     }
 
-    /// <summary>
-    /// 공격 구간을 고정된 반박 칸 수만큼 나누어 고정 박자선을 생성.
-    /// </summary>
-    private void BuildAttackGrid(AttackSide side, int gridStepCount)
+    // private void BuildAttackGrid(AttackSide side, int gridStepCount)
+    // {
+    //     ClearGrid();
+    //     if (attackGridContainer == null)
+    //     {
+    //         Debug.LogWarning("AttackGridContainer가 연결되지 않았습니다.");
+    //         return;
+    //     }
+    //     int safeCount = Mathf.Max(1, gridStepCount);
+    //     for (int i = 0; i <= safeCount; i++)
+    //     {
+    //         float t = (float)i / safeCount;
+    //         float x = Mathf.Lerp(GetStartX(side), GetEndX(side), t);
+    //         GameObject go = new GameObject($"GridLine_{i}", typeof(SpriteRenderer));
+    //         Transform lineT = go.transform;
+    //         lineT.SetParent(attackGridContainer, false);
+    //         lineT.localPosition = new Vector3(x, 0f, 0f);
+    //         lineT.localScale = new Vector3(gridLineSize.x, gridLineSize.y, 1f);
+    //         SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
+    //         sr.sprite = gridLineSprite;
+    //         sr.color = i % 2 == 0 ? beatGridColor : halfBeatGridColor;
+    //         gridLines.Add(lineT);
+    //     }
+    // }
+
+    // private void ClearGrid()
+    // {
+    //     foreach (Transform t in gridLines)
+    //     {
+    //         if (t != null) Destroy(t.gameObject);
+    //     }
+    //     gridLines.Clear();
+    // }
+
+    private Transform CreateNoteTransform(int noteId)
     {
-        ClearGrid();
-
-        if (attackGridContainer == null)
+        if (notePrefab == null)
         {
-            Debug.LogWarning("AttackGridContainer가 연결되지 않았습니다.");
-            return;
+            Debug.LogError("AttackNotePrefab이 연결되지 않았습니다.");
+            return null;
         }
 
-        int safeGridStepCount = Mathf.Max(1, gridStepCount);
-
-        for (int i = 0; i <= safeGridStepCount; i++)
-        {
-            float t = (float)i / safeGridStepCount;
-            float x = Mathf.Lerp(GetStartX(side), GetEndX(side), t);
-
-            GameObject go = new GameObject($"GridLine_{i}", typeof(Image));
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.SetParent(attackGridContainer, false);
-            rect.sizeDelta = gridLineSize;
-            rect.anchoredPosition = new Vector2(x, 0f);
-
-            Image image = go.GetComponent<Image>();
-            image.raycastTarget = false;
-
-            bool isBeat = i % 2 == 0;
-            image.color = isBeat ? beatGridColor : halfBeatGridColor;
-
-            gridLines.Add(rect);
-        }
+        Transform note = Instantiate(notePrefab);
+        note.name = $"AttackNote_{noteId}";
+        return note;
     }
 
-    /// <summary>
-    /// 생성된 고정 박자선을 모두 제거.
-    /// </summary>
-    private void ClearGrid()
+    private Transform GetAttackLine(AttackSide side) => side == AttackSide.P1 ? p1AttackLine : p2AttackLine;
+
+    private void SetLineX(AttackSide side, float x)
     {
-        foreach (RectTransform line in gridLines)
-        {
-            if (line != null)
-            {
-                Destroy(line.gameObject);
-            }
-        }
-
-        gridLines.Clear();
-    }
-
-    private RectTransform CreateNoteRect(int noteId)
-    {
-        if (attackNotePrefab != null)
-        {
-            RectTransform note = Instantiate(attackNotePrefab);
-            note.name = $"AttackNote_{noteId}";
-
-            Image prefabImage = note.GetComponent<Image>();
-            if (prefabImage != null)
-            {
-                prefabImage.raycastTarget = false;
-            }
-
-            return note;
-        }
-
-        GameObject go = new GameObject($"AttackNote_{noteId}", typeof(Image));
-        Image image = go.GetComponent<Image>();
-        image.color = noteColor;
-        image.raycastTarget = false;
-
-        RectTransform rect = go.GetComponent<RectTransform>();
-        rect.sizeDelta = fallbackNoteSize;
-        return rect;
-    }
-
-    private void SetLineX(float x)
-    {
-        Vector2 pos = attackLine.anchoredPosition;
+        Transform line = GetAttackLine(side);
+        if (line == null) return;
+        Vector3 pos = line.position;
         pos.x = x;
-        attackLine.anchoredPosition = pos;
+        line.position = pos;
     }
 
     private void SetLineColor(AttackSide side)
     {
-        Image image = attackLine.GetComponent<Image>();
-        if (image == null) return;
-
-        image.color = side == AttackSide.P1 ? p1LineColor : p2LineColor;
+        Transform line = GetAttackLine(side);
+        if (line == null) return;
+        SpriteRenderer sr = line.GetComponent<SpriteRenderer>();
+        if (sr == null) return;
+        sr.color = side == AttackSide.P1 ? p1LineColor : p2LineColor;
     }
 
-    private float GetStartX(AttackSide side)
+    /// <summary>
+    /// 노트별 도착 시각(judgeTime)을 설정. DefenseTurn.Begin()에서 노트별로 호출 후 StartTransfer 를 호출.
+    /// </summary>
+    public void SetNoteJudgeTime(int noteId, double judgeTime)
     {
-        return side == AttackSide.P1 ? p1StartX : p2StartX;
+        for (int i = 0; i < spawnedNotes.Count; i++)
+        {
+            if (spawnedNotes[i].noteId != noteId) continue;
+            NoteEntry e = spawnedNotes[i];
+            e.judgeTime = judgeTime;
+            spawnedNotes[i] = e;
+            return;
+        }
     }
 
-    private float GetEndX(AttackSide side)
+    /// <summary>
+    /// 방어 전환 시 호출. 각 노트는 SetNoteJudgeTime으로 설정된 judgeTime에서 역산한 출발 시각에 따라 이동 시작.
+    /// </summary>
+    public void StartTransfer(float judgeLineX, float speed)
     {
-        return side == AttackSide.P1 ? p1EndX : p2EndX;
+        transferJudgeLineX = judgeLineX;
+        transferSpeed = Mathf.Max(0.001f, Mathf.Abs(speed));
+        isTransferring = true;
+    }
+
+    /// <summary>
+    /// noteId에 해당하는 노트를 제거. DefenseTurn에서 판정 후 호출.
+    /// </summary>
+    public void RemoveNote(int noteId)
+    {
+        for (int i = spawnedNotes.Count - 1; i >= 0; i--)
+        {
+            if (spawnedNotes[i].noteId != noteId) continue;
+            if (spawnedNotes[i].rect != null) Destroy(spawnedNotes[i].rect.gameObject);
+            spawnedNotes.RemoveAt(i);
+            return;
+        }
+    }
+
+    public float GetStartX(AttackSide side) => side == AttackSide.P1 ? p1StartX : p2StartX;
+    public float GetEndX(AttackSide side) => side == AttackSide.P1 ? p1EndX : p2EndX;
+
+    /// <summary>
+    /// 공격자 기준 방어 판정선 X 좌표. P1 공격 시 P2DefenseLine, P2 공격 시 P1DefenseLine 위치를 반환.
+    /// </summary>
+    public float GetJudgeLineX(AttackSide attackerSide)
+    {
+        Transform line = attackerSide == AttackSide.P1 ? p2DefenseLine : p1DefenseLine;
+        if (line != null) return line.position.x;
+        Debug.LogWarning($"AttackTurnRenderer: {(attackerSide == AttackSide.P1 ? "P2" : "P1")}DefenseLine이 연결되지 않았습니다.");
+        return attackerSide == AttackSide.P1 ? 15f : -15f;
+    }
+
+    private void UpdateTransferMovement()
+    {
+        double now = AudioSettings.dspTime;
+
+        for (int i = spawnedNotes.Count - 1; i >= 0; i--)
+        {
+            NoteEntry entry = spawnedNotes[i];
+            if (entry.rect == null) { spawnedNotes.RemoveAt(i); continue; }
+
+            double travelTime = transferSpeed > 0f
+                ? Mathf.Abs(transferJudgeLineX - entry.initialX) / transferSpeed
+                : 0.0;
+            double departureTime = entry.judgeTime - travelTime;
+            float elapsed = (float)System.Math.Max(0.0, now - departureTime);
+
+            float dir = Mathf.Sign(transferJudgeLineX - entry.initialX);
+            float newX = entry.initialX + dir * transferSpeed * elapsed;
+
+            if (dir > 0f && newX > transferJudgeLineX) newX = transferJudgeLineX;
+            if (dir < 0f && newX < transferJudgeLineX) newX = transferJudgeLineX;
+
+            Vector3 pos = entry.rect.localPosition;
+            pos.x = newX;
+            entry.rect.localPosition = pos;
+        }
     }
 }
