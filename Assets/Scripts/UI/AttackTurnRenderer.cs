@@ -33,12 +33,6 @@ public class AttackTurnRenderer : MonoBehaviour
     // [SerializeField] private Color beatGridColor = new Color(1f, 0.82f, 0.36f, 0.65f);
     // [SerializeField] private Color halfBeatGridColor = new Color(1f, 1f, 1f, 0.22f);
 
-    [Header("Attack Visual")]
-    // [SerializeField] private Sprite fallbackNoteSprite;
-    // [SerializeField] private Vector2 fallbackNoteSize = new Vector2(0.36f, 0.36f);
-    [SerializeField] private Color p1LineColor = new Color(0.25f, 0.88f, 0.82f);
-    [SerializeField] private Color p2LineColor = new Color(1.0f, 0.37f, 0.63f);
-    // [SerializeField] private Color noteColor = new Color(1.0f, 0.82f, 0.36f);
 
     private struct NoteEntry { public Transform rect; public int noteId; public float initialX; public double judgeTime; }
     private readonly List<NoteEntry> spawnedNotes = new();
@@ -87,7 +81,6 @@ public class AttackTurnRenderer : MonoBehaviour
         }
 
         line.gameObject.SetActive(true);
-        SetLineColor(side);
         SetLineX(side, GetStartX(side));
     }
 
@@ -125,7 +118,7 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 판정선, 공격 노트, 고정 박자선을 모두 제거.
+    /// 스폰된 공격 노트를 모두 제거하고 판정선을 비활성화.
     /// </summary>
     public void ClearAll()
     {
@@ -214,15 +207,6 @@ public class AttackTurnRenderer : MonoBehaviour
         Vector3 pos = line.position;
         pos.x = x;
         line.position = pos;
-    }
-
-    private void SetLineColor(AttackSide side)
-    {
-        Transform line = GetAttackLine(side);
-        if (line == null) return;
-        SpriteRenderer sr = line.GetComponent<SpriteRenderer>();
-        if (sr == null) return;
-        sr.color = side == AttackSide.P1 ? p1LineColor : p2LineColor;
     }
 
     /// <summary>

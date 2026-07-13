@@ -5,7 +5,11 @@ using TMPro;
 public class HUD : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private AttackTurn attackTurn;
+    [SerializeField] private GameManager gameManager;
+
+    [Header("Game Status UI")]
+    [SerializeField] private TMP_Text p1JudgmentLabel;
+    [SerializeField] private TMP_Text p2JudgmentLabel;
 
     [Header("Offset UI")]
     [SerializeField] private Slider keyInputOffsetSlider;
@@ -159,27 +163,36 @@ public class HUD : MonoBehaviour
     public void UpdateBpm(float bpm) { }
 
     /// <summary>
-    /// 판정 결과를 화면에 표시.
+    /// 두 플레이어의 판정 라벨을 초기화.
     /// </summary>
-    public void ShowJudgment(Judgment j) { }
+    public void ClearJudgments()
+    {
+        if (p1JudgmentLabel != null) p1JudgmentLabel.text = string.Empty;
+        if (p2JudgmentLabel != null) p2JudgmentLabel.text = string.Empty;
+    }
 
     /// <summary>
-    /// 턴 전환 배너 텍스트를 화면에 표시.
+    /// 방어자 판정 결과를 해당 플레이어 라벨에 표시. attackerSide가 P1이면 P2가 방어자.
     /// </summary>
-    public void ShowTurnBanner(string label) { }
+    public void ShowJudgment(Judgment judgment, AttackSide attackerSide)
+    {
+        TMP_Text label = attackerSide == AttackSide.P1 ? p2JudgmentLabel : p1JudgmentLabel;
+        if (label == null) return;
+        label.text = judgment.ToString();
+    }
 
     /// <summary>
-    /// Tap Action 입력 시 AttackTurn에 입력을 전달. PlayerInput Send Messages에서 호출.
+    /// Tap Action 입력 시 GameManager를 통해 현재 턴에 맞는 컴포넌트로 전달.
     /// </summary>
     public void OnTap()
     {
-        if (attackTurn == null)
+        if (gameManager == null)
         {
-            Debug.LogWarning("AttackTurn이 HUD에 연결되지 않았습니다.");
+            Debug.LogWarning("GameManager가 HUD에 연결되지 않았습니다.");
             return;
         }
 
-        attackTurn.OnTap();
+        gameManager.OnTap();
     }
 
     private void UpdateKeyInputOffsetLabel(float value)
