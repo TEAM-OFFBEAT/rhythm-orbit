@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3132197320252958204}
   - component: {fileID: 5362042395865218281}
   - component: {fileID: 8940754824742537160}
+  - component: {fileID: 1337751902119619183}
   m_Layer: 0
   m_Name: Attack
   m_TagString: Untagged
@@ -51,13 +52,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackTurn
   minTargetTapCount: 2
   maxTargetTapCount: 4
-  attackMeasureCount: 1
   attackInputWindowMs: 100
-  offGridSanityPenalty: 1
-  missingNoteSanityPenaltyPerNote: 1
-  extraNoteSanityPenaltyPerNote: 1
-  penalizeDuplicateInput: 0
-  duplicateInputSanityPenalty: 1
   rhythmClock: {fileID: 0}
   attackTurnRenderer: {fileID: 8940754824742537160}
 --- !u!114 &8940754824742537160
@@ -75,7 +70,6 @@ MonoBehaviour:
   p1AttackLine: {fileID: 6605059672299844540}
   p2AttackLine: {fileID: 7827017187597452703}
   attackNoteContainer: {fileID: 6754599476164282960}
-  notePrefab: {fileID: 7346032156741214681, guid: 8a65eb155c116a349bfcabb29ae2f22c, type: 3}
   p1StartX: 5
   p1EndX: -5
   p2StartX: -5
@@ -83,6 +77,33 @@ MonoBehaviour:
   noteY: 0
   p1DefenseLine: {fileID: 0}
   p2DefenseLine: {fileID: 0}
+--- !u!114 &1337751902119619183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 215359887379893868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 318e2a3e82b73f143811c475af614431, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RandomMessageProvider
+  messageGroups:
+  - characterCount: 0
+    messages: []
+  - characterCount: 0
+    messages: []
+  - characterCount: 0
+    messages: []
+  - characterCount: 0
+    messages: []
+  - characterCount: 0
+    messages: []
+  - characterCount: 0
+    messages: []
+  - characterCount: 0
+    messages: []
 --- !u!1 &298405940485478635
 GameObject:
   m_ObjectHideFlags: 0
