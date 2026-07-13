@@ -17,30 +17,48 @@ public class GameManager : MonoBehaviour
 
     [Header("Camera")]
     [SerializeField] private GameCamera gameCamera;
+    
+    [Header("Systems")]
+    [SerializeField] private SanitySystem sanitySystem;
 
     private GameState currentState;
     private int attackerPlayerId = 1;
 
     private void Awake()
     {
-        if (attackTurn == null || defenseTurn == null || attackTurnRenderer == null)
+        if (attackTurn == null || defenseTurn == null || attackTurnRenderer == null || sanitySystem == null)
         {
             Debug.LogError("GameManager: 필수 컴포넌트가 연결되지 않았습니다.");
             return;
         }
-
+        sanitySystem.OnSanityChanged += HandleSanityChanged;
+        //sanitySystem.OnSanityDamaged += HandleSanityDamaged;
+        sanitySystem.OnPlayerDefeated += HandlePlayerDefeated;
+        
         attackTurn.OnAttackEnded += HandleAttackEnded;
         defenseTurn.OnDefenseEnded += HandleDefenseEnded;
         defenseTurn.OnJudgment += HandleJudgment;
+        
     }
 
     private void OnDestroy()
     {
-        if (attackTurn != null) attackTurn.OnAttackEnded -= HandleAttackEnded;
+        if (attackTurn != null)
+        {
+            attackTurn.OnAttackEnded -= HandleAttackEnded;
+        }
+
         if (defenseTurn != null)
         {
             defenseTurn.OnDefenseEnded -= HandleDefenseEnded;
             defenseTurn.OnJudgment -= HandleJudgment;
+        }
+
+        if (sanitySystem != null)
+        {
+            sanitySystem.OnSanityChanged -= HandleSanityChanged;
+            // sanitySystem.OnSanityDamaged -= HandleSanityDamaged;
+            sanitySystem.OnPlayerDefeated -= HandlePlayerDefeated;
         }
     }
 
@@ -50,6 +68,10 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         attackerPlayerId = 1;
+        if (sanitySystem != null)
+        {
+            sanitySystem.ResetSanity();
+        }
         if (RhythmClock.Instance != null) RhythmClock.Instance.StartClockNow();
         StartAttackPhase();
     }
@@ -87,9 +109,18 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// 공격 턴 종료 시 방어 턴을 시작하고 HUD와 카메라를 업데이트.
     /// </summary>
-    private void HandleAttackEnded(IReadOnlyList<NoteData> notes)
+    private void HandleAttackEnded(AttackResult attackResult)
     {
         currentState = GameState.DEFENSE;
+
+        sanitySystem?.ApplyAttackResult(attackerPlayerId, attackResult);
+
+        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(attackerPlayerId))
+        {
+            currentState = GameState.END;
+            Debug.Log($"Game End / P{attackerPlayerId} sanity depleted during attack.");
+            return;
+        }
 
         bool isAiDefense = (attackerPlayerId == 1);
 
@@ -101,21 +132,55 @@ public class GameManager : MonoBehaviour
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
         float attackEndX = attackTurnRenderer.GetEndX(attackerSide);
 
-        defenseTurn.Begin(notes, judgeLineX, attackStartX, attackEndX, attackTurn.AttackDuration, isAiDefense);
+        defenseTurn.Begin(
+            attackResult.Notes,
+            judgeLineX,
+            attackStartX,
+            attackEndX,
+            attackTurn.AttackDuration,
+            isAiDefense
+        );
     }
     /// <summary>
     /// 방어 턴에서 노트 판정 시 HUD에 결과를 표시.
     /// </summary>
     private void HandleJudgment(Judgment judgment)
     {
-        if (hud == null) return;
         AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-        hud.ShowJudgment(judgment, attackerSide);
+
+        if (hud != null)
+        {
+            hud.ShowJudgment(judgment, attackerSide);
+        }
+
+        if (judgment != Judgment.MISS) return;
+
+        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
+
+        sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
+
+        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(defenderPlayerId))
+        {
+            currentState = GameState.END;
+            Debug.Log($"Game End / P{defenderPlayerId} sanity depleted during defense.");
+        }
     }
 
     private void HandleDefenseEnded(DefenseResult result)
     {
-        Debug.Log($"Turn End / attacker:P{attackerPlayerId}, miss:{result.MissCount}");
+        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
+
+        //sanitySystem?.ApplyDefenseResult(defenderPlayerId, result);
+
+        Debug.Log($"Turn End / attacker:P{attackerPlayerId}, defender:P{defenderPlayerId}, miss:{result.MissCount}");
+
+        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(defenderPlayerId))
+        {
+            currentState = GameState.END;
+            Debug.Log($"Game End / P{defenderPlayerId} sanity depleted during defense.");
+            return;
+        }
+
         SwitchTurn();
     }
 
@@ -129,5 +194,24 @@ public class GameManager : MonoBehaviour
         if (hud != null) hud.ClearJudgments();
         attackerPlayerId = attackerPlayerId == 1 ? 2 : 1;
         StartAttackPhase();
+    }
+
+    private void HandleSanityChanged(int p1Sanity, int p2Sanity, int maxSanity)
+    {
+        if (hud == null) return;
+        hud.UpdateSanity(p1Sanity, p2Sanity, maxSanity);
+    }
+
+    /*
+    private void HandleSanityDamaged(int playerId, int amount, string reason)
+    {
+        if (hud == null) return;
+        hud.ShowSanityDamage(playerId, amount, reason);
+    }
+    */
+
+    private void HandlePlayerDefeated(int playerId)
+    {
+        Debug.Log($"Player Defeated / P{playerId}");
     }
 }
