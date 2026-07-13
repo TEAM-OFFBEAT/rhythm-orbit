@@ -64,10 +64,15 @@ public class AttackTurn : MonoBehaviour
     private int nextOpponentDemoIndex;
     private bool isRunning;
     private bool isLocalPlayerAttack;
-    
-
     private readonly int[] opponentDemoGridSteps = { 2, 4, 6 };
-
+    
+    private RandomMessageProvider randomMessageProvider;
+    private string currentAttackMessage;
+    /// <summary>
+    /// 공격 메시지가 선택되면 발행. GameManager가 구독해서 HUD에 표시.
+    /// </summary>
+    public event System.Action<string, int> OnAttackMessageSelected;
+    
     private double NoteDuration
     {
         get
@@ -107,6 +112,15 @@ public class AttackTurn : MonoBehaviour
     //     if (attackPenaltyLabel == penaltyLabel) attackPenaltyLabel = null;
     // }
 
+    private void Awake()
+    {
+        randomMessageProvider = GetComponent<RandomMessageProvider>();
+
+        if (randomMessageProvider == null)
+        {
+            Debug.LogWarning("RandomMessageProvider가 AttackTurn 오브젝트에 없습니다.");
+        }
+    }
     /// <summary>
     /// 개발용 P1 공격 테스트 시작. DevAttackPanel 버튼에서 호출.
     /// </summary>
@@ -211,6 +225,7 @@ public class AttackTurn : MonoBehaviour
         attackDuration = noteDuration * gridStepCount;
         attackStartDspTime = AudioSettings.dspTime;
         targetTapCount = Mathf.Clamp(requiredTapCount, 1, MaxPlayableTapCount);
+        SelectAttackMessage();
 
         if (attackTurnRenderer != null)
             attackTurnRenderer.BeginAttackVisual(currentSide, attackStartDspTime, attackDuration, gridStepCount);
@@ -331,4 +346,19 @@ public class AttackTurn : MonoBehaviour
     //     if (reason.Contains("DUPLICATE_INPUT")) return "DUPLICATE INPUT";
     //     return "ATTACK PANELTY";
     // }
+    private void SelectAttackMessage()
+    {
+        if (randomMessageProvider != null)
+        {
+            currentAttackMessage = randomMessageProvider.GetRandomMessage(targetTapCount);
+        }
+        else
+        {
+            currentAttackMessage = new string('?', targetTapCount);
+        }
+
+        OnAttackMessageSelected?.Invoke(currentAttackMessage, targetTapCount);
+
+        Debug.Log($"Attack Message Selected / target:{targetTapCount}, message:{currentAttackMessage}");
+    }
 }

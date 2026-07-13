@@ -17,6 +17,7 @@ public class HUD : MonoBehaviour
     [SerializeField] private Slider p1SanitySlider;
     [SerializeField] private Slider p2SanitySlider;
     //[SerializeField] private TMP_Text sanityDamageLabel;
+    [SerializeField] private TMP_Text attackMessageLabel;
     
     /*
     private float sanityDamagePopupDuration = 1.0f;
@@ -138,5 +139,15 @@ public class HUD : MonoBehaviour
         sanityDamageCoroutine = null;
     }
     */
+    /// <summary>
+    /// 현재 공격 턴의 목표 메시지를 표시.
+    /// </summary>
+    public void ShowAttackMessage(string message, AttackSide attackerSide)
+    {
+        if (attackMessageLabel == null) return;
+
+        attackMessageLabel.text = message;
+        attackMessageLabel.gameObject.SetActive(true);
+    }
     
 }

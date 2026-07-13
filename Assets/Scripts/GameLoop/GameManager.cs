@@ -18,7 +18,7 @@ public class GameManager : MonoBehaviour
     [Header("Camera")]
     [SerializeField] private GameCamera gameCamera;
     
-    [Header("Systems")]
+    [Header("Sanity Systems")]
     [SerializeField] private SanitySystem sanitySystem;
 
     private GameState currentState;
@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour
         sanitySystem.OnPlayerDefeated += HandlePlayerDefeated;
         
         attackTurn.OnAttackEnded += HandleAttackEnded;
+        attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
         defenseTurn.OnDefenseEnded += HandleDefenseEnded;
         defenseTurn.OnJudgment += HandleJudgment;
         
@@ -46,6 +47,7 @@ public class GameManager : MonoBehaviour
         if (attackTurn != null)
         {
             attackTurn.OnAttackEnded -= HandleAttackEnded;
+            attackTurn.OnAttackMessageSelected -= HandleAttackMessageSelected;
         }
 
         if (defenseTurn != null)
@@ -213,5 +215,12 @@ public class GameManager : MonoBehaviour
     private void HandlePlayerDefeated(int playerId)
     {
         Debug.Log($"Player Defeated / P{playerId}");
+    }
+    private void HandleAttackMessageSelected(string message, int noteCount)
+    {
+        if (hud == null) return;
+
+        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        hud.ShowAttackMessage(message, attackerSide);
     }
 }
