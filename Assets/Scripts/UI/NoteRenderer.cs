@@ -1,91 +1,49 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class NoteRenderer : SceneSingleton<NoteRenderer>
 {
-    [SerializeField] private RectTransform noteContainer;
-    [SerializeField] private RectTransform notePrefab;
-    [SerializeField] private RectTransform judgeLine;
-    [SerializeField] private float spawnX = 700f;
-    [SerializeField] private double leadTime = 2.0;
+    [SerializeField] private Transform noteContainer;
+    [SerializeField] private Transform notePrefab;
 
-    private struct NoteEntry { public RectTransform rect; public double judgeTime; public int noteId; }
-    private readonly List<NoteEntry> activeNotes = new();
-    public double LeadTime => leadTime;
-    private bool isMoving;
+    private readonly Dictionary<int, Transform> activeNotes = new();
 
     /// <summary>
-    /// NoteData를 받아 spawnX 위치에 노트 프리팹을 생성.
+    /// noteId에 해당하는 노트 Transform을 생성해 반환. 오브젝트 풀링 적용 시 이 메서드만 교체.
     /// </summary>
-    public void SpawnNote(NoteData note)
+    public Transform AcquireNote(int noteId)
     {
-        // TODO: DefenseTurn 구현 시 Instantiate/Destroy 대신 오브젝트 풀링으로 교체.
-        var rect = Instantiate(notePrefab, noteContainer);
-        Vector2 judgeLocalPos = (Vector2)noteContainer.InverseTransformPoint(judgeLine.position);
-        rect.anchoredPosition = new Vector2(spawnX, judgeLocalPos.y);
-        activeNotes.Add(new NoteEntry { rect = rect, judgeTime = note.judgeTime, noteId = note.noteId });
-    }
-
-    /// <summary>
-    /// 노트 이동을 활성화.
-    /// </summary>
-    public void StartMoving()
-    {
-        isMoving = true;
-    }
-
-    /// <summary>
-    /// noteId에 해당하는 노트를 제거.
-    /// </summary>
-    public void RemoveNote(int noteId)
-    {
-        for (int i = activeNotes.Count - 1; i >= 0; i--)
+        if (notePrefab == null)
         {
-            if (activeNotes[i].noteId != noteId) continue;
-            // TODO: DefenseTurn 구현 시 Instantiate/Destroy 대신 오브젝트 풀링으로 교체.
-            if (activeNotes[i].rect != null) Destroy(activeNotes[i].rect.gameObject);
-            activeNotes.RemoveAt(i);
-            return;
+            Debug.LogWarning("NoteRenderer: notePrefab이 연결되지 않았습니다.");
+            return null;
         }
+        Transform parent = noteContainer != null ? noteContainer : transform;
+        Transform t = Instantiate(notePrefab, parent);
+        t.name = $"Note_{noteId}";
+        activeNotes[noteId] = t;
+        return t;
     }
 
     /// <summary>
-    /// 모든 활성 노트를 제거하고 상태를 초기화.
+    /// noteId에 해당하는 노트를 반환(제거). 오브젝트 풀링 적용 시 이 메서드만 교체.
     /// </summary>
-    public void ClearAll()
+    public void ReleaseNote(int noteId)
     {
-        isMoving = false;
-        foreach (var entry in activeNotes)
+        if (!activeNotes.TryGetValue(noteId, out Transform t)) return;
+        if (t != null) Destroy(t.gameObject);
+        activeNotes.Remove(noteId);
+    }
+
+    /// <summary>
+    /// 모든 활성 노트를 반환(제거).
+    /// </summary>
+    public void ReleaseAll()
+    {
+        foreach (var kvp in activeNotes)
         {
-            // TODO: DefenseTurn 구현 시 Instantiate/Destroy 대신 오브젝트 풀링으로 교체.
-            if (entry.rect != null) Destroy(entry.rect.gameObject);
+            if (kvp.Value != null) Destroy(kvp.Value.gameObject);
         }
         activeNotes.Clear();
-    }
-
-    private void Update()
-    {
-        if (!isMoving || activeNotes.Count == 0) return;
-        double now = AudioSettings.dspTime;
-        float judgeLineX = judgeLine.anchoredPosition.x;
-        for (int i = activeNotes.Count - 1; i >= 0; i--)
-        {
-            var entry = activeNotes[i];
-            if (entry.rect == null) continue;
-            if (now >= entry.judgeTime)
-            {
-                // TODO: DefenseTurn 구현 시 Instantiate/Destroy 대신 오브젝트 풀링으로 교체.
-                Destroy(entry.rect.gameObject);
-                activeNotes.RemoveAt(i);
-                continue;
-            }
-            double remainingTime = System.Math.Max(0.0, entry.judgeTime - now);
-            float t = Mathf.Clamp01((float)(remainingTime / leadTime));
-
-            var pos = entry.rect.anchoredPosition;
-            pos.x = Mathf.Lerp(judgeLineX, spawnX, t);
-            entry.rect.anchoredPosition = pos;
-        }
     }
 }

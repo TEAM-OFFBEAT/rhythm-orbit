@@ -60,7 +60,7 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
         double offsetMs = JudgeSystem.Instance.CalcOffsetMs(AudioSettings.dspTime, note.judgeTime);
         resolvedIds.Add(note.noteId);
         onFeedback?.Invoke(GetFeedback(offsetMs));
-        NoteRenderer.Instance.RemoveNote(note.noteId);
+        spawner.RemoveNote(note.noteId);
     }
 
     private void Update()
@@ -87,7 +87,7 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
     private void CompleteCalibration()
     {
         isRunning = false;
-        NoteRenderer.Instance.ClearAll();
+        spawner.ClearAll();
     }
 
     private IEnumerator PlayMetronome(List<NoteData> noteList)
