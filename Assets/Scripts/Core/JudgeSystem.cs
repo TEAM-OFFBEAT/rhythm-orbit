@@ -4,6 +4,8 @@ public class JudgeSystem : SceneSingleton<JudgeSystem>
 {
     [SerializeField] private double perfectWindowMs = 50.0;
     [SerializeField] private double goodWindowMs = 100.0;
+    public double PerfectWindowMs => perfectWindowMs;
+    public double GoodWindowMs => goodWindowMs;
     public double KeyInputOffsetMs { get; private set; } //키 입력 오프셋
     public double AudioOffsetMs { get; private set; } //오디오 출력 오프셋
     protected override void Awake()
