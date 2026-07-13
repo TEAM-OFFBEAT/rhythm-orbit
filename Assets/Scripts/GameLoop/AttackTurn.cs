@@ -3,13 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 // using System.Collections;
 
+public struct AttackResult
+{
+    public IReadOnlyList<NoteData> Notes;
+    public int BadTimingInputCount;
+    public int MissingNoteCount;
+    public int ExtraNoteCount;
+    public int DuplicateInputCount;
+}
+
 public class AttackTurn : MonoBehaviour
 {
     /// <summary>
     /// 공격 턴이 종료되면 생성된 노트 목록과 함께 발행. GameManager가 구독.
     /// </summary>
-    public event System.Action<System.Collections.Generic.IReadOnlyList<NoteData>> OnAttackEnded;
-
+    public event System.Action<AttackResult> OnAttackEnded;
     /// <summary>
     /// 공격 구간 총 길이(초). DefenseTurn의 barSpeed 계산에 사용.
     /// </summary>
@@ -21,18 +29,12 @@ public class AttackTurn : MonoBehaviour
     [Header("Attack Settings [공격 설정]")]
     [SerializeField] private int minTargetTapCount = 2;
     [SerializeField] private int maxTargetTapCount = 4;
-    [SerializeField] private int attackMeasureCount = 1;
+    private int attackMeasureCount = 1;
 
-    [Header("Attack Penalty [공격 패널티]")]
+    [Header("Attack input window [공격 성공 범위]")]
     [SerializeField] private double attackInputWindowMs = 100.0;
-    [SerializeField] private int offGridSanityPenalty = 1;
-    [SerializeField] private int missingNoteSanityPenaltyPerNote = 1;
-    [SerializeField] private int extraNoteSanityPenaltyPerNote = 1;
-
-    [Header("Duplicate Input [중복 입력 처리]")]
-    [SerializeField] private bool penalizeDuplicateInput = false;
-    [SerializeField] private int duplicateInputSanityPenalty = 1;
-
+    
+    
     // [Header("Penalty Alert UI")]
     // [SerializeField] private float penaltyAlertDuration = 1.0f;
 
@@ -44,8 +46,10 @@ public class AttackTurn : MonoBehaviour
     // private TMP_Text attackPenaltyLabel;
     // private Coroutine penaltyAlertCoroutine;
 
-    private int pendingAttackSanityPenalty;
+    private int badTimingInputCount;
+    private int missingNoteCount;
     private int extraNoteCount;
+    private int duplicateInputCount;
 
     private readonly List<NoteData> createdNotes = new();
     private readonly List<double> opponentDemoRelativeTimes = new();
@@ -60,6 +64,7 @@ public class AttackTurn : MonoBehaviour
     private int nextOpponentDemoIndex;
     private bool isRunning;
     private bool isLocalPlayerAttack;
+    
 
     private readonly int[] opponentDemoGridSteps = { 2, 4, 6 };
 
@@ -145,7 +150,7 @@ public class AttackTurn : MonoBehaviour
 
         if (relativeTime < 0.0 || relativeTime > attackDuration)
         {
-            ApplyAttackSanityPenalty(offGridSanityPenalty, "OUT_OF_ATTACK_TIME");
+            badTimingInputCount++;
             return;
         }
 
@@ -155,21 +160,19 @@ public class AttackTurn : MonoBehaviour
 
         if (offsetMs > attackInputWindowMs)
         {
-            ApplyAttackSanityPenalty(offGridSanityPenalty, $"OFF_GRID / {offsetMs:0}ms");
+            badTimingInputCount++;
             return;
         }
 
         if (createdGridSteps.Contains(nearestGridStep))
         {
-            if (penalizeDuplicateInput)
-                ApplyAttackSanityPenalty(duplicateInputSanityPenalty, $"DUPLICATE_INPUT / gridStep: {nearestGridStep}");
+            duplicateInputCount++;
             return;
         }
 
         if (createdNotes.Count >= targetTapCount)
         {
             extraNoteCount++;
-            ApplyAttackSanityPenalty(extraNoteSanityPenaltyPerNote, "EXTRA_NOTE");
         }
 
         CreateAttackNote(snappedRelativeTime);
@@ -198,8 +201,10 @@ public class AttackTurn : MonoBehaviour
         createdNotes.Clear();
         createdGridSteps.Clear();
         opponentDemoRelativeTimes.Clear();
-        pendingAttackSanityPenalty = 0;
         extraNoteCount = 0;
+        missingNoteCount = 0;
+        duplicateInputCount = 0;
+        badTimingInputCount = 0;
 
         double noteDuration = NoteDuration;
         gridStepCount = Mathf.Max(1, attackMeasureCount) * HalfBeatStepsPerMeasure;
@@ -249,15 +254,28 @@ public class AttackTurn : MonoBehaviour
         isRunning = false;
 
         if (attackTurnRenderer != null)
+        {
             attackTurnRenderer.StopLine();
+        }
 
-        int missingNoteCount = Mathf.Max(0, targetTapCount - createdNotes.Count);
-        if (missingNoteCount > 0)
-            ApplyAttackSanityPenalty(missingNoteCount * missingNoteSanityPenaltyPerNote, $"MISSING_NOTES / count: {missingNoteCount}");
+        missingNoteCount = Mathf.Max(0, targetTapCount - createdNotes.Count);
 
-        Debug.Log($"Attack End / noteCount: {createdNotes.Count}, target: {targetTapCount}, extra: {extraNoteCount}, sanityPenalty: {pendingAttackSanityPenalty}");
+        Debug.Log(
+            $"Attack End / noteCount: {createdNotes.Count}, target: {targetTapCount}, " +
+            $"badTiming:{badTimingInputCount}, missing:{missingNoteCount}, " +
+            $"extra:{extraNoteCount}, duplicate:{duplicateInputCount}"
+        );
 
-        OnAttackEnded?.Invoke(createdNotes.AsReadOnly());
+        AttackResult result = new AttackResult
+        {
+            Notes = new List<NoteData>(createdNotes).AsReadOnly(),
+            BadTimingInputCount = badTimingInputCount,
+            MissingNoteCount = missingNoteCount,
+            ExtraNoteCount = extraNoteCount,
+            DuplicateInputCount = duplicateInputCount
+        };
+
+        OnAttackEnded?.Invoke(result);
     }
 
     private int LastPlayableGridStep => Mathf.Max(FirstPlayableGridStep, gridStepCount - 1);
@@ -278,14 +296,6 @@ public class AttackTurn : MonoBehaviour
         return Mathf.Clamp(nearestStep, FirstPlayableGridStep, LastPlayableGridStep);
     }
 
-    private void ApplyAttackSanityPenalty(int amount, string reason)
-    {
-        if (amount <= 0) return;
-        pendingAttackSanityPenalty += amount;
-        // ShowPenaltyAlert(amount, reason);
-        Debug.LogWarning($"Attack Sanity Penalty / amount: {amount}, reason: {reason}, total: {pendingAttackSanityPenalty}");
-        // TODO: SanitySystem 또는 GameManager 쪽으로 전달.
-    }
 
     // private void ShowStatus(string message)
     // {
