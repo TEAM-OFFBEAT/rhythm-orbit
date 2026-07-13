@@ -32,7 +32,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     }
 
     /// <summary>
-    /// noteId에 해당하는 노트를 풀에서 꺼내 활성화해 반환. 풀이 비어 있으면 새로 생성.
+    /// noteId에 해당하는 노트를 풀에서 꺼내 활성화해 반환. 풀이 비어 있으면 null 반환.
     /// </summary>
     public Transform AcquireNote(int noteId)
     {
