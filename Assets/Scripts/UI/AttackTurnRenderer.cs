@@ -14,7 +14,6 @@ public class AttackTurnRenderer : MonoBehaviour
     [SerializeField] private Transform p2AttackLine;
     // [SerializeField] private Transform attackGridContainer;
     [SerializeField] private Transform attackNoteContainer;
-    [SerializeField] private Transform notePrefab;
 
     [Header("Positions")]
     [SerializeField] private float p1StartX = 5f;
@@ -89,15 +88,15 @@ public class AttackTurnRenderer : MonoBehaviour
     /// </summary>
     public void SpawnAttackNote(AttackSide side, NoteData note, double duration)
     {
-        if (attackNoteContainer == null)
+        if (NoteRenderer.Instance == null)
         {
-            Debug.LogWarning("AttackNoteContainer가 연결되지 않았습니다.");
+            Debug.LogWarning("NoteRenderer.Instance가 없습니다.");
             return;
         }
 
-        Transform t = CreateNoteTransform(note.noteId);
+        Transform t = NoteRenderer.Instance.AcquireNote(note.noteId);
         if (t == null) return;
-        t.SetParent(attackNoteContainer, false);
+        if (attackNoteContainer != null) t.SetParent(attackNoteContainer, false);
 
         double safeDuration = System.Math.Max(0.01, duration);
         float ratio = Mathf.Clamp01((float)(note.noteRelativeTime / safeDuration));
@@ -129,10 +128,7 @@ public class AttackTurnRenderer : MonoBehaviour
         if (p2AttackLine != null) p2AttackLine.gameObject.SetActive(false);
 
         foreach (NoteEntry entry in spawnedNotes)
-        {
-            if (entry.rect != null)
-                Destroy(entry.rect.gameObject);
-        }
+            NoteRenderer.Instance?.ReleaseNote(entry.noteId);
         spawnedNotes.Clear();
         // ClearGrid();
     }
@@ -185,19 +181,6 @@ public class AttackTurnRenderer : MonoBehaviour
     //     gridLines.Clear();
     // }
 
-    private Transform CreateNoteTransform(int noteId)
-    {
-        if (notePrefab == null)
-        {
-            Debug.LogError("AttackNotePrefab이 연결되지 않았습니다.");
-            return null;
-        }
-
-        Transform note = Instantiate(notePrefab);
-        note.name = $"AttackNote_{noteId}";
-        return note;
-    }
-
     private Transform GetAttackLine(AttackSide side) => side == AttackSide.P1 ? p1AttackLine : p2AttackLine;
 
     private void SetLineX(AttackSide side, float x)
@@ -242,7 +225,7 @@ public class AttackTurnRenderer : MonoBehaviour
         for (int i = spawnedNotes.Count - 1; i >= 0; i--)
         {
             if (spawnedNotes[i].noteId != noteId) continue;
-            if (spawnedNotes[i].rect != null) Destroy(spawnedNotes[i].rect.gameObject);
+            NoteRenderer.Instance?.ReleaseNote(noteId);
             spawnedNotes.RemoveAt(i);
             return;
         }
