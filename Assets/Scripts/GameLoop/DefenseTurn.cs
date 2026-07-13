@@ -26,6 +26,7 @@ public class DefenseTurn : MonoBehaviour
     private readonly List<Judgment> judgments = new();
     private bool isRunning;
     private bool isAiDefense;
+    private double defenseEndDspTime;
 
     private void Update()
     {
@@ -60,7 +61,7 @@ public class DefenseTurn : MonoBehaviour
             }
         }
 
-        if (isRunning && pendingNotes.Count == 0) EndDefense();
+        if (isRunning && pendingNotes.Count == 0 && now >= defenseEndDspTime) EndDefense();
     }
 
     /// <summary>
@@ -81,12 +82,9 @@ public class DefenseTurn : MonoBehaviour
         judgments.Clear();
         this.isAiDefense = isAiDefense;
         isRunning = true;
+        defenseEndDspTime = AudioSettings.dspTime + attackDuration;
 
-        if (notes.Count == 0)
-        {
-            EndDefense();
-            return;
-        }
+        if (notes.Count == 0) return;
 
         // 가장 이른 노트 기준으로 transferSpeed 결정 — 이 노트가 defenseStart에 출발해 judgeTime에 도착
         double firstRelativeTime = double.MaxValue;
@@ -137,8 +135,6 @@ public class DefenseTurn : MonoBehaviour
         pendingNotes.Remove(target);
 
         Debug.Log($"Defense Judge / noteId:{target.noteId} → {result}");
-
-        if (pendingNotes.Count == 0) EndDefense();
     }
 
     private void EndDefense()

@@ -74,7 +74,6 @@ public class GameManager : MonoBehaviour
 
         AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
 
-        if (hud != null) hud.ShowTurnBanner(attackerPlayerId == 1 ? "P1 ATTACK" : "P2 ATTACK");
         gameCamera?.SetAttackView(attackerSide);
 
         // attackTurn.RegisterView(attackTurnRenderer, null, null);
@@ -93,7 +92,6 @@ public class GameManager : MonoBehaviour
         currentState = GameState.DEFENSE;
 
         bool isAiDefense = (attackerPlayerId == 1);
-        if (hud != null) hud.ShowTurnBanner(isAiDefense ? "P2 DEFENSE (AI)" : "P1 DEFENSE");
 
         AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
 
@@ -110,7 +108,9 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleJudgment(Judgment judgment)
     {
-        if (hud != null) hud.ShowJudgment(judgment);
+        if (hud == null) return;
+        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        hud.ShowJudgment(judgment, attackerSide);
     }
 
     private void HandleDefenseEnded(DefenseResult result)
@@ -126,6 +126,7 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.TURN_CHANGE;
         attackTurnRenderer.ClearAll();
+        if (hud != null) hud.ClearJudgments();
         attackerPlayerId = attackerPlayerId == 1 ? 2 : 1;
         StartAttackPhase();
     }
