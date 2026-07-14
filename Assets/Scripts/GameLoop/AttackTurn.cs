@@ -68,6 +68,10 @@ public class AttackTurn : MonoBehaviour
     /// 공격 메시지가 선택되면 발행. GameManager가 구독해서 HUD에 표시.
     /// </summary>
     public event System.Action<string, int> OnAttackMessageSelected;
+    /// <summary>
+    /// 공격 노트 생성 진행도가 바뀌면 발행. currentCount / targetCount를 전달.
+    /// </summary>
+    public event System.Action<int, int> OnAttackProgressChanged;
     public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
 
     private double NoteDuration
@@ -213,7 +217,7 @@ public class AttackTurn : MonoBehaviour
         attackStartDspTime = AudioSettings.dspTime;
         targetTapCount = Mathf.Clamp(requiredTapCount, 1, MaxPlayableTapCount);
         SetAttackMessage(attackMessage);
-
+        OnAttackProgressChanged?.Invoke(0, targetTapCount);
         if (attackTurnRenderer != null)
             attackTurnRenderer.BeginAttackVisual(currentSide, attackStartDspTime, attackDuration, gridStepCount);
         else
@@ -242,7 +246,8 @@ public class AttackTurn : MonoBehaviour
 
         createdNotes.Add(note);
         createdGridSteps.Add(GetNearestPlayableGridStep(noteRelativeTime, NoteDuration));
-
+        int filledCount = Mathf.Min(createdNotes.Count, targetTapCount);
+        OnAttackProgressChanged?.Invoke(filledCount, targetTapCount);
         if (attackTurnRenderer != null)
             attackTurnRenderer.SpawnAttackNote(currentSide, note, attackDuration);
 

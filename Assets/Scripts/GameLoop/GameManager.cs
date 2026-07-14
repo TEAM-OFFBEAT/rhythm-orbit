@@ -46,6 +46,7 @@ public class GameManager : MonoBehaviour
         
         attackTurn.OnAttackEnded += HandleAttackEnded;
         attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
+        attackTurn.OnAttackProgressChanged += HandleAttackProgressChanged;
         defenseTurn.OnDefenseEnded += HandleDefenseEnded;
         defenseTurn.OnJudgment += HandleJudgment;
         
@@ -57,6 +58,7 @@ public class GameManager : MonoBehaviour
         {
             attackTurn.OnAttackEnded -= HandleAttackEnded;
             attackTurn.OnAttackMessageSelected -= HandleAttackMessageSelected;
+            attackTurn.OnAttackProgressChanged -= HandleAttackProgressChanged;
         }
 
         if (defenseTurn != null)
@@ -280,5 +282,11 @@ public class GameManager : MonoBehaviour
 
         currentBpmStageIndex = nextStageIndex;
         ApplyCurrentBpm();
+    }
+    private void HandleAttackProgressChanged(int currentCount, int targetCount)
+    {
+        if (hud == null) return;
+
+        hud.UpdateAttackProgress(currentCount, targetCount);
     }
 }
