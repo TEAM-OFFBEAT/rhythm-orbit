@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3132197320252958204}
   - component: {fileID: 5362042395865218281}
   - component: {fileID: 8940754824742537160}
-  - component: {fileID: 1337751902119619183}
   m_Layer: 0
   m_Name: Attack
   m_TagString: Untagged
@@ -77,33 +76,6 @@ MonoBehaviour:
   noteY: 0
   p1DefenseLine: {fileID: 0}
   p2DefenseLine: {fileID: 0}
---- !u!114 &1337751902119619183
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 215359887379893868}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 318e2a3e82b73f143811c475af614431, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RandomMessageProvider
-  messageGroups:
-  - characterCount: 0
-    messages: []
-  - characterCount: 0
-    messages: []
-  - characterCount: 0
-    messages: []
-  - characterCount: 0
-    messages: []
-  - characterCount: 0
-    messages: []
-  - characterCount: 0
-    messages: []
-  - characterCount: 0
-    messages: []
 --- !u!1 &298405940485478635
 GameObject:
   m_ObjectHideFlags: 0
