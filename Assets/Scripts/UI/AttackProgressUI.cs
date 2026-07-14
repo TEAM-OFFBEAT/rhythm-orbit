@@ -8,13 +8,13 @@ public class AttackProgressUI : MonoBehaviour
     [SerializeField] private List<Image> starImages = new();
 
     [Header("Layout Size")]
-    [SerializeField] private float starWidth = 42f;
-    [SerializeField] private float starHeight = 42f;
-    [SerializeField] private float spacing = 4f;
-    [SerializeField] private float paddingLeft = 16f;
-    [SerializeField] private float paddingRight = 16f;
-    [SerializeField] private float paddingTop = 8f;
-    [SerializeField] private float paddingBottom = 8f;
+    [SerializeField] private float starWidth = 44f;
+    [SerializeField] private float starHeight = 48f;
+    [SerializeField] private float spacing = 0f;
+    [SerializeField] private float paddingLeft = 24f;
+    [SerializeField] private float paddingRight = 24f;
+    [SerializeField] private float paddingTop = 16f;
+    [SerializeField] private float paddingBottom = 16f;
 
     [Header("State Colors")]
     [SerializeField] private Color emptyColor = new Color(1f, 1f, 1f, 0.25f);

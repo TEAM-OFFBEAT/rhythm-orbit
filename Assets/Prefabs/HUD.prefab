@@ -1310,13 +1310,13 @@ MonoBehaviour:
   - {fileID: 8671262137511908168}
   - {fileID: 5822585246132461259}
   - {fileID: 2678404944159849890}
-  starWidth: 42
-  starHeight: 42
-  spacing: 4
-  paddingLeft: 16
-  paddingRight: 16
-  paddingTop: 8
-  paddingBottom: 8
+  starWidth: 44
+  starHeight: 48
+  spacing: 0
+  paddingLeft: 24
+  paddingRight: 24
+  paddingTop: 16
+  paddingBottom: 16
   emptyColor: {r: 1, g: 1, b: 1, a: 0.25}
   filledColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &6471220176453034234
