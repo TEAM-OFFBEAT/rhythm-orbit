@@ -19,6 +19,7 @@ public class HUD : MonoBehaviour
     //[SerializeField] private TMP_Text sanityDamageLabel;
     [SerializeField] private TMP_Text attackMessageLabel;
     [SerializeField] private TMP_Text bpmText;
+    [SerializeField] private AttackProgressUI attackProgressUI;
     
     /*
     private float sanityDamagePopupDuration = 1.0f;
@@ -153,5 +154,26 @@ public class HUD : MonoBehaviour
         attackMessageLabel.text = message;
         attackMessageLabel.gameObject.SetActive(true);
     }
-    
+
+    /// <summary>
+    /// 공격 진행도 별 UI를 갱신.
+    /// </summary>
+    public void UpdateAttackProgress(int currentCount, int targetCount)
+    {
+        if (attackProgressUI == null) return;
+
+        if (attackProgressUI.TargetCount != targetCount)
+        {
+            attackProgressUI.Setup(targetCount);
+        }
+
+        attackProgressUI.SetProgress(currentCount);
+    }
+
+    public void ClearAttackProgress()
+    {
+        if (attackProgressUI == null) return;
+
+        attackProgressUI.Clear();
+    }
 }
