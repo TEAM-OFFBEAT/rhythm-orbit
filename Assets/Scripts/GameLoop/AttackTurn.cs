@@ -26,9 +26,6 @@ public class AttackTurn : MonoBehaviour
     private const int HalfBeatStepsPerMeasure = 8;
     private const int FirstPlayableGridStep = 1;
 
-    [Header("Attack Settings [공격 설정]")]
-    [SerializeField] private int minTargetTapCount = 2;
-    [SerializeField] private int maxTargetTapCount = 4;
     private int attackMeasureCount = 1;
 
     [Header("Attack input window [공격 성공 범위]")]
@@ -66,13 +63,13 @@ public class AttackTurn : MonoBehaviour
     private bool isLocalPlayerAttack;
     private readonly int[] opponentDemoGridSteps = { 2, 4, 6 };
     
-    private RandomMessageProvider randomMessageProvider;
     private string currentAttackMessage;
     /// <summary>
     /// 공격 메시지가 선택되면 발행. GameManager가 구독해서 HUD에 표시.
     /// </summary>
     public event System.Action<string, int> OnAttackMessageSelected;
-    
+    public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
+
     private double NoteDuration
     {
         get
@@ -112,45 +109,35 @@ public class AttackTurn : MonoBehaviour
     //     if (attackPenaltyLabel == penaltyLabel) attackPenaltyLabel = null;
     // }
 
-    private void Awake()
-    {
-        randomMessageProvider = GetComponent<RandomMessageProvider>();
-
-        if (randomMessageProvider == null)
-        {
-            Debug.LogWarning("RandomMessageProvider가 AttackTurn 오브젝트에 없습니다.");
-        }
-    }
+    
     /// <summary>
     /// 개발용 P1 공격 테스트 시작. DevAttackPanel 버튼에서 호출.
     /// </summary>
-    public void StartLocalPlayerAttack()
+    public void StartLocalPlayerAttack(int targetNoteCount, string attackMessage)
     {
-        int safeMin = Mathf.Max(1, minTargetTapCount);
-        int safeMax = Mathf.Max(safeMin, maxTargetTapCount);
-        StartAttack(AttackSide.P1, true, Random.Range(safeMin, safeMax + 1));
+        StartAttack(AttackSide.P1, true, targetNoteCount, attackMessage);
     }
 
     /// <summary>
     /// 개발용 P2 공격 데모 시작. DevAttackPanel 버튼에서 호출.
     /// </summary>
-    public void StartOpponentAttackDemo()
+    public void StartOpponentAttackDemo(string attackMessage)
+{
+    StartAttack(AttackSide.P2, false, opponentDemoGridSteps.Length, attackMessage);
+
+    opponentDemoRelativeTimes.Clear();
+    double noteDuration = NoteDuration;
+
+    foreach (int step in opponentDemoGridSteps)
     {
-        StartAttack(AttackSide.P2, false, opponentDemoGridSteps.Length);
-
-        opponentDemoRelativeTimes.Clear();
-        double noteDuration = NoteDuration;
-
-        foreach (int step in opponentDemoGridSteps)
-        {
-            double relativeTime = step * noteDuration;
-            if (relativeTime <= attackDuration)
-                opponentDemoRelativeTimes.Add(relativeTime);
-        }
-
-        targetTapCount = opponentDemoRelativeTimes.Count;
-        nextOpponentDemoIndex = 0;
+        double relativeTime = step * noteDuration;
+        if (relativeTime <= attackDuration)
+            opponentDemoRelativeTimes.Add(relativeTime);
     }
+
+    targetTapCount = opponentDemoRelativeTimes.Count;
+    nextOpponentDemoIndex = 0;
+}
 
     /// <summary>
     /// Tap Action 입력 시 호출. P1 공격 중이면 noteRelativeTime을 생성.
@@ -205,7 +192,7 @@ public class AttackTurn : MonoBehaviour
             EndAttack();
     }
 
-    private void StartAttack(AttackSide side, bool localPlayerAttack, int requiredTapCount)
+    private void StartAttack(AttackSide side, bool localPlayerAttack, int requiredTapCount, string attackMessage)
     {
         currentSide = side;
         isLocalPlayerAttack = localPlayerAttack;
@@ -225,7 +212,7 @@ public class AttackTurn : MonoBehaviour
         attackDuration = noteDuration * gridStepCount;
         attackStartDspTime = AudioSettings.dspTime;
         targetTapCount = Mathf.Clamp(requiredTapCount, 1, MaxPlayableTapCount);
-        SelectAttackMessage();
+        SetAttackMessage(attackMessage);
 
         if (attackTurnRenderer != null)
             attackTurnRenderer.BeginAttackVisual(currentSide, attackStartDspTime, attackDuration, gridStepCount);
@@ -346,15 +333,15 @@ public class AttackTurn : MonoBehaviour
     //     if (reason.Contains("DUPLICATE_INPUT")) return "DUPLICATE INPUT";
     //     return "ATTACK PANELTY";
     // }
-    private void SelectAttackMessage()
+   private void SetAttackMessage(string attackMessage)
     {
-        if (randomMessageProvider != null)
+        if (string.IsNullOrEmpty(attackMessage))
         {
-            currentAttackMessage = randomMessageProvider.GetRandomMessage(targetTapCount);
+            currentAttackMessage = new string('?', targetTapCount);
         }
         else
         {
-            currentAttackMessage = new string('?', targetTapCount);
+            currentAttackMessage = attackMessage;
         }
 
         OnAttackMessageSelected?.Invoke(currentAttackMessage, targetTapCount);

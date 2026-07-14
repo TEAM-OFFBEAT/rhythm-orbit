@@ -11,6 +11,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AttackTurn attackTurn;
     [SerializeField] private DefenseTurn defenseTurn;
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
+    [SerializeField] private NoteCountGenerator noteCountGenerator;
+    [SerializeField] private RandomMessageProvider randomMessageProvider;
 
     [Header("HUD")]
     [SerializeField] private HUD hud;
@@ -32,7 +34,8 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (attackTurn == null || defenseTurn == null || attackTurnRenderer == null || sanitySystem == null)
+        if (attackTurn == null || defenseTurn == null || attackTurnRenderer == null ||
+            sanitySystem == null || noteCountGenerator == null || randomMessageProvider == null)
         {
             Debug.LogError("GameManager: 필수 컴포넌트가 연결되지 않았습니다.");
             return;
@@ -80,10 +83,9 @@ public class GameManager : MonoBehaviour
         {
             sanitySystem.ResetSanity();
         }
-        if (RhythmClock.Instance != null) RhythmClock.Instance.StartClockNow();
-        StartAttackPhase();
+        
 
-         ApplyCurrentBpm();
+        ApplyCurrentBpm();
 
         if (RhythmClock.Instance != null)
         {
@@ -115,12 +117,20 @@ public class GameManager : MonoBehaviour
 
         gameCamera?.SetAttackView(attackerSide);
 
-        // attackTurn.RegisterView(attackTurnRenderer, null, null);
-
         if (attackerPlayerId == 1)
-            attackTurn.StartLocalPlayerAttack();
+        {
+            int targetNoteCount = noteCountGenerator.CreateRandomNoteCount();
+            string attackMessage = randomMessageProvider.GetRandomMessage(targetNoteCount);
+
+            attackTurn.StartLocalPlayerAttack(targetNoteCount, attackMessage);
+        }
         else
-            attackTurn.StartOpponentAttackDemo();
+        {
+            int targetNoteCount = attackTurn.OpponentDemoNoteCount;
+            string attackMessage = randomMessageProvider.GetRandomMessage(targetNoteCount);
+
+            attackTurn.StartOpponentAttackDemo(attackMessage);
+        }
     }
 
     /// <summary>
