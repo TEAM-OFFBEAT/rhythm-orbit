@@ -114,6 +114,9 @@ public class AttackProgressUI : MonoBehaviour
         ResizePanel(1);
     }
 
+    /// <summary>
+    /// 인스펙터에서 설정한 패딩, 간격, 정렬 값을 HorizontalLayoutGroup에 적용한다.
+    /// </summary>
     private void ApplyLayoutSettings()
     {
         if (layoutGroup == null) return;
@@ -132,6 +135,12 @@ public class AttackProgressUI : MonoBehaviour
         layoutGroup.childForceExpandHeight = false;
     }
 
+    /// <summary>
+    /// 목표 별 개수에 맞춰 패널 RectTransform의 크기를 직접 계산
+    /// ContentSizeFitter를 사용하지 않고, 별 크기와 패딩 값을 기준으로 크기 정함
+    /// ㄴ:ContentSizeFitter는 LayoutElement와 함께 쓰면 충돌... 
+    /// </summary>
+    /// <param name="targetCount"></param>
     private void ResizePanel(int targetCount)
     {
         if (rectTransform == null) return;

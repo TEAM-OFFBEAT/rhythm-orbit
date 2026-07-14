@@ -1,7 +1,5 @@
 using UnityEngine;
 using TMPro;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class HUD : MonoBehaviour
@@ -170,6 +168,9 @@ public class HUD : MonoBehaviour
         attackProgressUI.SetProgress(currentCount);
     }
 
+    /// <summary>
+    /// 공격 진행도 별 UI 초기화
+    /// </summary>
     public void ClearAttackProgress()
     {
         if (attackProgressUI == null) return;

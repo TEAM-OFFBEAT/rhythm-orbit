@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -11,6 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AttackTurn attackTurn;
     [SerializeField] private DefenseTurn defenseTurn;
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
+    [Header("Generators")]
     [SerializeField] private NoteCountGenerator noteCountGenerator;
     [SerializeField] private RandomMessageProvider randomMessageProvider;
 
@@ -20,8 +20,9 @@ public class GameManager : MonoBehaviour
     [Header("Camera")]
     [SerializeField] private GameCamera gameCamera;
     
-    [Header("Sanity Systems")]
+    [Header("Sanity System")]
     [SerializeField] private SanitySystem sanitySystem;
+    
     [Header("BPM Progression")]
     [SerializeField] private int turnsPerBpmIncrease = 2;
     [SerializeField] private float[] bpmStages = { 106f, 120f, 144f };
@@ -32,6 +33,9 @@ public class GameManager : MonoBehaviour
     private GameState currentState;
     private int attackerPlayerId = 1;
 
+    /// <summary>
+    /// 필수 참조를 확인하고 각 시스템의 이벤트를 구독한다.
+    /// </summary>
     private void Awake()
     {
         if (attackTurn == null || defenseTurn == null || attackTurnRenderer == null ||
@@ -40,10 +44,12 @@ public class GameManager : MonoBehaviour
             Debug.LogError("GameManager: 필수 컴포넌트가 연결되지 않았습니다.");
             return;
         }
+
+        // 정신력 이벤트를 HUD 갱신으로 연결
         sanitySystem.OnSanityChanged += HandleSanityChanged;
-        //sanitySystem.OnSanityDamaged += HandleSanityDamaged;
         sanitySystem.OnPlayerDefeated += HandlePlayerDefeated;
         
+        // 공격/방어 턴 이벤트를 받아 다음 상태로 전환
         attackTurn.OnAttackEnded += HandleAttackEnded;
         attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
         attackTurn.OnAttackProgressChanged += HandleAttackProgressChanged;
@@ -52,8 +58,11 @@ public class GameManager : MonoBehaviour
         
     }
 
+    /// <summary>
+    /// 오브젝트 제거 시 구독한 이벤트 해제
+    /// </summary>
     private void OnDestroy()
-    {
+    {   
         if (attackTurn != null)
         {
             attackTurn.OnAttackEnded -= HandleAttackEnded;
@@ -77,10 +86,14 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 게임을 초기화하고 첫 공격 턴을 시작.
+    /// 정신력, BPM 단계, 리듬 클락을 초기화한 뒤 P1 공격부터 시작
     /// </summary>
     public void StartGame()
-    {
+    {   
+        completedTurnCount = 0;
+        currentBpmStageIndex = 0;
         attackerPlayerId = 1;
+        
         if (sanitySystem != null)
         {
             sanitySystem.ResetSanity();
@@ -99,6 +112,7 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 현재 게임 상태에 따라 입력을 적절한 턴 컴포넌트로 전달.
+    /// 공격 턴이면 AttackTurn, 방어 턴이면 DefenseTurn이 입력 처리
     /// </summary>
     public void OnTap()
     {
@@ -170,6 +184,7 @@ public class GameManager : MonoBehaviour
             isAiDefense
         );
     }
+
     /// <summary>
     /// 방어 턴에서 노트 판정 시 HUD에 결과를 표시.
     /// </summary>
@@ -194,20 +209,23 @@ public class GameManager : MonoBehaviour
             Debug.Log($"Game End / P{defenderPlayerId} sanity depleted during defense.");
         }
     }
-
+    /// <summary>
+    /// 방어 턴의 개별 노트 판정 이벤트 처리.
+    /// 판정 결과를 HUD에 표시하고, MISS인 경우 방어자의 정신력을 즉시 감소시킨다.
+    /// </summary>
     private void HandleDefenseEnded(DefenseResult result)
-{
-    if (currentState == GameState.END) return;
+    {
+        if (currentState == GameState.END) return;
 
-    int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
+        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
 
-    Debug.Log($"Turn End / attacker:P{attackerPlayerId}, defender:P{defenderPlayerId}, miss:{result.MissCount}");
+        Debug.Log($"Turn End / attacker:P{attackerPlayerId}, defender:P{defenderPlayerId}, miss:{result.MissCount}");
 
-    completedTurnCount++;
-    UpdateBpmByTurnCount();
+        completedTurnCount++;
+        UpdateBpmByTurnCount();
 
-    SwitchTurn();
-}
+        SwitchTurn();
+    }
 
     /// <summary>
     /// 턴을 전환하고 다음 공격 턴을 시작.
@@ -221,24 +239,27 @@ public class GameManager : MonoBehaviour
         StartAttackPhase();
     }
 
+    /// <summary>
+    /// SanitySystem의 정신력 변경 이벤트를 HUD에 반영한다.
+    /// </summary>
     private void HandleSanityChanged(int p1Sanity, int p2Sanity, int maxSanity)
     {
         if (hud == null) return;
         hud.UpdateSanity(p1Sanity, p2Sanity, maxSanity);
     }
 
-    /*
-    private void HandleSanityDamaged(int playerId, int amount, string reason)
-    {
-        if (hud == null) return;
-        hud.ShowSanityDamage(playerId, amount, reason);
-    }
-    */
-
+    /// <summary>
+    /// 플레이어 정신력이 0이 되었을 때 호출된다.
+    /// 현재는 로그만 출력하며, 이후 게임 종료 UI와 연결할 수 있다.
+    /// </summary>
     private void HandlePlayerDefeated(int playerId)
     {
         Debug.Log($"Player Defeated / P{playerId}");
     }
+
+    /// <summary>
+    /// AttackTurn에서 선택된 공격 메시지를 HUD에 표시한다.
+    /// </summary>
     private void HandleAttackMessageSelected(string message, int noteCount)
     {
         if (hud == null) return;
@@ -246,6 +267,20 @@ public class GameManager : MonoBehaviour
         AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
         hud.ShowAttackMessage(message, attackerSide);
     }
+    
+    /// <summary>
+    /// AttackTurn의 노트 생성 진행도를 HUD의 별 UI에 반영한다.
+    /// </summary>
+    private void HandleAttackProgressChanged(int currentCount, int targetCount)
+    {
+        if (hud == null) return;
+
+        hud.UpdateAttackProgress(currentCount, targetCount);
+    }
+    
+    /// <summary>
+    /// 현재 BPM 단계 인덱스에 해당하는 BPM을 RhythmClock과 HUD에 적용한다.
+    /// </summary>
     private void ApplyCurrentBpm()
     {
         if (bpmStages == null || bpmStages.Length == 0)
@@ -270,6 +305,10 @@ public class GameManager : MonoBehaviour
         Debug.Log($"BPM Changed / stage:{currentBpmStageIndex}, bpm:{bpm}");
     }
 
+    /// <summary>
+    /// 완료 턴 수를 기준으로 BPM 단계 상승 여부를 확인한다.
+    /// turnsPerBpmIncrease마다 다음 BPM 단계로 이동한다.
+    /// </summary>
     private void UpdateBpmByTurnCount()
     {
         if (turnsPerBpmIncrease <= 0) return;
@@ -282,11 +321,6 @@ public class GameManager : MonoBehaviour
 
         currentBpmStageIndex = nextStageIndex;
         ApplyCurrentBpm();
-    }
-    private void HandleAttackProgressChanged(int currentCount, int targetCount)
-    {
-        if (hud == null) return;
-
-        hud.UpdateAttackProgress(currentCount, targetCount);
-    }
+    }    
+    
 }

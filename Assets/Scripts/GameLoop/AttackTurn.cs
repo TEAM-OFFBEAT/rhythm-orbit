@@ -1,47 +1,43 @@
 using System.Collections.Generic;
-// using TMPro;
 using UnityEngine;
-// using System.Collections;
 
+
+/// <summary>
+///  공격 턴 종료 시 GameManager에 전달되는 결과 데이터
+///  생성된 노트 목록과 공격 중 발생한 입력 실수 횟수를 포함
+/// </summary>
 public struct AttackResult
 {
-    public IReadOnlyList<NoteData> Notes;
-    public int BadTimingInputCount;
-    public int MissingNoteCount;
-    public int ExtraNoteCount;
-    public int DuplicateInputCount;
+    public IReadOnlyList<NoteData> Notes; //방어 턴으로 넘길 공격 노트 목록
+    public int BadTimingInputCount;       //공격 시간 밖 입력 또는 박자 이탈 횟수
+    public int MissingNoteCount;          //공격 노트 누락 횟수
+    public int ExtraNoteCount;            //공격 초과 입력 횟수
+    public int DuplicateInputCount;       //공격 중복 입력 횟수
 }
 
 public class AttackTurn : MonoBehaviour
 {
     /// <summary>
-    /// 공격 턴이 종료되면 생성된 노트 목록과 함께 발행. GameManager가 구독.
-    /// </summary>
-    public event System.Action<AttackResult> OnAttackEnded;
-    /// <summary>
     /// 공격 구간 총 길이(초). DefenseTurn의 barSpeed 계산에 사용.
     /// </summary>
     public double AttackDuration => attackDuration;
 
+    // 한 마디를 반박자 단위 8칸으로 나눈다. 4/4박자 기준 8분음표 8개.
     private const int HalfBeatStepsPerMeasure = 8;
+
+    // 0번째 칸은 공격 시작 지점이라 입력 가능 칸에서 제외한다.
     private const int FirstPlayableGridStep = 1;
 
+    // 현재 공격 턴 길이. 지금은 1마디 고정.
     private int attackMeasureCount = 1;
 
     [Header("Attack input window [공격 성공 범위]")]
     [SerializeField] private double attackInputWindowMs = 100.0;
     
     
-    // [Header("Penalty Alert UI")]
-    // [SerializeField] private float penaltyAlertDuration = 1.0f;
-
     [Header("References [참조]")]
     [SerializeField] private RhythmClock rhythmClock;
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
-
-    // private TMP_Text attackStatusLabel;
-    // private TMP_Text attackPenaltyLabel;
-    // private Coroutine penaltyAlertCoroutine;
 
     private int badTimingInputCount;
     private int missingNoteCount;
@@ -64,16 +60,30 @@ public class AttackTurn : MonoBehaviour
     private readonly int[] opponentDemoGridSteps = { 2, 4, 6 };
     
     private string currentAttackMessage;
+
     /// <summary>
-    /// 공격 메시지가 선택되면 발행. GameManager가 구독해서 HUD에 표시.
+    /// 공격 메시지가 정해졌을 때 발행.
+    /// GameManager가 받아서 HUD에 현재 공격 메시지를 표시한다.
     /// </summary>
     public event System.Action<string, int> OnAttackMessageSelected;
+
     /// <summary>
-    /// 공격 노트 생성 진행도가 바뀌면 발행. currentCount / targetCount를 전달.
+    /// 공격 노트 생성 진행도가 바뀔 때 발행.
+    /// currentCount는 현재까지 생성된 노트 수, targetCount는 목표 노트 수.
     /// </summary>
     public event System.Action<int, int> OnAttackProgressChanged;
+
+    /// <summary>
+    /// 공격 턴이 끝났을 때 발행.
+    /// GameManager가 AttackResult를 받아 방어 턴 시작 및 정신력 패널티 처리를 진행한다.
+    /// </summary>
+    public event System.Action<AttackResult> OnAttackEnded;
     public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
 
+    /// <summary>
+    /// 현재 BPM 기준 반박자 길이를 반환.
+    /// RhythmClock이 연결되지 않았을 경우 기본 BPM 120 기준으로 계산한다.
+    /// </summary>
     private double NoteDuration
     {
         get
@@ -87,35 +97,9 @@ public class AttackTurn : MonoBehaviour
         }
     }
 
-    // /// <summary>
-    // /// DevAttackPanel에서 공격 테스트 UI를 등록.
-    // /// </summary>
-    // public void RegisterView(AttackTurnRenderer renderer, TMP_Text statusLabel, TMP_Text penaltyLabel)
-    // {
-    //     attackTurnRenderer = renderer;
-    //     attackStatusLabel = statusLabel;
-    //     attackPenaltyLabel = penaltyLabel;
-    //     if (attackPenaltyLabel != null)
-    //     {
-    //         attackPenaltyLabel.text = string.Empty;
-    //         attackPenaltyLabel.gameObject.SetActive(false);
-    //     }
-    //     ShowStatus("ATTACK TEST READY");
-    // }
-
-    // /// <summary>
-    // /// DevAttackPanel 제거 시 등록된 UI 참조를 해제.
-    // /// </summary>
-    // public void UnregisterView(AttackTurnRenderer renderer, TMP_Text statusLabel, TMP_Text penaltyLabel)
-    // {
-    //     if (attackTurnRenderer == renderer) attackTurnRenderer = null;
-    //     if (attackStatusLabel == statusLabel) attackStatusLabel = null;
-    //     if (attackPenaltyLabel == penaltyLabel) attackPenaltyLabel = null;
-    // }
-
-    
     /// <summary>
-    /// 개발용 P1 공격 테스트 시작. DevAttackPanel 버튼에서 호출.
+    /// P1 공격 턴을 시작.
+    /// GameManager가 NoteCountGenerator와 RandomMessageProvider에서 받은 노트 수와 메시지를 전달한다.
     /// </summary>
     public void StartLocalPlayerAttack(int targetNoteCount, string attackMessage)
     {
@@ -126,25 +110,26 @@ public class AttackTurn : MonoBehaviour
     /// 개발용 P2 공격 데모 시작. DevAttackPanel 버튼에서 호출.
     /// </summary>
     public void StartOpponentAttackDemo(string attackMessage)
-{
-    StartAttack(AttackSide.P2, false, opponentDemoGridSteps.Length, attackMessage);
-
-    opponentDemoRelativeTimes.Clear();
-    double noteDuration = NoteDuration;
-
-    foreach (int step in opponentDemoGridSteps)
     {
-        double relativeTime = step * noteDuration;
-        if (relativeTime <= attackDuration)
-            opponentDemoRelativeTimes.Add(relativeTime);
+        StartAttack(AttackSide.P2, false, opponentDemoGridSteps.Length, attackMessage);
+
+        opponentDemoRelativeTimes.Clear();
+        double noteDuration = NoteDuration;
+
+        foreach (int step in opponentDemoGridSteps)
+        {
+            double relativeTime = step * noteDuration;
+            if (relativeTime <= attackDuration)
+                opponentDemoRelativeTimes.Add(relativeTime);
+        }
+
+        targetTapCount = opponentDemoRelativeTimes.Count;
+        nextOpponentDemoIndex = 0;
     }
 
-    targetTapCount = opponentDemoRelativeTimes.Count;
-    nextOpponentDemoIndex = 0;
-}
-
     /// <summary>
-    /// Tap Action 입력 시 호출. P1 공격 중이면 noteRelativeTime을 생성.
+    /// 공격 턴 입력을 처리.
+    /// 유효한 입력이면 가장 가까운 박자선에 스냅하여 공격 노트를 생성한다.
     /// </summary>
     public void OnTap()
     {
@@ -153,6 +138,7 @@ public class AttackTurn : MonoBehaviour
         double noteDuration = NoteDuration;
         double relativeTime = GetCorrectedRelativeInputTime();
 
+        // 공격 시간 밖 입력은 노트를 생성하지 않고 bad timing으로 기록한다.
         if (relativeTime < 0.0 || relativeTime > attackDuration)
         {
             badTimingInputCount++;
@@ -163,18 +149,21 @@ public class AttackTurn : MonoBehaviour
         double snappedRelativeTime = nearestGridStep * noteDuration;
         double offsetMs = System.Math.Abs(relativeTime - snappedRelativeTime) * 1000.0;
 
+        // 허용 판정창을 벗어난 입력은 노트를 생성하지 않는다.
         if (offsetMs > attackInputWindowMs)
         {
             badTimingInputCount++;
             return;
         }
 
+        // 같은 박자선에 이미 노트가 있으면 중복 입력으로 처리한다.
         if (createdGridSteps.Contains(nearestGridStep))
         {
             duplicateInputCount++;
             return;
         }
 
+        // 목표 개수를 초과한 입력은 패널티 카운트에 기록하지만, 노트 자체는 생성한다.
         if (createdNotes.Count >= targetTapCount)
         {
             extraNoteCount++;
@@ -196,6 +185,10 @@ public class AttackTurn : MonoBehaviour
             EndAttack();
     }
 
+    /// <summary>
+    /// 공격 턴 공통 초기화.
+    /// 공격자 방향, 입력 주체, 목표 노트 수, 메시지를 설정하고 공격 판정선 이동을 시작한다.
+    /// </summary>
     private void StartAttack(AttackSide side, bool localPlayerAttack, int requiredTapCount, string attackMessage)
     {
         currentSide = side;
@@ -224,6 +217,9 @@ public class AttackTurn : MonoBehaviour
             Debug.LogWarning("AttackTurnRenderer가 연결되지 않았습니다.");
     }
 
+    /// <summary>
+    /// P2 데모 공격에서 정해진 relativeTime에 도달한 노트를 자동 생성한다.
+    /// </summary>
     private void UpdateOpponentDemo(double elapsed)
     {
         while (nextOpponentDemoIndex < opponentDemoRelativeTimes.Count &&
@@ -234,6 +230,10 @@ public class AttackTurn : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 공격 노트를 생성하고 렌더러와 진행도 UI에 반영한다.
+    /// judgeTime은 방어 턴 전환 시 DefenseTurn에서 설정한다.
+    /// </summary>
     private void CreateAttackNote(double noteRelativeTime)
     {
         NoteData note = new NoteData
@@ -254,6 +254,10 @@ public class AttackTurn : MonoBehaviour
         Debug.Log($"Attack Note Created / id: {note.noteId}, relativeTime: {note.noteRelativeTime:0.000}s");
     }
 
+    /// <summary>
+    /// 공격 턴을 종료하고 AttackResult를 생성해 GameManager에 전달한다.
+    /// 부족한 노트 수는 이 시점에 계산한다.
+    /// </summary>
     private void EndAttack()
     {
         if (!isRunning) return;
@@ -285,9 +289,20 @@ public class AttackTurn : MonoBehaviour
         OnAttackEnded?.Invoke(result);
     }
 
+    /// <summary>
+    /// 마지막으로 입력 가능한 grid step.
+    /// 마지막 step은 공격 종료 지점이므로 제외한다.
+    /// </summary>
     private int LastPlayableGridStep => Mathf.Max(FirstPlayableGridStep, gridStepCount - 1);
+    
+    /// <summary>
+    /// 현재 공격 턴에서 입력 가능한 최대 노트 개수.
+    /// </summary>
     private int MaxPlayableTapCount => LastPlayableGridStep - FirstPlayableGridStep + 1;
-
+    
+    /// <summary>
+    /// JudgeSystem의 키 입력 오프셋을 적용해 공격 시작 이후의 상대 입력 시간을 계산한다.
+    /// </summary>
     private double GetCorrectedRelativeInputTime()
     {
         double inputTime = AudioSettings.dspTime;
@@ -296,6 +311,9 @@ public class AttackTurn : MonoBehaviour
         return inputTime - attackStartDspTime;
     }
 
+    /// <summary>
+    /// 가장 가까운 입력 가능한 grid step을 반환한다.
+    /// </summary>
     private int GetNearestPlayableGridStep(double relativeTime, double noteDuration)
     {
         if (noteDuration <= 0.0) return FirstPlayableGridStep;
@@ -303,41 +321,10 @@ public class AttackTurn : MonoBehaviour
         return Mathf.Clamp(nearestStep, FirstPlayableGridStep, LastPlayableGridStep);
     }
 
-
-    // private void ShowStatus(string message)
-    // {
-    //     if (attackStatusLabel != null) attackStatusLabel.text = message;
-    // }
-
-    // private void ShowPenaltyAlert(int amount, string reason)
-    // {
-    //     if (attackPenaltyLabel == null) return;
-    //     attackPenaltyLabel.text = $"정신력 -{amount}\n{ConvertPenaltyReasonToText(reason)}";
-    //     attackPenaltyLabel.gameObject.SetActive(true);
-    //     if (penaltyAlertCoroutine != null) StopCoroutine(penaltyAlertCoroutine);
-    //     penaltyAlertCoroutine = StartCoroutine(HidePenaltyAlertAfterDelay());
-    // }
-
-    // private IEnumerator HidePenaltyAlertAfterDelay()
-    // {
-    //     yield return new WaitForSeconds(penaltyAlertDuration);
-    //     if (attackPenaltyLabel != null)
-    //     {
-    //         attackPenaltyLabel.text = string.Empty;
-    //         attackPenaltyLabel.gameObject.SetActive(false);
-    //     }
-    //     penaltyAlertCoroutine = null;
-    // }
-
-    // private string ConvertPenaltyReasonToText(string reason)
-    // {
-    //     if (reason.Contains("OFF_GRID")) return "OFF GRID";
-    //     if (reason.Contains("OUT_OF_ATTACK_TIME")) return "OUT OF ATTACK TIME";
-    //     if (reason.Contains("MISSING_NOTES")) return "MISSING NOTES";
-    //     if (reason.Contains("EXTRA_NOTE")) return "EXTRA NOTE";
-    //     if (reason.Contains("DUPLICATE_INPUT")) return "DUPLICATE INPUT";
-    //     return "ATTACK PANELTY";
-    // }
+    /// <summary>
+    /// 현재 공격 메시지를 저장하고 HUD 표시용 이벤트를 발행한다.
+    /// 메시지가 비어 있으면 목표 노트 수만큼 '?'로 대체한다.
+    /// </summary>
    private void SetAttackMessage(string attackMessage)
     {
         if (string.IsNullOrEmpty(attackMessage))
