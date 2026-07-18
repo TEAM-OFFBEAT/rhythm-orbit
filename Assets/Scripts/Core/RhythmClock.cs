@@ -25,17 +25,26 @@ public class RhythmClock : SceneSingleton<RhythmClock>
     }
 
     /// <summary>
-    /// 현재 bpm 기준 반박(8분음표) 길이를 초 단위로 반환.
+    /// 현재 bpm 기준 1박(4분음표) 길이를 초 단위로 반환.
     /// </summary>
-    public double GetNoteDuration()
+    public double GetBeatDuration()
     {
         if (bpm <= 0f)
         {
             Debug.LogWarning("BPM은 0보다 커야 합니다. 기본값 120으로 계산합니다.");
-            return 30.0 / 120.0;
+            return 60.0 / 120.0;
         }
+        return 60.0 / bpm;
+    }
 
-        return 30.0 / bpm;
+    /// <summary>
+    /// 1박을 subdivisions로 나눈 최소 리듬 단위 길이를 초 단위로 반환.
+    /// subdivisions=2이면 반박(8분음표), subdivisions=3이면 3연음부.
+    /// </summary>
+    public double GetNoteDuration(int subdivisions = 2)
+    {
+        int safeSubdivisions = System.Math.Max(1, subdivisions);
+        return GetBeatDuration() / safeSubdivisions;
     }
 
     /// <summary>

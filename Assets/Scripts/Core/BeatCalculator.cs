@@ -33,12 +33,5 @@ public static class BeatCalculator
         return diffMs <= gridToleranceMs;
     }
 
-    /// <summary>
-    /// 현재 박자 기준 한 마디(4/4박자)의 길이를 초 단위로 반환.
-    /// </summary>
-    public static double GetMeasureDuration(double noteDuration)
-    {
-        int safeNumerator = System.Math.Max(1, Numerator);
-        return noteDuration * 2.0 * safeNumerator;
-    }
+
 }
