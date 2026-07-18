@@ -94,7 +94,7 @@ public class AttackTurnRenderer : MonoBehaviour
             return;
         }
 
-        Transform t = NoteRenderer.Instance.AcquireNote(note.noteId);
+        Transform t = NoteRenderer.Instance.AcquireNote(note.noteId, note.noteType);
         if (t == null) return;
         if (attackNoteContainer != null) t.SetParent(attackNoteContainer, false);
 

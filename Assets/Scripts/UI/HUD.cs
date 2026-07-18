@@ -92,16 +92,29 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Tap Action 입력 시 GameManager를 통해 현재 턴에 맞는 컴포넌트로 전달.
+    /// HIGH 노트 Tap 입력. UI 버튼 또는 Input Action에서 호출.
     /// </summary>
-    public void OnTap()
+    public void OnTapHigh()
     {
         if (gameManager == null)
         {
             Debug.LogWarning("GameManager가 HUD에 연결되지 않았습니다.");
             return;
         }
-        gameManager.OnTap();
+        gameManager.OnTapHigh();
+    }
+
+    /// <summary>
+    /// LOW 노트 Tap 입력. UI 버튼 또는 Input Action에서 호출.
+    /// </summary>
+    public void OnTapLow()
+    {
+        if (gameManager == null)
+        {
+            Debug.LogWarning("GameManager가 HUD에 연결되지 않았습니다.");
+            return;
+        }
+        gameManager.OnTapLow();
     }
 
     /// <summary>

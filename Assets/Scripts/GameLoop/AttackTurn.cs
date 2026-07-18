@@ -22,8 +22,11 @@ public class AttackTurn : MonoBehaviour
     /// </summary>
     public double AttackDuration => attackDuration;
 
-    // 한 마디를 반박자 단위 8칸으로 나눈다. 4/4박자 기준 8분음표 8개.
-    private const int HalfBeatStepsPerMeasure = 8;
+    [Header("Rhythm [리듬 설정]")]
+    [SerializeField] private int subdivisions = 2; // 1박당 분할 수. 2=반박(기본), 3=3연음
+
+    // 4/4박자 고정. 1마디 = 4박 * subdivisions 스텝
+    private int StepsPerMeasure => 4 * subdivisions;
 
     // 0번째 칸은 공격 시작 지점이라 입력 가능 칸에서 제외한다.
     private const int FirstPlayableGridStep = 1;
@@ -45,7 +48,7 @@ public class AttackTurn : MonoBehaviour
     private int duplicateInputCount;
 
     private readonly List<NoteData> createdNotes = new();
-    private readonly List<double> opponentDemoRelativeTimes = new();
+    private readonly List<(double time, NoteType type)> opponentDemoRelativeTimes = new();
     private readonly HashSet<int> createdGridSteps = new();
 
     private AttackSide currentSide;
@@ -81,7 +84,7 @@ public class AttackTurn : MonoBehaviour
     public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
 
     /// <summary>
-    /// 현재 BPM 기준 반박자 길이를 반환.
+    /// 현재 BPM 기준 1스텝(1/subdivisions 박) 길이를 반환.
     /// RhythmClock이 연결되지 않았을 경우 기본 BPM 120 기준으로 계산한다.
     /// </summary>
     private double NoteDuration
@@ -91,9 +94,9 @@ public class AttackTurn : MonoBehaviour
             if (rhythmClock == null)
             {
                 Debug.LogWarning("RhythmClock이 연결되지 않았습니다. 기본 BPM 120 기준으로 계산합니다.");
-                return 30.0 / 120.0;
+                return 60.0 / 120.0 / System.Math.Max(1, subdivisions);
             }
-            return rhythmClock.GetNoteDuration();
+            return rhythmClock.GetNoteDuration(subdivisions);
         }
     }
 
@@ -116,11 +119,12 @@ public class AttackTurn : MonoBehaviour
         opponentDemoRelativeTimes.Clear();
         double noteDuration = NoteDuration;
 
-        foreach (int step in opponentDemoGridSteps)
+        for (int i = 0; i < opponentDemoGridSteps.Length; i++)
         {
+            int step = opponentDemoGridSteps[i];
             double relativeTime = step * noteDuration;
             if (relativeTime <= attackDuration)
-                opponentDemoRelativeTimes.Add(relativeTime);
+                opponentDemoRelativeTimes.Add((relativeTime, i % 2 == 0 ? NoteType.HIGH : NoteType.LOW));
         }
 
         targetTapCount = opponentDemoRelativeTimes.Count;
@@ -131,7 +135,7 @@ public class AttackTurn : MonoBehaviour
     /// 공격 턴 입력을 처리.
     /// 유효한 입력이면 가장 가까운 박자선에 스냅하여 공격 노트를 생성한다.
     /// </summary>
-    public void OnTap()
+    public void OnTap(NoteType noteType)
     {
         if (!isRunning || !isLocalPlayerAttack) return;
 
@@ -169,7 +173,7 @@ public class AttackTurn : MonoBehaviour
             extraNoteCount++;
         }
 
-        CreateAttackNote(snappedRelativeTime);
+        CreateAttackNote(snappedRelativeTime, noteType);
     }
 
     private void Update()
@@ -205,7 +209,7 @@ public class AttackTurn : MonoBehaviour
         badTimingInputCount = 0;
 
         double noteDuration = NoteDuration;
-        gridStepCount = Mathf.Max(1, attackMeasureCount) * HalfBeatStepsPerMeasure;
+        gridStepCount = Mathf.Max(1, attackMeasureCount) * StepsPerMeasure;
         attackDuration = noteDuration * gridStepCount;
         attackStartDspTime = AudioSettings.dspTime;
         targetTapCount = Mathf.Clamp(requiredTapCount, 1, MaxPlayableTapCount);
@@ -223,9 +227,10 @@ public class AttackTurn : MonoBehaviour
     private void UpdateOpponentDemo(double elapsed)
     {
         while (nextOpponentDemoIndex < opponentDemoRelativeTimes.Count &&
-               elapsed >= opponentDemoRelativeTimes[nextOpponentDemoIndex])
+               elapsed >= opponentDemoRelativeTimes[nextOpponentDemoIndex].time)
         {
-            CreateAttackNote(opponentDemoRelativeTimes[nextOpponentDemoIndex]);
+            var entry = opponentDemoRelativeTimes[nextOpponentDemoIndex];
+            CreateAttackNote(entry.time, entry.type);
             nextOpponentDemoIndex++;
         }
     }
@@ -234,11 +239,12 @@ public class AttackTurn : MonoBehaviour
     /// 공격 노트를 생성하고 렌더러와 진행도 UI에 반영한다.
     /// judgeTime은 방어 턴 전환 시 DefenseTurn에서 설정한다.
     /// </summary>
-    private void CreateAttackNote(double noteRelativeTime)
+    private void CreateAttackNote(double noteRelativeTime, NoteType noteType)
     {
         NoteData note = new NoteData
         {
             noteId = nextNoteId++,
+            noteType = noteType,
             noteRelativeTime = noteRelativeTime
             // judgeTime은 여기서 설정하지 않는다.
             // 방어자 쪽 transfer 이후 defenseStartDspTime + noteRelativeTime으로 계산한다.
@@ -251,7 +257,7 @@ public class AttackTurn : MonoBehaviour
         if (attackTurnRenderer != null)
             attackTurnRenderer.SpawnAttackNote(currentSide, note, attackDuration);
 
-        Debug.Log($"Attack Note Created / id: {note.noteId}, relativeTime: {note.noteRelativeTime:0.000}s");
+        Debug.Log($"Attack Note Created / id: {note.noteId}, type: {note.noteType}, relativeTime: {note.noteRelativeTime:0.000}s");
     }
 
     /// <summary>

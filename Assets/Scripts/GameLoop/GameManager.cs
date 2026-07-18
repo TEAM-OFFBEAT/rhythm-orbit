@@ -111,16 +111,25 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 게임 상태에 따라 입력을 적절한 턴 컴포넌트로 전달.
-    /// 공격 턴이면 AttackTurn, 방어 턴이면 DefenseTurn이 입력 처리
+    /// 현재 게임 상태에 따라 noteType 입력을 적절한 턴 컴포넌트로 전달.
     /// </summary>
-    public void OnTap()
+    public void OnTap(NoteType noteType)
     {
         if (currentState == GameState.ATTACK)
-            attackTurn.OnTap();
+            attackTurn.OnTap(noteType);
         else if (currentState == GameState.DEFENSE)
-            defenseTurn.OnTap();
+            defenseTurn.OnTap(noteType);
     }
+
+    /// <summary>
+    /// HIGH 노트 키 입력. HUD 또는 Input 스크립트에서 호출.
+    /// </summary>
+    public void OnTapHigh() => OnTap(NoteType.HIGH);
+
+    /// <summary>
+    /// LOW 노트 키 입력. HUD 또는 Input 스크립트에서 호출.
+    /// </summary>
+    public void OnTapLow() => OnTap(NoteType.LOW);
 
     /// <summary>
     /// 공격 턴을 시작하고 HUD와 카메라를 업데이트.

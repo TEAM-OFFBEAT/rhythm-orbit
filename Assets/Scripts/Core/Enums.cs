@@ -1,5 +1,6 @@
 public enum Judgment { PERFECT, GOOD, MISS }
 public enum GameState { ATTACK, DEFENSE, TURN_CHANGE, END }
+public enum NoteType { HIGH, LOW }
 public enum PacketType
 {
     GAME_START, NOTE_CREATED, ATTACK_END, DEFENSE_START,

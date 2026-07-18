@@ -110,10 +110,10 @@ public class DefenseTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// 입력 이벤트 수신 시 GameManager.OnTap()을 통해 호출.
-    /// 인간 방어 모드에서만 유효하며, 가장 가까운 미판정 노트를 판정.
+    /// 입력 이벤트 수신 시 GameManager.OnTapHigh() / OnTapLow()를 통해 호출.
+    /// 인간 방어 모드에서만 유효하며, 입력된 noteType과 일치하는 가장 가까운 미판정 노트를 판정.
     /// </summary>
-    public void OnTap()
+    public void OnTap(NoteType noteType)
     {
         if (!isRunning || isAiDefense) return;
 
@@ -125,7 +125,7 @@ public class DefenseTurn : MonoBehaviour
 
         double inputTime = AudioSettings.dspTime;
 
-        NoteData target = GetNearestNote(inputTime);
+        NoteData target = GetNearestNote(inputTime, noteType);
         if (target == null) return;
 
         Judgment result = JudgeSystem.Instance.Judge(inputTime, target.judgeTime);
@@ -134,7 +134,7 @@ public class DefenseTurn : MonoBehaviour
         attackTurnRenderer.RemoveNote(target.noteId);
         pendingNotes.Remove(target);
 
-        Debug.Log($"Defense Judge / noteId:{target.noteId} → {result}");
+        Debug.Log($"Defense Judge / noteId:{target.noteId} type:{target.noteType} → {result}");
     }
 
     private void EndDefense()
@@ -157,13 +157,14 @@ public class DefenseTurn : MonoBehaviour
         OnDefenseEnded?.Invoke(result);
     }
 
-    private NoteData GetNearestNote(double inputTime)
+    private NoteData GetNearestNote(double inputTime, NoteType noteType)
     {
         NoteData nearest = null;
         double minDist = double.MaxValue;
 
         foreach (var note in pendingNotes)
         {
+            if (note.noteType != noteType) continue;
             double dist = System.Math.Abs(note.judgeTime - inputTime);
             if (dist >= minDist) continue;
             minDist = dist;
