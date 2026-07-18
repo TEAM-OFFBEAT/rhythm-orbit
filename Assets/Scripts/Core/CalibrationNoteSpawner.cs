@@ -50,7 +50,7 @@ public class CalibrationNoteSpawner : MonoBehaviour
     /// </summary>
     public List<NoteData> SpawnNotes()
     {
-        beatDuration = RhythmClock.Instance.GetNoteDuration() * 2.0;
+        beatDuration = RhythmClock.Instance.GetBeatDuration();
         ClearAll();
         double firstJudgeTime = AudioSettings.dspTime + leadTime;
         var result = new List<NoteData>();
