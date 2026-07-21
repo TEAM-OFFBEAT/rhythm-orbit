@@ -41,6 +41,7 @@ public class AttackTurn : MonoBehaviour
     [Header("References [참조]")]
     [SerializeField] private RhythmClock rhythmClock;
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
+    [SerializeField] private NetworkManager networkManager; // null이면 로컬 전용
 
     private int badTimingInputCount;
     private int missingNoteCount;
@@ -63,6 +64,12 @@ public class AttackTurn : MonoBehaviour
     private readonly int[] opponentDemoGridSteps = { 2, 4, 6 };
     
     private string currentAttackMessage;
+
+    private void Awake()
+    {
+        if (networkManager == null)
+            networkManager = NetworkManager.Instance;
+    }
 
     /// <summary>
     /// 공격 메시지가 정해졌을 때 발행.
@@ -101,12 +108,12 @@ public class AttackTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// P1 공격 턴을 시작.
-    /// GameManager가 NoteCountGenerator와 RandomMessageProvider에서 받은 노트 수와 메시지를 전달한다.
+    /// 로컬 플레이어의 공격 턴을 시작.
+    /// GameManager가 공격자 방향, 노트 수, 메시지를 전달한다.
     /// </summary>
-    public void StartLocalPlayerAttack(int targetNoteCount, string attackMessage)
+    public void StartLocalPlayerAttack(AttackSide side, int targetNoteCount, string attackMessage)
     {
-        StartAttack(AttackSide.P1, true, targetNoteCount, attackMessage);
+        StartAttack(side, true, targetNoteCount, attackMessage);
     }
 
     /// <summary>
@@ -215,6 +222,14 @@ public class AttackTurn : MonoBehaviour
         targetTapCount = Mathf.Clamp(requiredTapCount, 1, MaxPlayableTapCount);
         SetAttackMessage(attackMessage);
         OnAttackProgressChanged?.Invoke(0, targetTapCount);
+        if (isLocalPlayerAttack && networkManager != null)
+        {
+            byte attackerId = (byte)(side == AttackSide.P1 ? 1 : 2);
+            double dur = attackDuration;
+            double startTime = attackStartDspTime;
+            networkManager.Send(w => PacketSerializer.WriteAttackStart(w, attackerId, dur, startTime));
+        }
+
         if (attackTurnRenderer != null)
             attackTurnRenderer.BeginAttackVisual(currentSide, attackStartDspTime, attackDuration, gridStepCount);
         else
@@ -251,6 +266,13 @@ public class AttackTurn : MonoBehaviour
         };
 
         createdNotes.Add(note);
+        if (isLocalPlayerAttack && networkManager != null)
+        {
+            int id = note.noteId;
+            double rel = note.noteRelativeTime;
+            NoteType nt = note.noteType;
+            networkManager.Send(w => PacketSerializer.WriteNoteCreated(w, id, rel, nt));
+        }
         createdGridSteps.Add(GetNearestPlayableGridStep(noteRelativeTime, NoteDuration));
         int filledCount = Mathf.Min(createdNotes.Count, targetTapCount);
         OnAttackProgressChanged?.Invoke(filledCount, targetTapCount);
@@ -291,6 +313,14 @@ public class AttackTurn : MonoBehaviour
             ExtraNoteCount = extraNoteCount,
             DuplicateInputCount = duplicateInputCount
         };
+
+        if (isLocalPlayerAttack && networkManager != null)
+        {
+            byte attackerId = (byte)(currentSide == AttackSide.P1 ? 1 : 2);
+            double startTime = attackStartDspTime;
+            AttackResult r = result;
+            networkManager.Send(w => PacketSerializer.WriteAttackEnd(w, attackerId, startTime, r));
+        }
 
         OnAttackEnded?.Invoke(result);
     }
