@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
 
     private GameState currentState;
     private int attackerPlayerId = 1;
+    private int myLocalPlayerId = 1; // NetworkManager.Instance에서 Awake() 시 읽어옴
 
     /// <summary>
     /// 필수 참조를 확인하고 각 시스템의 이벤트를 구독한다.
@@ -55,7 +56,20 @@ public class GameManager : MonoBehaviour
         attackTurn.OnAttackProgressChanged += HandleAttackProgressChanged;
         defenseTurn.OnDefenseEnded += HandleDefenseEnded;
         defenseTurn.OnJudgment += HandleJudgment;
-        
+
+        var net = NetworkManager.Instance;
+        if (net != null)
+        {
+            myLocalPlayerId  = net.LocalPlayerId;
+            attackerPlayerId = net.FirstAttackerId;
+
+            net.OnAttackStart        += HandleNetworkAttackStart;
+            net.OnNoteCreated        += defenseTurn.OnNoteReceived;
+            net.OnAttackEnd          += HandleNetworkAttackEnd;
+            net.OnJudgmentReceived   += HandleNetworkJudgment;
+            net.OnDefenseEnd         += HandleNetworkDefenseEnd;
+            net.OnGameEnd            += HandleNetworkGameEnd;
+        }
     }
 
     /// <summary>
@@ -82,6 +96,26 @@ public class GameManager : MonoBehaviour
             // sanitySystem.OnSanityDamaged -= HandleSanityDamaged;
             sanitySystem.OnPlayerDefeated -= HandlePlayerDefeated;
         }
+
+        var net = NetworkManager.Instance;
+        if (net != null)
+        {
+            net.OnAttackStart        -= HandleNetworkAttackStart;
+            net.OnNoteCreated        -= defenseTurn.OnNoteReceived;
+            net.OnAttackEnd          -= HandleNetworkAttackEnd;
+            net.OnJudgmentReceived   -= HandleNetworkJudgment;
+            net.OnDefenseEnd         -= HandleNetworkDefenseEnd;
+            net.OnGameEnd            -= HandleNetworkGameEnd;
+        }
+    }
+
+    /// <summary>
+    /// 네트워크 모드에서 씬 로드 직후 자동으로 게임을 시작한다.
+    /// </summary>
+    private void Start()
+    {
+        if (NetworkManager.Instance != null)
+            StartGame();
     }
 
     /// <summary>
@@ -92,7 +126,7 @@ public class GameManager : MonoBehaviour
     {   
         completedTurnCount = 0;
         currentBpmStageIndex = 0;
-        attackerPlayerId = 1;
+        attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
         
         if (sanitySystem != null)
         {
@@ -104,7 +138,10 @@ public class GameManager : MonoBehaviour
 
         if (RhythmClock.Instance != null)
         {
-            RhythmClock.Instance.StartClockNow();
+            double startDspTime = NetworkManager.Instance != null
+                ? NetworkManager.Instance.LocalGameStartDspTime
+                : AudioSettings.dspTime;
+            RhythmClock.Instance.StartClock(startDspTime);
         }
 
         StartAttackPhase();
@@ -116,9 +153,15 @@ public class GameManager : MonoBehaviour
     public void OnTap(NoteType noteType)
     {
         if (currentState == GameState.ATTACK)
+        {
             attackTurn.OnTap(noteType);
+        }
         else if (currentState == GameState.DEFENSE)
-            defenseTurn.OnTap(noteType);
+        {
+            bool isMirrorView = NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId;
+            if (!isMirrorView)
+                defenseTurn.OnTap(noteType);
+        }
     }
 
     /// <summary>
@@ -137,25 +180,28 @@ public class GameManager : MonoBehaviour
     private void StartAttackPhase()
     {
         currentState = GameState.ATTACK;
-
         AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-
         gameCamera?.SetAttackView(attackerSide);
 
-        if (attackerPlayerId == 1)
-        {
-            int targetNoteCount = noteCountGenerator.CreateRandomNoteCount();
-            string attackMessage = randomMessageProvider.GetRandomMessage(targetNoteCount);
+        bool isNetworkMode   = NetworkManager.Instance != null;
+        bool isLocalAttacker = !isNetworkMode
+            ? attackerPlayerId == 1
+            : attackerPlayerId == myLocalPlayerId;
 
-            attackTurn.StartLocalPlayerAttack(targetNoteCount, attackMessage);
+        if (isLocalAttacker)
+        {
+            int targetNoteCount  = noteCountGenerator.CreateRandomNoteCount();
+            string attackMessage = randomMessageProvider.GetRandomMessage(targetNoteCount);
+            attackTurn.StartLocalPlayerAttack(attackerSide, targetNoteCount, attackMessage);
         }
-        else
+        else if (!isNetworkMode)
         {
-            int targetNoteCount = attackTurn.OpponentDemoNoteCount;
+            // 로컬 전용: 상대 공격은 데모로 처리
+            int targetNoteCount  = attackTurn.OpponentDemoNoteCount;
             string attackMessage = randomMessageProvider.GetRandomMessage(targetNoteCount);
-
             attackTurn.StartOpponentAttackDemo(attackMessage);
         }
+        // 네트워크 원격 공격: NOTE_CREATED / ATTACK_END 수신 대기, 로컬 AttackTurn 실행 안 함
     }
 
     /// <summary>
@@ -164,34 +210,35 @@ public class GameManager : MonoBehaviour
     private void HandleAttackEnded(AttackResult attackResult)
     {
         currentState = GameState.DEFENSE;
-
         sanitySystem?.ApplyAttackResult(attackerPlayerId, attackResult);
 
         if (sanitySystem != null && sanitySystem.IsPlayerDefeated(attackerPlayerId))
         {
             currentState = GameState.END;
+            NetworkManager.Instance?.Send(w => PacketSerializer.WriteGameEnd(w));
             Debug.Log($"Game End / P{attackerPlayerId} sanity depleted during attack.");
             return;
         }
 
-        bool isAiDefense = (attackerPlayerId == 1);
-
         AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-
         gameCamera?.SetDefenseView(attackerSide);
 
-        float judgeLineX = attackTurnRenderer.GetJudgeLineX(attackerSide);
+        float judgeLineX   = attackTurnRenderer.GetJudgeLineX(attackerSide);
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
-        float attackEndX = attackTurnRenderer.GetEndX(attackerSide);
+        float attackEndX   = attackTurnRenderer.GetEndX(attackerSide);
 
-        defenseTurn.Begin(
-            attackResult.Notes,
-            judgeLineX,
-            attackStartX,
-            attackEndX,
-            attackTurn.AttackDuration,
-            isAiDefense
-        );
+        if (NetworkManager.Instance != null)
+        {
+            // 네트워크 모드: 로컬이 공격자일 때 공격자 화면에서도 노트 이동 시작.
+            // networkManager:null → DEFENSE_END 전송 안 함. 판정은 JUDGMENT 패킷이 담당.
+            if (attackerPlayerId == myLocalPlayerId)
+                defenseTurn.Begin(attackResult.Notes, judgeLineX, attackStartX, attackEndX,
+                    attackTurn.AttackDuration, isAiDefense: false, networkManager: null);
+            return;
+        }
+
+        defenseTurn.Begin(attackResult.Notes, judgeLineX, attackStartX, attackEndX,
+            attackTurn.AttackDuration, isAiDefense: (attackerPlayerId == 1));
     }
 
     /// <summary>
@@ -199,17 +246,15 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleJudgment(Judgment judgment)
     {
-        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        // 네트워크 모드에서 로컬이 공격자면: 판정 시각화는 JUDGMENT 패킷(HandleNetworkJudgment)이 담당
+        if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId) return;
 
-        if (hud != null)
-        {
-            hud.ShowJudgment(judgment, attackerSide);
-        }
+        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        hud?.ShowJudgment(judgment, attackerSide);
 
         if (judgment != Judgment.MISS) return;
 
         int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
-
         sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
 
         if (sanitySystem != null && sanitySystem.IsPlayerDefeated(defenderPlayerId))
@@ -226,13 +271,21 @@ public class GameManager : MonoBehaviour
     {
         if (currentState == GameState.END) return;
 
+        if (NetworkManager.Instance != null)
+        {
+            // 공격자 미러 뷰(networkManager:null로 Begin된 경우)는 무시
+            // 로컬이 실제 방어자인 경우에만 턴 전환 (DEFENSE_END는 DefenseTurn이 이미 전송)
+            if (attackerPlayerId == myLocalPlayerId) return;
+            completedTurnCount++;
+            UpdateBpmByTurnCount();
+            SwitchTurn();
+            return;
+        }
+
         int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
-
         Debug.Log($"Turn End / attacker:P{attackerPlayerId}, defender:P{defenderPlayerId}, miss:{result.MissCount}");
-
         completedTurnCount++;
         UpdateBpmByTurnCount();
-
         SwitchTurn();
     }
 
@@ -264,6 +317,7 @@ public class GameManager : MonoBehaviour
     private void HandlePlayerDefeated(int playerId)
     {
         Debug.Log($"Player Defeated / P{playerId}");
+        NetworkManager.Instance?.Send(w => PacketSerializer.WriteGameEnd(w));
     }
 
     /// <summary>
@@ -330,6 +384,91 @@ public class GameManager : MonoBehaviour
 
         currentBpmStageIndex = nextStageIndex;
         ApplyCurrentBpm();
-    }    
-    
+    }
+
+    /// <summary>
+    /// 방어자의 노트 판정 결과 수신 시 호출. 공격자 화면에서 노트 제거 및 판정 UI를 표시한다.
+    /// </summary>
+    private void HandleNetworkJudgment(JudgmentPacket packet)
+    {
+        Judgment judgment = (Judgment)packet.judgment;
+        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+
+        defenseTurn.RemoteRemoveNote(packet.noteId);
+        hud?.ShowJudgment(judgment, attackerSide);
+
+        if (judgment != Judgment.MISS) return;
+
+        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
+        sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
+
+        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(defenderPlayerId))
+        {
+            currentState = GameState.END;
+            Debug.Log($"Game End / P{defenderPlayerId} sanity depleted during defense.");
+        }
+    }
+
+    /// <summary>
+    /// 원격 공격자의 ATTACK_START 수신 시 호출. 방어자 화면 준비 및 공격 컨텍스트를 DefenseTurn에 전달한다.
+    /// </summary>
+    private void HandleNetworkAttackStart(AttackStartPacket packet)
+    {
+        AttackSide attackerSide = packet.attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        gameCamera?.SetAttackView(attackerSide);
+
+        var net = NetworkManager.Instance;
+        if (net != null && attackTurnRenderer != null)
+        {
+            double correctedStart = net.TimeSync.CorrectTime(packet.attackStartDspTime);
+            Debug.Log($"[Net] ATTACK_START 수신 / attacker:P{packet.attackerPlayerId}, correctedStart:{correctedStart:F3}, now:{AudioSettings.dspTime:F3}, lag:{(AudioSettings.dspTime - correctedStart) * 1000:F1}ms");
+            attackTurnRenderer.BeginAttackVisual(attackerSide, correctedStart, packet.attackDuration, 0);
+        }
+
+        defenseTurn.OnAttackStartReceived(packet);
+    }
+
+    /// <summary>
+    /// 원격 공격자의 ATTACK_END 수신 시 호출. 로컬에서 방어 턴을 시작한다.
+    /// </summary>
+    private void HandleNetworkAttackEnd(AttackEndPacket packet)
+    {
+        var net = NetworkManager.Instance;
+        if (net == null) return;
+
+        currentState = GameState.DEFENSE;
+        AttackSide attackerSide = packet.attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        gameCamera?.SetDefenseView(attackerSide);
+
+        attackTurnRenderer?.StopLine();
+
+        if (attackTurnRenderer == null) return;
+
+        float judgeLineX   = attackTurnRenderer.GetJudgeLineX(attackerSide);
+        float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
+        float attackEndX   = attackTurnRenderer.GetEndX(attackerSide);
+
+        defenseTurn.OnAttackEndReceived(packet, judgeLineX, attackStartX, attackEndX, net);
+    }
+
+    /// <summary>
+    /// 원격 방어자의 DEFENSE_END 수신 시 호출. 턴을 전환한다.
+    /// </summary>
+    private void HandleNetworkDefenseEnd(DefenseEndPacket packet)
+    {
+        if (currentState == GameState.END) return;
+        completedTurnCount++;
+        UpdateBpmByTurnCount();
+        SwitchTurn();
+    }
+
+    /// <summary>
+    /// 원격 기기의 GAME_END 수신 시 호출.
+    /// </summary>
+    private void HandleNetworkGameEnd()
+    {
+        currentState = GameState.END;
+        Debug.Log("GameManager: 상대방 게임 종료 신호 수신");
+    }
+
 }
