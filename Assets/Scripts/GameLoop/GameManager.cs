@@ -69,6 +69,7 @@ public class GameManager : MonoBehaviour
             net.OnJudgmentReceived   += HandleNetworkJudgment;
             net.OnDefenseEnd         += HandleNetworkDefenseEnd;
             net.OnGameEnd            += HandleNetworkGameEnd;
+            net.OnDisconnected       += HandleNetworkDisconnected;
         }
     }
 
@@ -106,6 +107,7 @@ public class GameManager : MonoBehaviour
             net.OnJudgmentReceived   -= HandleNetworkJudgment;
             net.OnDefenseEnd         -= HandleNetworkDefenseEnd;
             net.OnGameEnd            -= HandleNetworkGameEnd;
+            net.OnDisconnected       -= HandleNetworkDisconnected;
         }
     }
 
@@ -233,7 +235,8 @@ public class GameManager : MonoBehaviour
             // networkManager:null → DEFENSE_END 전송 안 함. 판정은 JUDGMENT 패킷이 담당.
             if (attackerPlayerId == myLocalPlayerId)
                 defenseTurn.Begin(attackResult.Notes, judgeLineX, attackStartX, attackEndX,
-                    attackTurn.AttackDuration, isAiDefense: false, networkManager: null);
+                    attackTurn.AttackDuration, isAiDefense: false, networkManager: null,
+                    remoteAttackStartDspTime: attackTurn.AttackStartDspTime);
             return;
         }
 
@@ -469,6 +472,16 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.END;
         Debug.Log("GameManager: 상대방 게임 종료 신호 수신");
+    }
+
+    /// <summary>
+    /// 상대방 연결이 예기치 않게 끊어졌을 때 호출.
+    /// </summary>
+    private void HandleNetworkDisconnected()
+    {
+        if (currentState == GameState.END) return;
+        currentState = GameState.END;
+        Debug.Log("GameManager: 상대방 연결 끊김");
     }
 
 }

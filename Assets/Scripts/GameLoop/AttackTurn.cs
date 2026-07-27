@@ -22,6 +22,11 @@ public class AttackTurn : MonoBehaviour
     /// </summary>
     public double AttackDuration => attackDuration;
 
+    /// <summary>
+    /// 현재 공격 턴이 시작된 DSP 시각. 미러뷰의 defenseStartDspTime 계산에 사용.
+    /// </summary>
+    public double AttackStartDspTime => attackStartDspTime;
+
     [Header("Rhythm [리듬 설정]")]
     [SerializeField] private int subdivisions = 2; // 1박당 분할 수. 2=반박(기본), 3=3연음
 

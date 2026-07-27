@@ -77,8 +77,11 @@ public class DefenseTurn : MonoBehaviour
     /// transferSpeed는 가장 이른 노트가 defenseStart에 출발해 judgeLineX에 도착하는 속도로 결정.
     /// 이후 노트일수록 이동 거리가 길어 더 빨리 출발하며, 모든 노트가 공격 턴과 동일한 박자 체감으로 도착.
     /// isAiDefense = true 이면 judgeTime 도달 시 자동 PERFECT 처리.
+    /// remoteAttackStartDspTime이 0이 아닌 경우, AudioSettings.dspTime 대신 이 값을 기반으로 defenseStartDspTime을 결정적으로 계산한다.
     /// </summary>
-    public void Begin(IReadOnlyList<NoteData> notes, float judgeLineX, float attackStartX, float attackEndX, double attackDuration, bool isAiDefense = false, NetworkManager networkManager = null)
+    public void Begin(IReadOnlyList<NoteData> notes, float judgeLineX, float attackStartX, float attackEndX,
+        double attackDuration, bool isAiDefense = false, NetworkManager networkManager = null,
+        double remoteAttackStartDspTime = 0.0)
     {
         this.networkManager = networkManager;
         isMirrorView = NetworkManager.Instance != null && networkManager == null;
@@ -106,11 +109,25 @@ public class DefenseTurn : MonoBehaviour
             ? Mathf.Abs(judgeLineX - firstInitialX) / (float)firstRelativeTime
             : 5f;
 
-        double defenseStartDspTime = AudioSettings.dspTime;
+        double defenseStartDspTime;
+        if (networkManager != null && remoteAttackStartDspTime > 0.0)
+        {
+            // 실제 방어자: 공격자 DSP 시각을 로컬 클럭으로 변환 후 공격 길이를 더해 공격 종료 시각을 결정적으로 계산
+            defenseStartDspTime = networkManager.TimeSync.CorrectTime(remoteAttackStartDspTime) + attackDuration;
+        }
+        else if (isMirrorView && remoteAttackStartDspTime > 0.0)
+        {
+            // 공격자 미러뷰: 동일 클럭이므로 보정 없이 공격 시작 + 공격 길이
+            defenseStartDspTime = remoteAttackStartDspTime + attackDuration;
+        }
+        else
+        {
+            // 로컬 전용 또는 fallback
+            defenseStartDspTime = AudioSettings.dspTime;
+        }
 
         foreach (var note in notes)
         {
-            // 네트워크 구현 시: defenseStartDspTime = attackStartDspTime + clockOffset + leadTime 으로 교체.
             note.judgeTime = defenseStartDspTime + note.noteRelativeTime;
             attackTurnRenderer.SetNoteJudgeTime(note.noteId, note.judgeTime);
             pendingNotes.Add(note);
@@ -156,7 +173,8 @@ public class DefenseTurn : MonoBehaviour
     {
         Debug.Log($"[Net] ATTACK_END 수신 / receivedNotes:{receivedNotes.Count}, isMirrorView:{isMirrorView}");
         Begin(receivedNotes, judgeLineX, attackStartX, attackEndX, pendingAttackDuration,
-            isAiDefense: false, networkManager: net);
+            isAiDefense: false, networkManager: net,
+            remoteAttackStartDspTime: packet.attackStartDspTime);
         receivedNotes.Clear();
     }
 

@@ -39,6 +39,8 @@ public class NetworkManager : Singleton<NetworkManager>
 
     // ── 수신 이벤트 ──────────────────────────────────────────────────────────
     public event Action OnConnected;
+    public event Action OnConnectionFailed;
+    public event Action OnDisconnected;
     public event Action<GameStartPacket> OnGameStart;
     public event Action OnGameEnd;
     public event Action<AttackStartPacket> OnAttackStart;
@@ -89,7 +91,6 @@ public class NetworkManager : Singleton<NetworkManager>
     public void Disconnect()
     {
         running = false;
-        receiveThread?.Abort();
         stream?.Close();
         client?.Close();
         listener?.Stop();
@@ -177,6 +178,7 @@ public class NetworkManager : Singleton<NetworkManager>
         catch (Exception e)
         {
             Debug.LogError($"NetworkManager: 연결 실패 — {e.Message}");
+            mainThreadQueue.Enqueue(() => OnConnectionFailed?.Invoke());
         }
     }
 
@@ -254,7 +256,10 @@ public class NetworkManager : Singleton<NetworkManager>
             catch (Exception e)
             {
                 if (running)
+                {
                     Debug.LogWarning($"NetworkManager: 수신 오류 — {e.Message}");
+                    mainThreadQueue.Enqueue(() => OnDisconnected?.Invoke());
+                }
                 break;
             }
         }
