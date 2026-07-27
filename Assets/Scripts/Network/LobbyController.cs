@@ -46,6 +46,8 @@ public class LobbyController : MonoBehaviour
         cancelJoinButton.onClick.AddListener(OnCancel);
 
         networkManager.OnConnected += HandleConnected;
+        networkManager.OnConnectionFailed += HandleConnectionFailed;
+        networkManager.OnDisconnected += HandleLobbyDisconnected;
         networkManager.OnGameStart += HandleGameStart;
 
         ShowMainMenu();
@@ -55,6 +57,8 @@ public class LobbyController : MonoBehaviour
     {
         if (networkManager == null) return;
         networkManager.OnConnected -= HandleConnected;
+        networkManager.OnConnectionFailed -= HandleConnectionFailed;
+        networkManager.OnDisconnected -= HandleLobbyDisconnected;
         networkManager.OnGameStart -= HandleGameStart;
     }
 
@@ -95,6 +99,17 @@ public class LobbyController : MonoBehaviour
     }
 
     // ── 네트워크 이벤트 ──────────────────────────────────────────────────────
+
+    private void HandleConnectionFailed()
+    {
+        joinStatusText.text = "연결에 실패했습니다. IP 주소를 확인해 주세요.";
+        connectButton.interactable = true;
+    }
+
+    private void HandleLobbyDisconnected()
+    {
+        ShowMainMenu();
+    }
 
     private void HandleConnected()
     {
