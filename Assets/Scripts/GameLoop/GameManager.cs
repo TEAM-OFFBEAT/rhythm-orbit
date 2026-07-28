@@ -71,6 +71,11 @@ public class GameManager : MonoBehaviour
             net.OnGameEnd            += HandleNetworkGameEnd;
             net.OnDisconnected       += HandleNetworkDisconnected;
         }
+
+        if (hud != null)
+        {
+            hud.SetupPlayerPerspective(myLocalPlayerId);
+        }
     }
 
     /// <summary>
