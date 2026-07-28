@@ -1,87 +1,115 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.UI;
 
+/// <summary>
+/// 게임 HUD 전체를 관리하는 UI 중계자.
+/// GameManager로부터 받은 P1/P2 데이터를 로컬 플레이어 관점의 My/Opponent 슬롯에 맞게 전달한다.
+/// </summary>
 public class HUD : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameManager gameManager;
 
     [Header("Game Status UI")]
-    [SerializeField] private TMP_Text p1JudgmentLabel;
-    [SerializeField] private TMP_Text p2JudgmentLabel;
-    [SerializeField] private TMP_Text p1SanityText;
-    [SerializeField] private TMP_Text p2SanityText;
-    [SerializeField] private Slider p1SanitySlider;
-    [SerializeField] private Slider p2SanitySlider;
-    //[SerializeField] private TMP_Text sanityDamageLabel;
     [SerializeField] private TMP_Text attackMessageLabel;
     [SerializeField] private TMP_Text bpmText;
     [SerializeField] private AttackProgressUI attackProgressUI;
-    
-    /*
-    private float sanityDamagePopupDuration = 1.0f;
-    private readonly Queue<string> sanityDamageQueue = new();
-    private Coroutine sanityDamageCoroutine;
-    */
+
+    [Header("Player HUD Slots")]
+    [SerializeField] private HUDPlayerSlotUI mySlot;
+    [SerializeField] private HUDPlayerSlotUI opponentSlot;
+
+    [Header("Default Name")]
+    [SerializeField] private string defaultPlayerName = "Player";
+
+    // 로컬 플레이어의 ID.
+    // 네트워크 모드에서는 NetworkManager.LocalPlayerId를 GameManager가 전달한다.
+    // 로컬 테스트 모드에서는 기본값 1을 사용한다.
+    private int localPlayerId = 1;
 
     /// <summary>
-    /// 두 플레이어의 판정 라벨을 초기화.
+    /// 로컬 플레이어 기준으로 My/Opponent 슬롯의 이름과 Host/Client 역할 표시를 설정한다.
+    /// GameManager.Awake()에서 로컬 플레이어 ID를 읽은 뒤 호출한다.
     /// </summary>
-    public void ClearJudgments()
+    public void SetupPlayerPerspective(int localPlayerId)
     {
-        if (p1JudgmentLabel != null) p1JudgmentLabel.text = string.Empty;
-        if (p2JudgmentLabel != null) p2JudgmentLabel.text = string.Empty;
+        this.localPlayerId = Mathf.Clamp(localPlayerId, 1, 2);
+
+        int opponentPlayerId = this.localPlayerId == 1 ? 2 : 1;
+
+        mySlot?.SetPlayerName(defaultPlayerName);
+        opponentSlot?.SetPlayerName(defaultPlayerName);
+
+        mySlot?.SetHostRole(IsHostPlayer(this.localPlayerId));
+        opponentSlot?.SetHostRole(IsHostPlayer(opponentPlayerId));
+
+        ClearJudgments();
     }
 
     /// <summary>
-    /// 방어자 판정 결과를 해당 플레이어 라벨에 표시. attackerSide가 P1이면 P2가 방어자.
+    /// 현재 규칙상 P1은 Host, P2는 Client로 취급한다.
+    /// </summary>
+    private bool IsHostPlayer(int playerId)
+    {
+        return playerId == 1;
+    }
+
+    /// <summary>
+    /// P1/P2 정신력 값을 로컬 플레이어 관점의 My/Opponent 슬롯에 맞게 표시한다.
+    /// SanitySystem.OnSanityChanged 이벤트를 받은 GameManager가 호출한다.
+    /// </summary>
+    public void UpdateSanity(int p1Sanity, int p2Sanity, int maxSanity)
+    {
+        int mySanity = localPlayerId == 1 ? p1Sanity : p2Sanity;
+        int opponentSanity = localPlayerId == 1 ? p2Sanity : p1Sanity;
+
+        mySlot?.UpdateSanity(mySanity, maxSanity);
+        opponentSlot?.UpdateSanity(opponentSanity, maxSanity);
+    }
+
+    /// <summary>
+    /// 테스트용 정신력 갱신 함수.
+    /// maxSanity를 100으로 가정한다.
+    /// </summary>
+    public void UpdateSanity(int p1Sanity, int p2Sanity)
+    {
+        UpdateSanity(p1Sanity, p2Sanity, 100);
+    }
+
+    /// <summary>
+    /// 방어자 판정 결과를 My/Opponent 슬롯 중 올바른 위치에 표시한다.
+    /// attackerSide가 P1이면 방어자는 P2, attackerSide가 P2이면 방어자는 P1이다.
     /// </summary>
     public void ShowJudgment(Judgment judgment, AttackSide attackerSide)
     {
-        TMP_Text label = attackerSide == AttackSide.P1 ? p2JudgmentLabel : p1JudgmentLabel;
-        if (label == null) return;
-        label.text = judgment.ToString();
+        int attackerPlayerId = attackerSide == AttackSide.P1 ? 1 : 2;
+        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
+
+        bool isMyJudgment = defenderPlayerId == localPlayerId;
+
+        if (isMyJudgment)
+        {
+            mySlot?.ShowJudgment(judgment);
+        }
+        else
+        {
+            opponentSlot?.ShowJudgment(judgment);
+        }
     }
 
     /// <summary>
-    /// 두 플레이어의 정신력 수치를 HUD에 반영.
+    /// My/Opponent 슬롯의 판정 라벨을 초기화한다.
+    /// 턴 전환 시 GameManager가 호출한다.
     /// </summary>
-    public void UpdateSanity(int p1, int p2, int maxSanity)
+    public void ClearJudgments()
     {
-        if (p1SanityText != null)
-        {
-            p1SanityText.text = $"P1 SANITY {p1} / {maxSanity}";
-        }
-
-        if (p2SanityText != null)
-        {
-            p2SanityText.text = $"P2 SANITY {p2} / {maxSanity}";
-        }
-
-        if (p1SanitySlider != null)
-        {
-            p1SanitySlider.maxValue = maxSanity;
-            p1SanitySlider.value = p1;
-        }
-
-        if (p2SanitySlider != null)
-        {
-            p2SanitySlider.maxValue = maxSanity;
-            p2SanitySlider.value = p2;
-        }
+        mySlot?.ClearJudgment();
+        opponentSlot?.ClearJudgment();
     }
 
     /// <summary>
-    /// 오버로딩
-    /// </summary>
-    public void UpdateSanity(int p1, int p2)
-    {
-        UpdateSanity(p1, p2, 100);
-    }
-
-    /// <summary>
-    /// 현재 BPM 수치를 HUD에 표시.
+    /// 현재 BPM 수치를 HUD에 표시한다.
+    /// BPM 단계 변경 시 GameManager가 호출한다.
     /// </summary>
     public void UpdateBpm(float bpm)
     {
@@ -92,7 +120,8 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// HIGH 노트 Tap 입력. UI 버튼 또는 Input Action에서 호출.
+    /// HIGH 노트 입력 버튼에서 호출된다.
+    /// 실제 입력 처리는 GameManager로 전달한다.
     /// </summary>
     public void OnTapHigh()
     {
@@ -101,11 +130,13 @@ public class HUD : MonoBehaviour
             Debug.LogWarning("GameManager가 HUD에 연결되지 않았습니다.");
             return;
         }
+
         gameManager.OnTapHigh();
     }
 
     /// <summary>
-    /// LOW 노트 Tap 입력. UI 버튼 또는 Input Action에서 호출.
+    /// LOW 노트 입력 버튼에서 호출된다.
+    /// 실제 입력 처리는 GameManager로 전달한다.
     /// </summary>
     public void OnTapLow()
     {
@@ -114,49 +145,13 @@ public class HUD : MonoBehaviour
             Debug.LogWarning("GameManager가 HUD에 연결되지 않았습니다.");
             return;
         }
+
         gameManager.OnTapLow();
     }
 
     /// <summary>
-    /// 정신력 감소 팝업 추가
-    /// </summary>
-    /*
-    public void ShowSanityDamage(int playerId, int amount, string reason)
-    {
-        sanityDamageQueue.Enqueue($"P{playerId} 정신력 -{amount}\n{reason}");
-
-        if (sanityDamageCoroutine == null)
-        {
-            sanityDamageCoroutine = StartCoroutine(ShowSanityDamageQueue());
-        }
-    }
-
-    private IEnumerator ShowSanityDamageQueue()
-    {
-        while (sanityDamageQueue.Count > 0)
-        {
-            string message = sanityDamageQueue.Dequeue();
-
-            if (sanityDamageLabel != null)
-            {
-                sanityDamageLabel.text = message;
-                sanityDamageLabel.gameObject.SetActive(true);
-            }
-
-            yield return new WaitForSeconds(sanityDamagePopupDuration);
-        }
-
-        if (sanityDamageLabel != null)
-        {
-            sanityDamageLabel.text = string.Empty;
-            sanityDamageLabel.gameObject.SetActive(false);
-        }
-
-        sanityDamageCoroutine = null;
-    }
-    */
-    /// <summary>
-    /// 현재 공격 턴의 목표 메시지를 표시.
+    /// 현재 공격 턴의 목표 메시지를 표시한다.
+    /// AttackTurn.OnAttackMessageSelected 이벤트를 받은 GameManager가 호출한다.
     /// </summary>
     public void ShowAttackMessage(string message, AttackSide attackerSide)
     {
@@ -167,7 +162,8 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 진행도 별 UI를 갱신.
+    /// 공격 턴의 노트 생성 진행도를 별 UI에 반영한다.
+    /// AttackTurn.OnAttackProgressChanged 이벤트를 받은 GameManager가 호출한다.
     /// </summary>
     public void UpdateAttackProgress(int currentCount, int targetCount)
     {
@@ -182,12 +178,11 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 진행도 별 UI 초기화
+    /// 공격 진행도 별 UI를 초기화한다.
+    /// 턴 전환 또는 공격 종료 후 필요할 때 GameManager가 호출한다.
     /// </summary>
     public void ClearAttackProgress()
     {
-        if (attackProgressUI == null) return;
-
-        attackProgressUI.Clear();
+        attackProgressUI?.Clear();
     }
 }
