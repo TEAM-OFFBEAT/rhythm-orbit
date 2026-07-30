@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using System.Collections;
 /// <summary>
 /// 게임 상태 머신 + 컴포넌트 간 이벤트 중계자 역할.
 /// 턴 흐름 제어, 입력 라우팅, 이벤트 중계, 카메라 뷰 전환 등 게임 루프 전반을 관리.
@@ -23,12 +23,21 @@ public class GameManager : MonoBehaviour
     [Header("Sanity System")]
     [SerializeField] private SanitySystem sanitySystem;
     
+    [Header("Result UI")]
+    [SerializeField] private ResultPanelUI resultPanelUI;
+    
     [Header("BPM Progression")]
     [SerializeField] private int turnsPerBpmIncrease = 2;
     [SerializeField] private float[] bpmStages = { 106f, 120f, 144f };
     
-    [Header("Result UI")]
-    [SerializeField] private ResultPanelUI resultPanelUI;
+    [Header("Game Start Delay")]
+    [SerializeField] private bool useMillisecondStartDelay = true;
+    [SerializeField] private int gameStartDelayMs = 1000;
+
+    [SerializeField] private bool useBeatStartDelay = true;
+    [SerializeField] private int gameStartDelayBeats = 4;
+
+    private Coroutine gameStartDelayCoroutine;
 
     private int completedTurnCount;
     private int currentBpmStageIndex;
@@ -145,27 +154,37 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGame()
     {   
+        resultPanelUI?.HideAll();
+
         completedTurnCount = 0;
         currentBpmStageIndex = 0;
         attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
         
+        // 첫 턴 시작 전 대기 중에는 입력이 공격/방어로 들어가면 안 되므로 TURN_CHANGE 상태로 둔다.
+        currentState = GameState.TURN_CHANGE;
+
         if (sanitySystem != null)
         {
             sanitySystem.ResetSanity();
         }
         
-
         ApplyCurrentBpm();
+
+        double rhythmStartDspTime = AudioSettings.dspTime;
 
         if (RhythmClock.Instance != null)
         {
             double startDspTime = NetworkManager.Instance != null
                 ? NetworkManager.Instance.LocalGameStartDspTime
                 : AudioSettings.dspTime;
-            RhythmClock.Instance.StartClock(startDspTime);
+            RhythmClock.Instance.StartClock(rhythmStartDspTime);
+        }
+        if (gameStartDelayCoroutine != null)
+        {
+            StopCoroutine(gameStartDelayCoroutine);
         }
 
-        StartAttackPhase();
+        gameStartDelayCoroutine = StartCoroutine(StartFirstTurnAfterDelay(rhythmStartDspTime));
     }
 
     /// <summary>
@@ -629,5 +648,83 @@ public class GameManager : MonoBehaviour
             isApplyingRemoteGameState = false;
         }
     }
+    /// <summary>
+    /// 리듬 클락 시작 시각을 기준으로 첫 공격 턴 시작 시간을 계산하고,
+    /// 해당 시간이 될 때까지 기다린 뒤 첫 공격 턴을 시작한다.
+    /// </summary>
+    private IEnumerator StartFirstTurnAfterDelay(double rhythmStartDspTime)
+    {
+        double delaySeconds = GetGameStartDelaySeconds();
 
+        // 딜레이가 0이면 다음 프레임까지 기다리지 않고 바로 첫 공격 턴을 시작한다.
+        if (delaySeconds <= 0.0)
+        {
+            gameStartDelayCoroutine = null;
+            StartAttackPhase();
+            yield break;
+        }
+
+        double firstTurnStartDspTime = rhythmStartDspTime + delaySeconds;
+
+        Debug.Log(
+            $"Game Start Delay / msEnabled:{useMillisecondStartDelay}, ms:{gameStartDelayMs}, " +
+            $"beatEnabled:{useBeatStartDelay}, beats:{gameStartDelayBeats}, " +
+            $"totalDelay:{delaySeconds:F3}s, firstTurnStart:{firstTurnStartDspTime:F3}"
+        );
+
+        while (AudioSettings.dspTime < firstTurnStartDspTime)
+        {
+            if (currentState == GameState.END)
+            {
+                gameStartDelayCoroutine = null;
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        gameStartDelayCoroutine = null;
+
+        if (currentState == GameState.END) yield break;
+
+        StartAttackPhase();
+    }
+    /// <summary>
+    /// 인스펙터 체크박스 설정에 따라 첫 턴 시작 전 대기 시간을 초 단위로 계산한다.
+    /// ms 체크박스와 beat 체크박스가 모두 켜져 있으면 두 값을 더해서 사용한다.
+    /// 둘 다 꺼져 있으면 0초를 반환한다.
+    /// </summary>
+    private double GetGameStartDelaySeconds()
+    {
+        double delaySeconds = 0.0;
+
+        if (useMillisecondStartDelay)
+        {
+            delaySeconds += Mathf.Max(0, gameStartDelayMs) / 1000.0;
+        }
+
+        if (useBeatStartDelay)
+        {
+            delaySeconds += GetCurrentBeatDurationSeconds() * Mathf.Max(0, gameStartDelayBeats);
+        }
+
+        return delaySeconds;
+    }
+
+    /// <summary>
+    /// 현재 BPM 단계 기준으로 1박자의 길이를 초 단위로 반환한다.
+    /// 첫 턴 시작 전에는 ApplyCurrentBpm()으로 currentBpmStageIndex가 먼저 설정되어 있어야 한다.
+    /// </summary>
+    private double GetCurrentBeatDurationSeconds()
+    {
+        if (bpmStages == null || bpmStages.Length == 0)
+        {
+            return 60.0 / 120.0;
+        }
+
+        int safeIndex = Mathf.Clamp(currentBpmStageIndex, 0, bpmStages.Length - 1);
+        float bpm = Mathf.Max(1f, bpmStages[safeIndex]);
+
+        return 60.0 / bpm;
+    }
 }
