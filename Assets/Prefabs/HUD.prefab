@@ -2995,7 +2995,7 @@ MonoBehaviour:
   defaultPortrait: {fileID: 6348650364859679042, guid: e84e2ac2f1c8de447ac9f1f77c7e0875, type: 3}
   nameText: {fileID: 8843575491015221942}
   roleText: {fileID: 7045518653836685156}
-  showClientRole: 1
+  showGuestRole: 1
   sanityText: {fileID: 8496526074489073658}
   sanitySlider: {fileID: 8209978018075474777}
   judgmentLabel: {fileID: 6485202493117855234}
@@ -3278,10 +3278,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Message
+  m_text: "\uB79C\uB364\uBA54\uC2DC\uC9C0"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 88bf27a26e10de146a83d589feccc5c5, type: 2}
+  m_sharedMaterial: {fileID: 4834826722952762383, guid: 88bf27a26e10de146a83d589feccc5c5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3448,7 +3448,7 @@ MonoBehaviour:
   defaultPortrait: {fileID: -5753959745434874293, guid: 10d6a8fe7c6f2aa4cba5363dc0e31b12, type: 3}
   nameText: {fileID: 6794769460500575595}
   roleText: {fileID: 5641015664744765890}
-  showClientRole: 1
+  showGuestRole: 1
   sanityText: {fileID: 4126034067170213231}
   sanitySlider: {fileID: 4888393601062870406}
   judgmentLabel: {fileID: 1900013767317057958}
