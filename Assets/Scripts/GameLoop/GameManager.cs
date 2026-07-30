@@ -509,19 +509,47 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 원격 공격자의 ATTACK_START 수신 시 호출. 방어자 화면 준비 및 공격 컨텍스트를 DefenseTurn에 전달한다.
+    /// 원격 공격자의 ATTACK_START 수신 시 호출.
+    /// 방어자 화면을 준비하고, 공격자가 생성한 목표 노트 수와 메시지를 그대로 사용한다.
     /// </summary>
     private void HandleNetworkAttackStart(AttackStartPacket packet)
     {
-        AttackSide attackerSide = packet.attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        if (gameStartDelayCoroutine != null)
+        {
+            StopCoroutine(gameStartDelayCoroutine);
+            gameStartDelayCoroutine = null;
+        }
+
+        attackerPlayerId = packet.attackerPlayerId;
+        AttackSide attackerSide = GetAttackSide(packet.attackerPlayerId);
         gameCamera?.SetAttackView(attackerSide);
+
+        currentTargetNoteCount = packet.targetNoteCount;
+        currentReceivedNoteCount = 0;
+
+        // 중요:
+        // 방어자는 RandomMessageProvider를 돌리지 않는다.
+        // 공격자가 보낸 메시지를 그대로 표시한다.
+        hud?.ShowAttackMessage(packet.attackMessage, attackerSide);
+        hud?.UpdateAttackProgress(0, currentTargetNoteCount);
 
         var net = NetworkManager.Instance;
         if (net != null && attackTurnRenderer != null)
         {
             double correctedStart = net.TimeSync.CorrectTime(packet.attackStartDspTime);
-            Debug.Log($"[Net] ATTACK_START 수신 / attacker:P{packet.attackerPlayerId}, correctedStart:{correctedStart:F3}, now:{AudioSettings.dspTime:F3}, lag:{(AudioSettings.dspTime - correctedStart) * 1000:F1}ms");
-            attackTurnRenderer.BeginAttackVisual(attackerSide, correctedStart, packet.attackDuration, 0);
+
+            Debug.Log(
+                $"[Net] ATTACK_START 수신 / attacker:P{packet.attackerPlayerId}, " +
+                $"target:{packet.targetNoteCount}, message:{packet.attackMessage}, " +
+                $"correctedStart:{correctedStart:F3}, now:{AudioSettings.dspTime:F3}"
+            );
+
+            attackTurnRenderer.BeginAttackVisual(
+                attackerSide,
+                correctedStart,
+                packet.attackDuration,
+                packet.targetNoteCount
+            );
         }
 
         defenseTurn.OnAttackStartReceived(packet);
