@@ -175,4 +175,36 @@ public static class PacketSerializer
     /// </summary>
     public static DefenseEndPacket ReadDefenseEnd(BinaryReader r)
         => new DefenseEndPacket { missCount = r.ReadInt32() };
+
+    /// <summary>
+    /// 게임 종료 패킷을 기록한다.
+    /// 종료 사유와 패배한 플레이어 ID를 함께 전송한다.
+    /// </summary>
+    public static void WriteGameEnd(BinaryWriter writer, GameEndReason reason, int defeatedPlayerId = 0)
+    {
+        writer.Write((byte)PacketType.GAME_END);
+        writer.Write((byte)reason);
+        writer.Write(ClampPlayerIdToByte(defeatedPlayerId));
+    }
+
+    /// <summary>
+    /// 게임 종료 패킷의 본문을 읽는다.
+    /// 패킷 타입 byte는 ReceiveLoop에서 이미 읽었으므로 여기서는 본문만 읽는다.
+    /// </summary>
+    public static GameEndPacket ReadGameEnd(BinaryReader reader)
+    {
+        return new GameEndPacket
+        {
+            reason = (GameEndReason)reader.ReadByte(),
+            defeatedPlayerId = reader.ReadByte()
+        };
+    }
+
+    private static byte ClampPlayerIdToByte(int playerId)
+    {
+        if (playerId < 0) return 0;
+        if (playerId > 2) return 2;
+
+        return (byte)playerId;
+    }    
 }

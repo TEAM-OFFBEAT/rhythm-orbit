@@ -1,6 +1,7 @@
 public enum Judgment { PERFECT, GOOD, MISS }
 public enum GameState { ATTACK, DEFENSE, TURN_CHANGE, END }
 public enum NoteType { HIGH, LOW }
+public enum GameResultType { Win, Lose, CommunicationSuccess }
 public enum PacketType
 {
     PING, PONG,          // 클럭 동기화 — RTT 측정으로 두 기기의 dspTime 오프셋 계산
@@ -12,3 +13,4 @@ public enum PacketType
     JUDGMENT,            // 방어자 노트 판정 결과 실시간 전송 → 공격자 화면 동기화 (noteId + judgment)
     DEFENSE_END,         // 방어 종료 → 다음 공격 시작 트리거 (missCount)
 }
+

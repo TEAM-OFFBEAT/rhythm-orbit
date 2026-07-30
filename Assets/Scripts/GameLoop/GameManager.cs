@@ -26,6 +26,9 @@ public class GameManager : MonoBehaviour
     [Header("BPM Progression")]
     [SerializeField] private int turnsPerBpmIncrease = 2;
     [SerializeField] private float[] bpmStages = { 106f, 120f, 144f };
+    
+    [Header("Result UI")]
+    [SerializeField] private ResultPanelUI resultPanelUI;
 
     private int completedTurnCount;
     private int currentBpmStageIndex;
@@ -33,6 +36,10 @@ public class GameManager : MonoBehaviour
     private GameState currentState;
     private int attackerPlayerId = 1;
     private int myLocalPlayerId = 1; // NetworkManager.Instance에서 Awake() 시 읽어옴
+
+    // 상대 패킷을 반영해서 정신력이 깎이는 중인지 표시.
+    // true일 때 발생한 패배는 이미 상대 쪽 흐름에서 온 것이므로 GAME_END를 다시 보내지 않는다.
+    private bool isApplyingRemoteGameState;
 
     /// <summary>
     /// 필수 참조를 확인하고 각 시스템의 이벤트를 구독한다.
@@ -120,7 +127,14 @@ public class GameManager : MonoBehaviour
     /// 네트워크 모드에서 씬 로드 직후 자동으로 게임을 시작한다.
     /// </summary>
     private void Start()
-    {
+    {   
+        //결과 패널 숨기기
+        resultPanelUI?.HideAll();
+
+        completedTurnCount = 0;
+        currentBpmStageIndex = 0;
+        attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
+
         if (NetworkManager.Instance != null)
             StartGame();
     }
@@ -212,64 +226,138 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 턴 종료 시 방어 턴을 시작하고 HUD와 카메라를 업데이트.
+    /// 공격 턴 종료 시 공격자 패널티를 적용하고 방어 턴을 시작한다.
+    /// 공격자의 정신력이 0이 되는 경우 게임 종료 처리는 SanitySystem.OnPlayerDefeated 이벤트가 담당한다.
     /// </summary>
     private void HandleAttackEnded(AttackResult attackResult)
     {
+        if (currentState == GameState.END) return;
+
         currentState = GameState.DEFENSE;
+
+        // 공격 실패 패널티 적용.
+        // 이 과정에서 정신력이 0이 되면 SanitySystem.OnPlayerDefeated가 발생한다.
         sanitySystem?.ApplyAttackResult(attackerPlayerId, attackResult);
 
-        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(attackerPlayerId))
-        {
-            currentState = GameState.END;
-            NetworkManager.Instance?.Send(w => PacketSerializer.WriteGameEnd(w));
-            Debug.Log($"Game End / P{attackerPlayerId} sanity depleted during attack.");
-            return;
-        }
+        // ApplyAttackResult 중 게임이 종료되었으면 방어 턴을 시작하지 않는다.
+        if (currentState == GameState.END) return;
 
-        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         gameCamera?.SetDefenseView(attackerSide);
 
-        float judgeLineX   = attackTurnRenderer.GetJudgeLineX(attackerSide);
+        float judgeLineX = attackTurnRenderer.GetJudgeLineX(attackerSide);
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
-        float attackEndX   = attackTurnRenderer.GetEndX(attackerSide);
+        float attackEndX = attackTurnRenderer.GetEndX(attackerSide);
 
         if (NetworkManager.Instance != null)
         {
-            // 네트워크 모드: 로컬이 공격자일 때 공격자 화면에서도 노트 이동 시작.
-            // networkManager:null → DEFENSE_END 전송 안 함. 판정은 JUDGMENT 패킷이 담당.
+            // 네트워크 모드에서 로컬이 공격자라면,
+            // 공격자 화면에서도 방어 노트 이동을 미러뷰로 보여준다.
+            // networkManager:null → DEFENSE_END 전송 안 함.
+            // 실제 판정 결과는 상대가 보낸 JUDGMENT 패킷으로 처리한다.
             if (attackerPlayerId == myLocalPlayerId)
-                defenseTurn.Begin(attackResult.Notes, judgeLineX, attackStartX, attackEndX,
-                    attackTurn.AttackDuration, isAiDefense: false, networkManager: null,
-                    remoteAttackStartDspTime: attackTurn.AttackStartDspTime);
+            {
+                defenseTurn.Begin(
+                    attackResult.Notes,
+                    judgeLineX,
+                    attackStartX,
+                    attackEndX,
+                    attackTurn.AttackDuration,
+                    isAiDefense: false,
+                    networkManager: null,
+                    remoteAttackStartDspTime: attackTurn.AttackStartDspTime
+                );
+            }
+
             return;
         }
 
-        defenseTurn.Begin(attackResult.Notes, judgeLineX, attackStartX, attackEndX,
-            attackTurn.AttackDuration, isAiDefense: (attackerPlayerId == 1));
+        // 로컬 테스트 모드.
+        defenseTurn.Begin(
+            attackResult.Notes,
+            judgeLineX,
+            attackStartX,
+            attackEndX,
+            attackTurn.AttackDuration,
+            isAiDefense: attackerPlayerId == 1
+        );
     }
 
     /// <summary>
-    /// 방어 턴에서 노트 판정 시 HUD에 결과를 표시.
+    /// 실제 방어자의 노트 판정 결과를 처리한다.
+    /// MISS일 경우 방어자의 정신력을 감소시킨다.
+    /// 정신력이 0이 되는 순간의 게임 종료 처리는 SanitySystem.OnPlayerDefeated 이벤트가 담당한다.
     /// </summary>
     private void HandleJudgment(Judgment judgment)
     {
-        // 네트워크 모드에서 로컬이 공격자면: 판정 시각화는 JUDGMENT 패킷(HandleNetworkJudgment)이 담당
+        if (currentState == GameState.END) return;
+
+        // 네트워크 모드에서 내가 공격자라면,
+        // 방어 판정 표시는 상대가 보낸 JUDGMENT 패킷을 받은 HandleNetworkJudgment가 담당한다.
         if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId) return;
 
-        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         hud?.ShowJudgment(judgment, attackerSide);
 
         if (judgment != Judgment.MISS) return;
 
-        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
-        sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
+        int defenderPlayerId = GetDefenderPlayerId();
 
-        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(defenderPlayerId))
+        // 여기서는 정신력만 깎는다.
+        // 정신력이 0이 되면 SanitySystem 내부에서 OnPlayerDefeated 이벤트가 발생한다.
+        sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
+    }
+
+    /// <summary>
+    /// 특정 플레이어의 정신력이 0이 되어 게임이 종료되었을 때 호출한다.
+    /// 내 화면에는 localPlayerId 기준으로 승리/패배 패널을 표시하고,
+    /// 내가 직접 감지한 종료라면 상대에게 GAME_END 패킷을 전송한다.
+    /// </summary>
+    private void EndGameByDefeatedPlayer(int defeatedPlayerId, bool shouldSendNetworkPacket)
+    {
+        if (currentState == GameState.END) return;
+
+        currentState = GameState.END;
+
+        attackTurnRenderer?.ClearAll();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+
+        GameResultType resultType = defeatedPlayerId == myLocalPlayerId
+            ? GameResultType.Lose
+            : GameResultType.Win;
+
+        resultPanelUI?.Show(resultType);
+
+        Debug.Log($"Game End / P{defeatedPlayerId} sanity depleted. Result: {resultType}");
+
+        if (shouldSendNetworkPacket && NetworkManager.Instance != null)
         {
-            currentState = GameState.END;
-            Debug.Log($"Game End / P{defenderPlayerId} sanity depleted during defense.");
+            NetworkManager.Instance.Send(writer =>
+                PacketSerializer.WriteGameEnd(
+                    writer,
+                    GameEndReason.PlayerDefeated,
+                    defeatedPlayerId
+                )
+            );
         }
+    }
+
+    /// <summary>
+    /// 현재 공격자의 반대 플레이어를 방어자로 반환한다.
+    /// P1이 공격 중이면 P2가 방어자, P2가 공격 중이면 P1이 방어자다.
+    /// </summary>
+    private int GetDefenderPlayerId()
+    {
+        return attackerPlayerId == 1 ? 2 : 1;
+    }
+
+    /// <summary>
+    /// 플레이어 ID를 HUD와 Renderer에서 사용하는 AttackSide 값으로 변환한다.
+    /// </summary>
+    private AttackSide GetAttackSide(int playerId)
+    {
+        return playerId == 1 ? AttackSide.P1 : AttackSide.P2;
     }
     /// <summary>
     /// 방어 턴의 개별 노트 판정 이벤트 처리.
@@ -319,13 +407,17 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 플레이어 정신력이 0이 되었을 때 호출된다.
-    /// 현재는 로그만 출력하며, 이후 게임 종료 UI와 연결할 수 있다.
+    /// SanitySystem에서 플레이어 정신력이 0이 되었을 때 호출된다.
+    /// 로컬 플레이어 기준으로 승리/패배 결과를 표시하고,
+    /// 내가 직접 만든 게임 종료라면 상대에게 GAME_END 패킷을 전송한다.
     /// </summary>
-    private void HandlePlayerDefeated(int playerId)
+    private void HandlePlayerDefeated(int defeatedPlayerId)
     {
-        Debug.Log($"Player Defeated / P{playerId}");
-        NetworkManager.Instance?.Send(w => PacketSerializer.WriteGameEnd(w));
+        bool shouldSendNetworkPacket =
+            NetworkManager.Instance != null &&
+            !isApplyingRemoteGameState;
+
+        EndGameByDefeatedPlayer(defeatedPlayerId, shouldSendNetworkPacket);
     }
 
     /// <summary>
@@ -395,29 +487,6 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 방어자의 노트 판정 결과 수신 시 호출. 공격자 화면에서 노트 제거 및 판정 UI를 표시한다.
-    /// </summary>
-    private void HandleNetworkJudgment(JudgmentPacket packet)
-    {
-        Judgment judgment = (Judgment)packet.judgment;
-        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-
-        defenseTurn.RemoteRemoveNote(packet.noteId);
-        hud?.ShowJudgment(judgment, attackerSide);
-
-        if (judgment != Judgment.MISS) return;
-
-        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
-        sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
-
-        if (sanitySystem != null && sanitySystem.IsPlayerDefeated(defenderPlayerId))
-        {
-            currentState = GameState.END;
-            Debug.Log($"Game End / P{defenderPlayerId} sanity depleted during defense.");
-        }
-    }
-
-    /// <summary>
     /// 원격 공격자의 ATTACK_START 수신 시 호출. 방어자 화면 준비 및 공격 컨텍스트를 DefenseTurn에 전달한다.
     /// </summary>
     private void HandleNetworkAttackStart(AttackStartPacket packet)
@@ -471,15 +540,6 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 원격 기기의 GAME_END 수신 시 호출.
-    /// </summary>
-    private void HandleNetworkGameEnd()
-    {
-        currentState = GameState.END;
-        Debug.Log("GameManager: 상대방 게임 종료 신호 수신");
-    }
-
-    /// <summary>
     /// 상대방 연결이 예기치 않게 끊어졌을 때 호출.
     /// </summary>
     private void HandleNetworkDisconnected()
@@ -487,6 +547,87 @@ public class GameManager : MonoBehaviour
         if (currentState == GameState.END) return;
         currentState = GameState.END;
         Debug.Log("GameManager: 상대방 연결 끊김");
+    }
+
+    /// <summary>
+    /// 양쪽 플레이어가 마지막까지 생존하여 교신 성공 조건을 만족했을 때 호출한다.
+    /// 현재는 조건이 확정되지 않았으므로 추후 BGM 종료 또는 목표 달성 조건에서 호출한다.
+    /// </summary>
+    private void EndGameByCommunicationSuccess(bool shouldSendNetworkPacket)
+    {
+        if (currentState == GameState.END) return;
+
+        currentState = GameState.END;
+
+        attackTurnRenderer?.ClearAll();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+
+        resultPanelUI?.Show(GameResultType.CommunicationSuccess);
+
+        Debug.Log("Game End / Communication Success.");
+
+        if (shouldSendNetworkPacket && NetworkManager.Instance != null)
+        {
+            NetworkManager.Instance.Send(writer =>
+                PacketSerializer.WriteGameEnd(
+                    writer,
+                    GameEndReason.CommunicationSuccess,
+                    defeatedPlayerId: 0
+                )
+            );
+        }
+    }
+    /// <summary>
+    /// 상대 클라이언트에서 전송한 GAME_END 패킷을 처리한다.
+    /// 패킷 내용은 공통이지만, 결과 패널은 각자의 localPlayerId 기준으로 다르게 표시된다.
+    /// </summary>
+    private void HandleNetworkGameEnd(GameEndPacket packet)
+    {
+        if (currentState == GameState.END) return;
+
+        switch (packet.reason)
+        {
+            case GameEndReason.PlayerDefeated:
+                EndGameByDefeatedPlayer(packet.defeatedPlayerId, shouldSendNetworkPacket: false);
+                break;
+
+            case GameEndReason.CommunicationSuccess:
+                EndGameByCommunicationSuccess(shouldSendNetworkPacket: false);
+                break;
+        }
+    }
+    /// <summary>
+    /// 상대 클라이언트에서 받은 판정 패킷을 처리한다.
+    /// MISS일 경우 로컬 정신력 상태도 맞춰주지만,
+    /// 이 과정에서 발생한 패배는 다시 GAME_END로 전송하지 않는다.
+    /// </summary>
+    private void HandleNetworkJudgment(JudgmentPacket packet)
+    {
+        if (currentState == GameState.END) return;
+
+        Judgment judgment = (Judgment)packet.judgment;
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+
+        defenseTurn?.RemoteRemoveNote(packet.noteId);
+        hud?.ShowJudgment(judgment, attackerSide);
+
+        if (judgment != Judgment.MISS) return;
+
+        int defenderPlayerId = GetDefenderPlayerId();
+
+        isApplyingRemoteGameState = true;
+
+        try
+        {
+            // 상대에게 받은 판정 결과를 내 로컬 정신력 상태에도 반영한다.
+            // 이 과정에서 OnPlayerDefeated가 발생해도 GAME_END를 다시 보내면 안 된다.
+            sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
+        }
+        finally
+        {
+            isApplyingRemoteGameState = false;
+        }
     }
 
 }
