@@ -40,9 +40,11 @@ public static class PacketSerializer
     /// <summary>
     /// 게임 세션 종료 신호. 페이로드 없음.
     /// </summary>
+    /*
     public static void WriteGameEnd(BinaryWriter w)
         => w.Write((byte)PacketType.GAME_END);
-
+    */
+    
     /// <summary>
     /// 공격 시작 알림. 방어자가 실시간 노트 시각화를 준비하는 데 사용.
     /// </summary>
@@ -185,6 +187,7 @@ public static class PacketSerializer
     /// 게임 종료 패킷을 기록한다.
     /// 종료 사유와 패배한 플레이어 ID를 함께 전송한다.
     /// </summary>
+
     public static void WriteGameEnd(BinaryWriter writer, GameEndReason reason, int defeatedPlayerId = 0)
     {
         writer.Write((byte)PacketType.GAME_END);

@@ -235,7 +235,7 @@ public class AttackTurn : MonoBehaviour
             byte attackerId = (byte)(side == AttackSide.P1 ? 1 : 2);
             double dur = attackDuration;
             double startTime = attackStartDspTime;
-            networkManager.Send(w => PacketSerializer.WriteAttackStart(w, attackerId, dur, startTime,targetTapCount,attackMessage));
+            networkManager.Send(w => PacketSerializer.WriteAttackStart(w, attackerId, dur, startTime,targetTapCount,currentAttackMessage));
         }
 
         if (attackTurnRenderer != null)
