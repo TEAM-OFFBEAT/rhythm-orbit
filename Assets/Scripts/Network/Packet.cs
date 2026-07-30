@@ -19,6 +19,14 @@ public struct AttackStartPacket
     public byte attackerPlayerId;
     public double attackDuration;     // 방어자가 NOTE_CREATED 스폰 위치 계산에 사용
     public double attackStartDspTime; // 방어자가 BeginAttackVisual 즉시 시작에 사용
+
+    // 이번 공격 턴의 목표 노트 수.
+    // 공격자만 랜덤 생성하고, 방어자는 이 값을 패킷으로 받아서 사용한다.
+    public int targetNoteCount;
+
+    // 이번 공격 턴에 표시할 메시지.
+    // 방어자는 RandomMessageProvider를 돌리지 않고 이 문자열을 그대로 표시한다.
+    public string attackMessage;
 }
 
 /// <summary>

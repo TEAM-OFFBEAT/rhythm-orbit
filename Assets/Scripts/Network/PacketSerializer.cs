@@ -46,12 +46,15 @@ public static class PacketSerializer
     /// <summary>
     /// 공격 시작 알림. 방어자가 실시간 노트 시각화를 준비하는 데 사용.
     /// </summary>
-    public static void WriteAttackStart(BinaryWriter w, byte attackerPlayerId, double attackDuration, double attackStartDspTime)
+    public static void WriteAttackStart(BinaryWriter w, byte attackerPlayerId, double attackDuration, double attackStartDspTime, int targetNoteCount,
+    string attackMessage)
     {
         w.Write((byte)PacketType.ATTACK_START);
         w.Write(attackerPlayerId);
         w.Write(attackDuration);
         w.Write(attackStartDspTime);
+        w.Write(targetNoteCount);
+        w.Write(attackMessage ?? string.Empty);
     }
 
     /// <summary>
@@ -132,7 +135,9 @@ public static class PacketSerializer
         {
             attackerPlayerId   = r.ReadByte(),
             attackDuration     = r.ReadDouble(),
-            attackStartDspTime = r.ReadDouble()
+            attackStartDspTime = r.ReadDouble(),
+            targetNoteCount    = r.ReadInt32(),
+            attackMessage      = r.ReadString()
         };
 
     /// <summary>
