@@ -61,3 +61,19 @@ public struct DefenseEndPacket
 {
     public int missCount;
 }
+
+public enum GameEndReason
+{
+    PlayerDefeated,
+    CommunicationSuccess
+}
+
+public struct GameEndPacket
+{
+    public GameEndReason reason;
+
+    // reason이 PlayerDefeated일 때만 사용한다.
+    // P1이 패배하면 1, P2가 패배하면 2.
+    // CommunicationSuccess일 때는 0으로 둔다.
+    public byte defeatedPlayerId;
+}

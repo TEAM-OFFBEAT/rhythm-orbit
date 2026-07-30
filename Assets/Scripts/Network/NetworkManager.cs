@@ -42,7 +42,7 @@ public class NetworkManager : Singleton<NetworkManager>
     public event Action OnConnectionFailed;
     public event Action OnDisconnected;
     public event Action<GameStartPacket> OnGameStart;
-    public event Action OnGameEnd;
+    public event Action<GameEndPacket> OnGameEnd;
     public event Action<AttackStartPacket> OnAttackStart;
     public event Action<NoteCreatedPacket> OnNoteCreated;
     public event Action<AttackEndPacket> OnAttackEnd;
@@ -220,8 +220,11 @@ public class NetworkManager : Singleton<NetworkManager>
                         break;
 
                     case PacketType.GAME_END:
-                        mainThreadQueue.Enqueue(() => OnGameEnd?.Invoke());
+                    {
+                        GameEndPacket packet = PacketSerializer.ReadGameEnd(reader);
+                        mainThreadQueue.Enqueue(() => OnGameEnd?.Invoke(packet));
                         break;
+                    }
 
                     case PacketType.ATTACK_START:
                         var ast = PacketSerializer.ReadAttackStart(reader);
