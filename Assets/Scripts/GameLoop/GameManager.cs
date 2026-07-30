@@ -49,6 +49,8 @@ public class GameManager : MonoBehaviour
     // 상대 패킷을 반영해서 정신력이 깎이는 중인지 표시.
     // true일 때 발생한 패배는 이미 상대 쪽 흐름에서 온 것이므로 GAME_END를 다시 보내지 않는다.
     private bool isApplyingRemoteGameState;
+    private int currentTargetNoteCount;
+    private int currentReceivedNoteCount;
 
     /// <summary>
     /// 필수 참조를 확인하고 각 시스템의 이벤트를 구독한다.
@@ -80,7 +82,7 @@ public class GameManager : MonoBehaviour
             attackerPlayerId = net.FirstAttackerId;
 
             net.OnAttackStart        += HandleNetworkAttackStart;
-            net.OnNoteCreated        += defenseTurn.OnNoteReceived;
+            net.OnNoteCreated        += HandleNetworkNoteCreated;
             net.OnAttackEnd          += HandleNetworkAttackEnd;
             net.OnJudgmentReceived   += HandleNetworkJudgment;
             net.OnDefenseEnd         += HandleNetworkDefenseEnd;
@@ -123,7 +125,7 @@ public class GameManager : MonoBehaviour
         if (net != null)
         {
             net.OnAttackStart        -= HandleNetworkAttackStart;
-            net.OnNoteCreated        -= defenseTurn.OnNoteReceived;
+            net.OnNoteCreated        -= HandleNetworkNoteCreated;
             net.OnAttackEnd          -= HandleNetworkAttackEnd;
             net.OnJudgmentReceived   -= HandleNetworkJudgment;
             net.OnDefenseEnd         -= HandleNetworkDefenseEnd;
@@ -174,9 +176,10 @@ public class GameManager : MonoBehaviour
 
         if (RhythmClock.Instance != null)
         {
-            double startDspTime = NetworkManager.Instance != null
+            rhythmStartDspTime = NetworkManager.Instance != null
                 ? NetworkManager.Instance.LocalGameStartDspTime
                 : AudioSettings.dspTime;
+
             RhythmClock.Instance.StartClock(rhythmStartDspTime);
         }
         if (gameStartDelayCoroutine != null)
@@ -525,6 +528,22 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 원격 공격자가 생성한 노트 패킷을 처리한다.
+    /// DefenseTurn에는 노트 데이터를 전달하고, HUD에는 수신된 노트 개수 진행도를 표시한다.
+    /// </summary>
+    private void HandleNetworkNoteCreated(NoteCreatedPacket packet)
+    {
+        defenseTurn?.OnNoteReceived(packet);
+
+        currentReceivedNoteCount++;
+
+        if (currentTargetNoteCount > 0)
+        {
+            hud?.UpdateAttackProgress(currentReceivedNoteCount, currentTargetNoteCount);
+        }
+    }
+
+    /// <summary>
     /// 원격 공격자의 ATTACK_END 수신 시 호출. 로컬에서 방어 턴을 시작한다.
     /// </summary>
     private void HandleNetworkAttackEnd(AttackEndPacket packet)
@@ -533,6 +552,11 @@ public class GameManager : MonoBehaviour
         if (net == null) return;
 
         currentState = GameState.DEFENSE;
+        
+        ApplyRemoteAttackResult(packet);
+
+        if (currentState == GameState.END) return;
+
         AttackSide attackerSide = packet.attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
         gameCamera?.SetDefenseView(attackerSide);
 
@@ -545,6 +569,33 @@ public class GameManager : MonoBehaviour
         float attackEndX   = attackTurnRenderer.GetEndX(attackerSide);
 
         defenseTurn.OnAttackEndReceived(packet, judgeLineX, attackStartX, attackEndX, net);
+    }
+
+    /// <summary>
+    /// 원격 공격자가 보낸 공격 결과 패널티를 로컬 SanitySystem에 반영한다.
+    /// 방어자 쪽에서는 목표 노트 수를 다시 계산하지 않고, 패킷에 담긴 결과를 그대로 사용한다.
+    /// </summary>
+    private void ApplyRemoteAttackResult(AttackEndPacket packet)
+    {
+        AttackResult result = new AttackResult
+        {
+            Notes = new NoteData[0],
+            BadTimingInputCount = packet.badTimingInputCount,
+            MissingNoteCount = packet.missingNoteCount,
+            ExtraNoteCount = packet.extraNoteCount,
+            DuplicateInputCount = packet.duplicateInputCount
+        };
+
+        isApplyingRemoteGameState = true;
+
+        try
+        {
+            sanitySystem?.ApplyAttackResult(packet.attackerPlayerId, result);
+        }
+        finally
+        {
+            isApplyingRemoteGameState = false;
+        }
     }
 
     /// <summary>

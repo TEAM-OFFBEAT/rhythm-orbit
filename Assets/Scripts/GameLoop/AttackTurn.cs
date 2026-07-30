@@ -60,6 +60,7 @@ public class AttackTurn : MonoBehaviour
     private AttackSide currentSide;
     private double attackStartDspTime;
     private double attackDuration;
+    private string attackMessage;
     private int gridStepCount;
     private int targetTapCount;
     private int nextNoteId;
@@ -117,7 +118,9 @@ public class AttackTurn : MonoBehaviour
     /// GameManager가 공격자 방향, 노트 수, 메시지를 전달한다.
     /// </summary>
     public void StartLocalPlayerAttack(AttackSide side, int targetNoteCount, string attackMessage)
-    {
+    {   
+        this.targetTapCount = targetNoteCount;
+        this.attackMessage = attackMessage;
         StartAttack(side, true, targetNoteCount, attackMessage);
     }
 
@@ -232,7 +235,7 @@ public class AttackTurn : MonoBehaviour
             byte attackerId = (byte)(side == AttackSide.P1 ? 1 : 2);
             double dur = attackDuration;
             double startTime = attackStartDspTime;
-            networkManager.Send(w => PacketSerializer.WriteAttackStart(w, attackerId, dur, startTime));
+            networkManager.Send(w => PacketSerializer.WriteAttackStart(w, attackerId, dur, startTime,targetTapCount,attackMessage));
         }
 
         if (attackTurnRenderer != null)
