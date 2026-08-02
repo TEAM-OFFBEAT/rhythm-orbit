@@ -174,11 +174,34 @@ public class LobbyController : MonoBehaviour
     // ── 유틸 ─────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// 같은 LAN에 있는 다른 클라이언트가 접속할 수 있는 IPv4 주소를 찾는다.
-    /// 127.0.0.1, 가상 터널, 자동 사설 IP는 제외한다.
+    /// 현재 PC가 외부 네트워크로 나갈 때 실제로 사용하는 IPv4 주소를 우선 찾는다.
+    /// 실패하면 활성화된 Wi-Fi/Ethernet 어댑터의 IPv4 주소를 찾는다.
     /// </summary>
     private static string GetLocalIPAddress()
     {
+        // 1순위: 현재 기본 라우팅에 사용되는 로컬 IP 찾기
+        // 보통 현재 연결 중인 Wi-Fi/Ethernet의 IPv4가 나옴.
+        try
+        {
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+            {
+                socket.Connect("8.8.8.8", 65530);
+
+                if (socket.LocalEndPoint is IPEndPoint endPoint)
+                {
+                    string ip = endPoint.Address.ToString();
+
+                    if (IsUsableIPv4(ip))
+                        return ip;
+                }
+            }
+        }
+        catch
+        {
+            // 아래 fallback으로 이동
+        }
+
+        // 2순위: 활성화된 Wi-Fi / Ethernet 어댑터에서 IPv4 찾기
         try
         {
             foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
@@ -186,31 +209,37 @@ public class LobbyController : MonoBehaviour
                 if (networkInterface.OperationalStatus != OperationalStatus.Up)
                     continue;
 
-                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                if (networkInterface.NetworkInterfaceType != NetworkInterfaceType.Wireless80211 &&
+                    networkInterface.NetworkInterfaceType != NetworkInterfaceType.Ethernet)
                     continue;
 
-                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Tunnel)
+                string name = networkInterface.Name.ToLower();
+                string description = networkInterface.Description.ToLower();
+
+                // 가상 어댑터 제외
+                if (name.Contains("virtual") || description.Contains("virtual") ||
+                    name.Contains("vmware") || description.Contains("vmware") ||
+                    name.Contains("virtualbox") || description.Contains("virtualbox") ||
+                    name.Contains("docker") || description.Contains("docker") ||
+                    name.Contains("wsl") || description.Contains("wsl") ||
+                    name.Contains("bluetooth") || description.Contains("bluetooth"))
+                {
                     continue;
+                }
 
                 IPInterfaceProperties properties = networkInterface.GetIPProperties();
 
                 foreach (UnicastIPAddressInformation addressInfo in properties.UnicastAddresses)
                 {
-                    IPAddress ip = addressInfo.Address;
+                    IPAddress address = addressInfo.Address;
 
-                    if (ip.AddressFamily != AddressFamily.InterNetwork)
+                    if (address.AddressFamily != AddressFamily.InterNetwork)
                         continue;
 
-                    if (IPAddress.IsLoopback(ip))
-                        continue;
+                    string ip = address.ToString();
 
-                    string ipText = ip.ToString();
-
-                    // 인터넷 연결 실패 시 Windows가 자동으로 잡는 주소라 방 코드로 부적절함.
-                    if (ipText.StartsWith("169.254."))
-                        continue;
-
-                    return ipText;
+                    if (IsUsableIPv4(ip))
+                        return ip;
                 }
             }
         }
@@ -220,5 +249,22 @@ public class LobbyController : MonoBehaviour
         }
 
         return "IP 주소를 찾을 수 없음";
+    }
+
+    /// <summary>
+    /// 방 코드로 표시하기에 적절한 IPv4인지 확인한다.
+    /// </summary>
+    private static bool IsUsableIPv4(string ip)
+    {
+        if (string.IsNullOrEmpty(ip))
+            return false;
+
+        if (ip == "127.0.0.1")
+            return false;
+
+        if (ip.StartsWith("169.254."))
+            return false;
+
+        return true;
     }
 }
