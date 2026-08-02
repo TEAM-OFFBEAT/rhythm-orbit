@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
+using System.Net.NetworkInformation;
 
 /// <summary>
 /// 로비 씬의 방 생성/입장 흐름을 제어한다.
@@ -172,15 +173,52 @@ public class LobbyController : MonoBehaviour
 
     // ── 유틸 ─────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// 같은 LAN에 있는 다른 클라이언트가 접속할 수 있는 IPv4 주소를 찾는다.
+    /// 127.0.0.1, 가상 터널, 자동 사설 IP는 제외한다.
+    /// </summary>
     private static string GetLocalIPAddress()
     {
         try
         {
-            foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                    return ip.ToString();
+            foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (networkInterface.OperationalStatus != OperationalStatus.Up)
+                    continue;
+
+                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                    continue;
+
+                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Tunnel)
+                    continue;
+
+                IPInterfaceProperties properties = networkInterface.GetIPProperties();
+
+                foreach (UnicastIPAddressInformation addressInfo in properties.UnicastAddresses)
+                {
+                    IPAddress ip = addressInfo.Address;
+
+                    if (ip.AddressFamily != AddressFamily.InterNetwork)
+                        continue;
+
+                    if (IPAddress.IsLoopback(ip))
+                        continue;
+
+                    string ipText = ip.ToString();
+
+                    // 인터넷 연결 실패 시 Windows가 자동으로 잡는 주소라 방 코드로 부적절함.
+                    if (ipText.StartsWith("169.254."))
+                        continue;
+
+                    return ipText;
+                }
+            }
         }
-        catch { }
-        return "127.0.0.1";
+        catch
+        {
+            // 아래 fallback으로 이동
+        }
+
+        return "IP 주소를 찾을 수 없음";
     }
 }
