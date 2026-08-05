@@ -85,6 +85,7 @@ public class GameManager : MonoBehaviour
         {
             myLocalPlayerId  = net.LocalPlayerId;
             attackerPlayerId = net.FirstAttackerId;
+            attackTurnRenderer?.SetLocalPlayer(myLocalPlayerId);
 
             net.OnAttackStart        += HandleNetworkAttackStart;
             net.OnNoteCreated        += HandleNetworkNoteCreated;
