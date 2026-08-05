@@ -38,28 +38,6 @@ public static class PacketSerializer
     }
 
     /// <summary>
-    /// 게임 세션 종료 신호. 페이로드 없음.
-    /// </summary>
-    /*
-    public static void WriteGameEnd(BinaryWriter w)
-        => w.Write((byte)PacketType.GAME_END);
-    */
-    
-    /// <summary>
-    /// 공격 시작 알림. 방어자가 실시간 노트 시각화를 준비하는 데 사용.
-    /// </summary>
-    public static void WriteAttackStart(BinaryWriter w, byte attackerPlayerId, double attackDuration, double attackStartDspTime, int targetNoteCount,
-    string attackMessage)
-    {
-        w.Write((byte)PacketType.ATTACK_START);
-        w.Write(attackerPlayerId);
-        w.Write(attackDuration);
-        w.Write(attackStartDspTime);
-        w.Write(targetNoteCount);
-        w.Write(attackMessage ?? string.Empty);
-    }
-
-    /// <summary>
     /// 공격 노트 실시간 스트리밍. 탭 발생 즉시 전송.
     /// </summary>
     public static void WriteNoteCreated(BinaryWriter w, int noteId, double noteRelativeTime, NoteType noteType)
@@ -68,20 +46,6 @@ public static class PacketSerializer
         w.Write(noteId);
         w.Write(noteRelativeTime);
         w.Write((byte)noteType);
-    }
-
-    /// <summary>
-    /// 공격 종료 신호. attackStartDspTime을 포함해 방어자가 judgeTime을 계산할 수 있게 한다.
-    /// </summary>
-    public static void WriteAttackEnd(BinaryWriter w, byte attackerPlayerId, double attackStartDspTime, AttackResult result)
-    {
-        w.Write((byte)PacketType.ATTACK_END);
-        w.Write(attackerPlayerId);
-        w.Write(attackStartDspTime);
-        w.Write(result.BadTimingInputCount);
-        w.Write(result.MissingNoteCount);
-        w.Write(result.ExtraNoteCount);
-        w.Write(result.DuplicateInputCount);
     }
 
     /// <summary>
@@ -95,12 +59,13 @@ public static class PacketSerializer
     }
 
     /// <summary>
-    /// 방어 종료 신호. missCount를 포함해 양측이 SanitySystem을 동기화한다.
+    /// 정신력 변화를 상대에게 전송한다.
     /// </summary>
-    public static void WriteDefenseEnd(BinaryWriter w, int missCount)
+    public static void WriteSanityChange(BinaryWriter w, byte targetPlayerId, int amount)
     {
-        w.Write((byte)PacketType.DEFENSE_END);
-        w.Write(missCount);
+        w.Write((byte)PacketType.SANITY_CHANGE);
+        w.Write(targetPlayerId);
+        w.Write(amount);
     }
 
     // ── 수신 (Read) ──────────────────────────────────────────────────────────
@@ -130,19 +95,6 @@ public static class PacketSerializer
         };
 
     /// <summary>
-    /// ATTACK_START 페이로드.
-    /// </summary>
-    public static AttackStartPacket ReadAttackStart(BinaryReader r)
-        => new AttackStartPacket
-        {
-            attackerPlayerId   = r.ReadByte(),
-            attackDuration     = r.ReadDouble(),
-            attackStartDspTime = r.ReadDouble(),
-            targetNoteCount    = r.ReadInt32(),
-            attackMessage      = r.ReadString()
-        };
-
-    /// <summary>
     /// NOTE_CREATED 페이로드.
     /// </summary>
     public static NoteCreatedPacket ReadNoteCreated(BinaryReader r)
@@ -151,20 +103,6 @@ public static class PacketSerializer
             noteId             = r.ReadInt32(),
             noteRelativeTime   = r.ReadDouble(),
             noteType           = (NoteType)r.ReadByte()
-        };
-
-    /// <summary>
-    /// ATTACK_END 페이로드.
-    /// </summary>
-    public static AttackEndPacket ReadAttackEnd(BinaryReader r)
-        => new AttackEndPacket
-        {
-            attackerPlayerId      = r.ReadByte(),
-            attackStartDspTime    = r.ReadDouble(),
-            badTimingInputCount   = r.ReadInt32(),
-            missingNoteCount      = r.ReadInt32(),
-            extraNoteCount        = r.ReadInt32(),
-            duplicateInputCount   = r.ReadInt32()
         };
 
     /// <summary>
@@ -178,10 +116,14 @@ public static class PacketSerializer
         };
 
     /// <summary>
-    /// DEFENSE_END 페이로드.
+    /// SANITY_CHANGE 페이로드.
     /// </summary>
-    public static DefenseEndPacket ReadDefenseEnd(BinaryReader r)
-        => new DefenseEndPacket { missCount = r.ReadInt32() };
+    public static SanityChangePacket ReadSanityChange(BinaryReader r)
+        => new SanityChangePacket
+        {
+            targetPlayerId = r.ReadByte(),
+            amount         = r.ReadInt32()
+        };
 
     /// <summary>
     /// 게임 종료 패킷을 기록한다.

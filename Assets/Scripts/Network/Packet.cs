@@ -12,24 +12,6 @@ public struct GameStartPacket
 }
 
 /// <summary>
-/// 공격 시작 시 방어자에게 전송. 방어자가 실시간 시각화를 준비하는 데 필요한 컨텍스트.
-/// </summary>
-public struct AttackStartPacket
-{
-    public byte attackerPlayerId;
-    public double attackDuration;     // 방어자가 NOTE_CREATED 스폰 위치 계산에 사용
-    public double attackStartDspTime; // 방어자가 BeginAttackVisual 즉시 시작에 사용
-
-    // 이번 공격 턴의 목표 노트 수.
-    // 공격자만 랜덤 생성하고, 방어자는 이 값을 패킷으로 받아서 사용한다.
-    public int targetNoteCount;
-
-    // 이번 공격 턴에 표시할 메시지.
-    // 방어자는 RandomMessageProvider를 돌리지 않고 이 문자열을 그대로 표시한다.
-    public string attackMessage;
-}
-
-/// <summary>
 /// 공격자가 탭할 때마다 즉시 전송되는 노트 스트리밍 데이터.
 /// </summary>
 public struct NoteCreatedPacket
@@ -37,20 +19,6 @@ public struct NoteCreatedPacket
     public int noteId;
     public double noteRelativeTime; // 탭 시각 - attackStartDspTime
     public NoteType noteType;       // HIGH or LOW
-}
-
-/// <summary>
-/// 공격 종료 시 방어 시작 트리거로 전송되는 데이터.
-/// attackStartDspTime을 포함해 방어자 측에서 judgeTime을 계산할 수 있게 한다.
-/// </summary>
-public struct AttackEndPacket
-{
-    public byte attackerPlayerId;
-    public double attackStartDspTime; // 방어자가 judgeTime 계산에 사용
-    public int badTimingInputCount;
-    public int missingNoteCount;
-    public int extraNoteCount;
-    public int duplicateInputCount;
 }
 
 /// <summary>
@@ -63,11 +31,12 @@ public struct JudgmentPacket
 }
 
 /// <summary>
-/// 방어 종료 시 다음 공격 시작 트리거로 전송되는 데이터.
+/// 정신력 변화 발생 시 상대에게 전송. 공격 패널티와 방어 미스 양쪽이 사용한다.
 /// </summary>
-public struct DefenseEndPacket
+public struct SanityChangePacket
 {
-    public int missCount;
+    public byte targetPlayerId; // 정신력이 감소하는 플레이어 ID
+    public int amount;          // 감소량 (항상 양수)
 }
 
 public enum GameEndReason

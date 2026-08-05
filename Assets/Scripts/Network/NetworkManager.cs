@@ -44,11 +44,9 @@ public class NetworkManager : Singleton<NetworkManager>
     public event Action OnDisconnected;
     public event Action<GameStartPacket> OnGameStart;
     public event Action<GameEndPacket> OnGameEnd;
-    public event Action<AttackStartPacket> OnAttackStart;
     public event Action<NoteCreatedPacket> OnNoteCreated;
-    public event Action<AttackEndPacket> OnAttackEnd;
     public event Action<JudgmentPacket> OnJudgmentReceived;
-    public event Action<DefenseEndPacket> OnDefenseEnd;
+    public event Action<SanityChangePacket> OnSanityChange;
 
     private readonly ConcurrentQueue<Action> mainThreadQueue = new();
     private TcpListener listener;
@@ -227,19 +225,9 @@ public class NetworkManager : Singleton<NetworkManager>
                         break;
                     }
 
-                    case PacketType.ATTACK_START:
-                        var ast = PacketSerializer.ReadAttackStart(reader);
-                        mainThreadQueue.Enqueue(() => OnAttackStart?.Invoke(ast));
-                        break;
-
                     case PacketType.NOTE_CREATED:
                         var nc = PacketSerializer.ReadNoteCreated(reader);
                         mainThreadQueue.Enqueue(() => OnNoteCreated?.Invoke(nc));
-                        break;
-
-                    case PacketType.ATTACK_END:
-                        var ae = PacketSerializer.ReadAttackEnd(reader);
-                        mainThreadQueue.Enqueue(() => OnAttackEnd?.Invoke(ae));
                         break;
 
                     case PacketType.JUDGMENT:
@@ -247,9 +235,9 @@ public class NetworkManager : Singleton<NetworkManager>
                         mainThreadQueue.Enqueue(() => OnJudgmentReceived?.Invoke(jp));
                         break;
 
-                    case PacketType.DEFENSE_END:
-                        var de = PacketSerializer.ReadDefenseEnd(reader);
-                        mainThreadQueue.Enqueue(() => OnDefenseEnd?.Invoke(de));
+                    case PacketType.SANITY_CHANGE:
+                        var sc = PacketSerializer.ReadSanityChange(reader);
+                        mainThreadQueue.Enqueue(() => OnSanityChange?.Invoke(sc));
                         break;
 
                     default:
