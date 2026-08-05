@@ -21,6 +21,7 @@ public class DefenseTurn : MonoBehaviour
 
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private double fallbackMissTimeoutMs = 100.0;
+    [SerializeField] private float fallbackTransferSpeed = 5f;
 
     private readonly List<NoteData> pendingNotes = new();
     private readonly List<NoteData> receivedNotes = new();
@@ -99,7 +100,6 @@ public class DefenseTurn : MonoBehaviour
         judgments.Clear();
         this.isAiDefense = isAiDefense;
         isRunning = true;
-        defenseEndDspTime = AudioSettings.dspTime + attackDuration;
 
         if (notes.Count == 0) return;
 
@@ -111,24 +111,14 @@ public class DefenseTurn : MonoBehaviour
         float firstInitialX = Mathf.Lerp(attackStartX, attackEndX, (float)(firstRelativeTime / attackDuration));
         float transferSpeed = firstRelativeTime > 0.0
             ? Mathf.Abs(judgeLineX - firstInitialX) / (float)firstRelativeTime
-            : 5f;
+            : fallbackTransferSpeed;
 
         double defenseStartDspTime;
-        if (networkManager != null && remoteAttackStartDspTime > 0.0)
-        {
-            // 실제 방어자: 공격자 DSP 시각을 로컬 클럭으로 변환 후 공격 길이를 더해 공격 종료 시각을 결정적으로 계산
-            defenseStartDspTime = networkManager.TimeSync.CorrectTime(remoteAttackStartDspTime) + attackDuration;
-        }
-        else if (isMirrorView && remoteAttackStartDspTime > 0.0)
-        {
-            // 공격자 미러뷰: 동일 클럭이므로 보정 없이 공격 시작 + 공격 길이
+        if (remoteAttackStartDspTime > 0.0)
             defenseStartDspTime = remoteAttackStartDspTime + attackDuration;
-        }
         else
-        {
-            // 로컬 전용 또는 fallback
             defenseStartDspTime = AudioSettings.dspTime;
-        }
+        defenseEndDspTime = defenseStartDspTime + attackDuration;
 
         foreach (var note in notes)
         {
@@ -141,45 +131,82 @@ public class DefenseTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// NetworkManager.OnAttackStart 수신 시 GameManager를 통해 호출.
-    /// 공격자 측 컨텍스트를 저장해 이후 OnNoteReceived()에서 즉시 스폰할 수 있도록 준비한다.
+    /// GameManager의 DSP 페이즈 루프가 원격 공격 phase 시작 시 호출한다.
+    /// 이후 OnNoteReceived()에서 즉시 스폰할 수 있도록 컨텍스트를 준비한다.
     /// </summary>
-    public void OnAttackStartReceived(AttackStartPacket packet)
+    public void PrepareForIncomingAttack(AttackSide attackSide, double attackDuration)
     {
-        pendingAttackSide = packet.attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-        pendingAttackDuration = packet.attackDuration;
+        pendingAttackSide     = attackSide;
+        pendingAttackDuration = attackDuration;
         receivedNotes.Clear();
     }
 
     /// <summary>
-    /// NetworkManager.OnNoteCreated 수신 시 GameManager를 통해 호출.
-    /// 수신 즉시 노트를 스폰한다. judgeTime은 ATTACK_END 수신 후 Begin()에서 설정된다.
+    /// NOTE_CREATED 수신 시 GameManager를 통해 호출.
+    /// judgeTime을 즉시 계산해 설정하고 노트를 스폰한다.
+    /// localTurnStart는 GameManager가 DSP 페이즈 루프에서 계산한 이번 공격 phase 시작 시각.
     /// </summary>
-    public void OnNoteReceived(NoteCreatedPacket packet)
+    public void OnNoteReceived(NoteCreatedPacket packet, double localTurnStart)
     {
         var note = new NoteData
         {
             noteId           = packet.noteId,
             noteType         = packet.noteType,
-            noteRelativeTime = packet.noteRelativeTime
+            noteRelativeTime = packet.noteRelativeTime,
+            judgeTime        = localTurnStart + packet.noteRelativeTime
         };
         receivedNotes.Add(note);
         if (attackTurnRenderer != null)
+        {
             attackTurnRenderer.SpawnAttackNote(pendingAttackSide, note, pendingAttackDuration);
+            attackTurnRenderer.SetNoteJudgeTime(note.noteId, note.judgeTime);
+        }
     }
 
     /// <summary>
-    /// NetworkManager.OnAttackEnd 수신 시 GameManager를 통해 호출.
-    /// 버퍼에 쌓인 수신 노트와 좌표 정보로 방어 턴을 시작한다.
+    /// defense phase 시작 DSP 시각에 GameManager가 호출한다.
+    /// receivedNotes는 OnNoteReceived에서 이미 judgeTime이 설정되어 있다.
     /// </summary>
-    public void OnAttackEndReceived(AttackEndPacket packet,
-        float judgeLineX, float attackStartX, float attackEndX, NetworkManager net)
+    public void BeginTransfer(float judgeLineX, float attackStartX, float attackEndX,
+        double attackDuration, NetworkManager networkManager, double defenseStartDspTime)
     {
-        Debug.Log($"[Net] ATTACK_END 수신 / receivedNotes:{receivedNotes.Count}, isMirrorView:{isMirrorView}");
-        Begin(receivedNotes, judgeLineX, attackStartX, attackEndX, pendingAttackDuration,
-            isAiDefense: false, networkManager: net,
-            remoteAttackStartDspTime: packet.attackStartDspTime);
+        this.networkManager = networkManager;
+        isMirrorView = false;
+        isAiDefense  = false;
+
+        if (attackTurnRenderer == null)
+        {
+            Debug.LogError("DefenseTurn: AttackTurnRenderer가 연결되지 않았습니다.");
+            return;
+        }
+
+        pendingNotes.Clear();
+        judgments.Clear();
+        isRunning       = true;
+        defenseEndDspTime = defenseStartDspTime + attackDuration;
+
+        if (receivedNotes.Count == 0)
+        {
+            receivedNotes.Clear();
+            return;
+        }
+
+        double firstRelativeTime = double.MaxValue;
+        foreach (var n in receivedNotes)
+            if (n.noteRelativeTime < firstRelativeTime) firstRelativeTime = n.noteRelativeTime;
+
+        float firstInitialX  = Mathf.Lerp(attackStartX, attackEndX,
+            (float)(firstRelativeTime / System.Math.Max(0.01, attackDuration)));
+        float transferSpeed  = firstRelativeTime > 0.0
+            ? Mathf.Abs(judgeLineX - firstInitialX) / (float)firstRelativeTime
+            : fallbackTransferSpeed;
+
+        // judgeTime은 OnNoteReceived에서 이미 계산됨 — 여기서 재계산하지 않는다.
+        foreach (var note in receivedNotes)
+            pendingNotes.Add(note);
+
         receivedNotes.Clear();
+        attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
     }
 
     /// <summary>
@@ -234,26 +261,7 @@ public class DefenseTurn : MonoBehaviour
         };
 
         Debug.Log($"Defense End / total:{judgments.Count}, miss:{missCount}");
-        if (networkManager != null)
-        {
-            int miss = result.MissCount;
-            networkManager.Send(w => PacketSerializer.WriteDefenseEnd(w, miss));
-        }
         OnDefenseEnded?.Invoke(result);
-    }
-
-    /// <summary>
-    /// JUDGMENT 패킷 수신 시 공격자 화면에서 호출. 판정 처리 없이 노트를 대기 목록과 렌더러에서 제거한다.
-    /// </summary>
-    public void RemoteRemoveNote(int noteId)
-    {
-        for (int i = pendingNotes.Count - 1; i >= 0; i--)
-        {
-            if (pendingNotes[i].noteId != noteId) continue;
-            attackTurnRenderer.RemoveNote(noteId);
-            pendingNotes.RemoveAt(i);
-            return;
-        }
     }
 
     private NoteData GetNearestNote(double inputTime, NoteType noteType)
