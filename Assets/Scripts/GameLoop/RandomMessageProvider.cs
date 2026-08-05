@@ -33,6 +33,21 @@ public class RandomMessageProvider : MonoBehaviour
         return CreateFallbackMessage(characterCount);
     }
 
+    /// <summary>
+    /// 외부 난수 생성기로 메시지를 선택한다. 양쪽 클라이언트가 같은 시드를 쓸 때 사용.
+    /// </summary>
+    public string GetRandomMessage(int characterCount, System.Random rng)
+    {
+        foreach (RandomMessageGroup group in messageGroups)
+        {
+            if (group.characterCount != characterCount) continue;
+            if (group.messages == null || group.messages.Count == 0) break;
+            return group.messages[rng.Next(0, group.messages.Count)];
+        }
+        Debug.LogWarning($"{characterCount}글자 공격 메시지가 없습니다.");
+        return CreateFallbackMessage(characterCount);
+    }
+
     private string CreateFallbackMessage(int characterCount)
     {
         int safeCount = Mathf.Clamp(characterCount, 1, 7);
