@@ -52,9 +52,10 @@ public class GameManager : MonoBehaviour
     private int currentTargetNoteCount;
     private int currentReceivedNoteCount;
 
+    private double scheduledAttackViewDspTime;
+    private bool pendingAttackVisualStart;
     private double scheduledDefenseTransitionDspTime;
     private bool pendingDefenseVisualTransition;
-    private bool defenseViewSet;
     private AttackSide pendingDefenseAttackerSide;
 
     /// <summary>
@@ -158,11 +159,19 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (pendingDefenseVisualTransition &&
-            AudioSettings.dspTime >= scheduledDefenseTransitionDspTime)
+        double now = AudioSettings.dspTime;
+
+        if (pendingAttackVisualStart && now >= scheduledAttackViewDspTime)
+        {
+            pendingAttackVisualStart = false;
+            gameCamera?.SetAttackView(pendingDefenseAttackerSide);
+        }
+
+        if (pendingDefenseVisualTransition && now >= scheduledDefenseTransitionDspTime)
         {
             pendingDefenseVisualTransition = false;
-            PerformDefenseVisualTransition(pendingDefenseAttackerSide);
+            gameCamera?.SetDefenseView(pendingDefenseAttackerSide);
+            attackTurnRenderer?.StopLine();
         }
     }
 
@@ -429,24 +438,12 @@ public class GameManager : MonoBehaviour
     private void SwitchTurn()
     {
         currentState = GameState.TURN_CHANGE;
+        pendingAttackVisualStart = false;
         pendingDefenseVisualTransition = false;
-        defenseViewSet = false;
         attackTurnRenderer.ClearAll();
         if (hud != null) hud.ClearJudgments();
         attackerPlayerId = attackerPlayerId == 1 ? 2 : 1;
         StartAttackPhase();
-    }
-
-    /// <summary>
-    /// 방어 전환 시 카메라와 공격 판정선을 업데이트한다.
-    /// DSP 시각 도달 시 Update()에서, 또는 ATTACK_END 패킷이 먼저 도달한 경우 fallback으로 호출된다.
-    /// </summary>
-    private void PerformDefenseVisualTransition(AttackSide attackerSide)
-    {
-        if (defenseViewSet) return;
-        defenseViewSet = true;
-        gameCamera?.SetDefenseView(attackerSide);
-        attackTurnRenderer?.StopLine();
     }
 
     /// <summary>
@@ -552,7 +549,6 @@ public class GameManager : MonoBehaviour
 
         attackerPlayerId = packet.attackerPlayerId;
         AttackSide attackerSide = GetAttackSide(packet.attackerPlayerId);
-        gameCamera?.SetAttackView(attackerSide);
 
         currentTargetNoteCount = packet.targetNoteCount;
         currentReceivedNoteCount = 0;
@@ -574,10 +570,11 @@ public class GameManager : MonoBehaviour
                 $"correctedStart:{correctedStart:F3}, now:{AudioSettings.dspTime:F3}"
             );
 
+            scheduledAttackViewDspTime = correctedStart;
+            pendingAttackVisualStart = true;
             scheduledDefenseTransitionDspTime = correctedStart + packet.attackDuration;
             pendingDefenseAttackerSide = GetAttackSide(packet.attackerPlayerId);
             pendingDefenseVisualTransition = true;
-            defenseViewSet = false;
 
             attackTurnRenderer.BeginAttackVisual(
                 attackerSide,
@@ -615,16 +612,13 @@ public class GameManager : MonoBehaviour
         if (net == null) return;
 
         currentState = GameState.DEFENSE;
-        pendingDefenseVisualTransition = false;
-
-        AttackSide attackerSide = GetAttackSide(packet.attackerPlayerId);
-        PerformDefenseVisualTransition(attackerSide);
 
         ApplyRemoteAttackResult(packet);
         if (currentState == GameState.END) return;
 
         if (attackTurnRenderer == null) return;
 
+        AttackSide attackerSide = GetAttackSide(packet.attackerPlayerId);
         float judgeLineX   = attackTurnRenderer.GetJudgeLineX(attackerSide);
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
         float attackEndX   = attackTurnRenderer.GetEndX(attackerSide);
