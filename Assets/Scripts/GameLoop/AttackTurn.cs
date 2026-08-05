@@ -60,7 +60,6 @@ public class AttackTurn : MonoBehaviour
     private AttackSide currentSide;
     private double attackStartDspTime;
     private double attackDuration;
-    private string attackMessage;
     private int gridStepCount;
     private int targetTapCount;
     private int nextNoteId;
@@ -114,14 +113,11 @@ public class AttackTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// 로컬 플레이어의 공격 턴을 시작.
-    /// GameManager가 공격자 방향, 노트 수, 메시지를 전달한다.
+    /// 로컬 플레이어의 공격 턴을 시작. turnStartDspTime은 GameManager의 DSP 페이즈 루프가 전달한다.
     /// </summary>
-    public void StartLocalPlayerAttack(AttackSide side, int targetNoteCount, string attackMessage)
-    {   
-        this.targetTapCount = targetNoteCount;
-        this.attackMessage = attackMessage;
-        StartAttack(side, true, targetNoteCount, attackMessage);
+    public void StartLocalPlayerAttack(AttackSide side, int targetNoteCount, string attackMessage, double turnStartDspTime)
+    {
+        StartAttack(side, true, targetNoteCount, attackMessage, turnStartDspTime);
     }
 
     /// <summary>
@@ -129,7 +125,7 @@ public class AttackTurn : MonoBehaviour
     /// </summary>
     public void StartOpponentAttackDemo(string attackMessage)
     {
-        StartAttack(AttackSide.P2, false, opponentDemoGridSteps.Length, attackMessage);
+        StartAttack(AttackSide.P2, false, opponentDemoGridSteps.Length, attackMessage, AudioSettings.dspTime);
 
         opponentDemoRelativeTimes.Clear();
         double noteDuration = NoteDuration;
@@ -207,8 +203,9 @@ public class AttackTurn : MonoBehaviour
     /// <summary>
     /// 공격 턴 공통 초기화.
     /// 공격자 방향, 입력 주체, 목표 노트 수, 메시지를 설정하고 공격 판정선 이동을 시작한다.
+    /// turnStartDspTime은 GameManager의 DSP 페이즈 루프가 전달한 턴 시작 시각이다.
     /// </summary>
-    private void StartAttack(AttackSide side, bool localPlayerAttack, int requiredTapCount, string attackMessage)
+    private void StartAttack(AttackSide side, bool localPlayerAttack, int requiredTapCount, string attackMessage, double turnStartDspTime)
     {
         currentSide = side;
         isLocalPlayerAttack = localPlayerAttack;
@@ -226,17 +223,10 @@ public class AttackTurn : MonoBehaviour
         double noteDuration = NoteDuration;
         gridStepCount = Mathf.Max(1, attackMeasureCount) * StepsPerMeasure;
         attackDuration = noteDuration * gridStepCount;
-        attackStartDspTime = AudioSettings.dspTime;
+        attackStartDspTime = turnStartDspTime;
         targetTapCount = Mathf.Clamp(requiredTapCount, 1, MaxPlayableTapCount);
         SetAttackMessage(attackMessage);
         OnAttackProgressChanged?.Invoke(0, targetTapCount);
-        if (isLocalPlayerAttack && networkManager != null)
-        {
-            byte attackerId = (byte)(side == AttackSide.P1 ? 1 : 2);
-            double dur = attackDuration;
-            double startTime = attackStartDspTime;
-            networkManager.Send(w => PacketSerializer.WriteAttackStart(w, attackerId, dur, startTime,targetTapCount,currentAttackMessage));
-        }
 
         if (attackTurnRenderer != null)
             attackTurnRenderer.BeginAttackVisual(currentSide, attackStartDspTime, attackDuration, gridStepCount);
@@ -321,14 +311,6 @@ public class AttackTurn : MonoBehaviour
             ExtraNoteCount = extraNoteCount,
             DuplicateInputCount = duplicateInputCount
         };
-
-        if (isLocalPlayerAttack && networkManager != null)
-        {
-            byte attackerId = (byte)(currentSide == AttackSide.P1 ? 1 : 2);
-            double startTime = attackStartDspTime;
-            AttackResult r = result;
-            networkManager.Send(w => PacketSerializer.WriteAttackEnd(w, attackerId, startTime, r));
-        }
 
         OnAttackEnded?.Invoke(result);
     }
