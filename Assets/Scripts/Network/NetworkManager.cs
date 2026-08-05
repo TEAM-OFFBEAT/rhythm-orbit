@@ -22,6 +22,7 @@ public class NetworkManager : Singleton<NetworkManager>
 
     public bool IsHost { get; private set; }
     public bool IsConnected => stream != null;
+    public int Port => port;
 
     /// <summary>
     /// 클럭 동기화 매니저. OnConnected 이후 사용 가능.
