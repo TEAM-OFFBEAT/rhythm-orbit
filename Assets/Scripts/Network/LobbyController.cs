@@ -44,8 +44,7 @@ public class LobbyController : MonoBehaviour
         createRoomButton.onClick.AddListener(OnCreateRoom);
         joinRoomButton.onClick.AddListener(OnJoinRoom);
         cancelHostButton.onClick.AddListener(OnCancel);
-        copyCodeButton?.onClick.AddListener(() =>
-            GUIUtility.systemCopyBuffer = roomCodeText.text);
+        copyCodeButton?.onClick.AddListener(OnCopyCode);
         connectButton.onClick.AddListener(OnConnect);
         cancelJoinButton.onClick.AddListener(OnCancel);
 
@@ -59,11 +58,14 @@ public class LobbyController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (networkManager == null) return;
-        networkManager.OnConnected -= HandleConnected;
-        networkManager.OnConnectionFailed -= HandleConnectionFailed;
-        networkManager.OnDisconnected -= HandleLobbyDisconnected;
-        networkManager.OnGameStart -= HandleGameStart;
+        if (networkManager != null)
+        {
+            networkManager.OnConnected -= HandleConnected;
+            networkManager.OnConnectionFailed -= HandleConnectionFailed;
+            networkManager.OnDisconnected -= HandleLobbyDisconnected;
+            networkManager.OnGameStart -= HandleGameStart;
+        }
+        copyCodeButton?.onClick.RemoveListener(OnCopyCode);
     }
 
     // ── 버튼 핸들러 ──────────────────────────────────────────────────────────
@@ -100,6 +102,11 @@ public class LobbyController : MonoBehaviour
     {
         networkManager?.Disconnect();
         ShowMainMenu();
+    }
+
+    private void OnCopyCode()
+    {
+        GUIUtility.systemCopyBuffer = roomCodeText.text;
     }
 
     // ── 네트워크 이벤트 ──────────────────────────────────────────────────────
