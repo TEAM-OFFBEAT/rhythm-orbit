@@ -1,8 +1,7 @@
 using UnityEngine;
-using System.Collections;
 /// <summary>
 /// 게임 상태 머신 + 컴포넌트 간 이벤트 중계자 역할.
-/// 턴 흐름 제어, 입력 라우팅, 이벤트 중계, 카메라 뷰 전환 등 게임 루프 전반을 관리.
+/// DSP 페이즈 루프로 턴 흐름을 제어하고, 입력 라우팅, 이벤트 중계, 카메라 뷰 전환 등 게임 루프 전반을 관리.
 /// </summary>
 public class GameManager : MonoBehaviour
 {
@@ -19,17 +18,17 @@ public class GameManager : MonoBehaviour
 
     [Header("Camera")]
     [SerializeField] private GameCamera gameCamera;
-    
+
     [Header("Sanity System")]
     [SerializeField] private SanitySystem sanitySystem;
-    
+
     [Header("Result UI")]
     [SerializeField] private ResultPanelUI resultPanelUI;
-    
+
     [Header("BPM Progression")]
     [SerializeField] private int turnsPerBpmIncrease = 2;
     [SerializeField] private float[] bpmStages = { 106f, 120f, 144f };
-    
+
     [Header("Game Start Delay")]
     [SerializeField] private bool useMillisecondStartDelay = true;
     [SerializeField] private int gameStartDelayMs = 1000;
@@ -37,7 +36,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool useBeatStartDelay = true;
     [SerializeField] private int gameStartDelayBeats = 4;
 
-    private Coroutine gameStartDelayCoroutine;
+    // DSP 페이즈 루프
+    private int    phaseIndex;
+    private double nextPhaseDspTime;
+    private double currentTurnDuration;
+    private double localAttackStartDspTime;
+
+    // 네트워크 노트 수신 추적
+    private int currentTargetNoteCount;
+    private int currentReceivedNoteCount;
 
     private int completedTurnCount;
     private int currentBpmStageIndex;
@@ -49,14 +56,6 @@ public class GameManager : MonoBehaviour
     // 상대 패킷을 반영해서 정신력이 깎이는 중인지 표시.
     // true일 때 발생한 패배는 이미 상대 쪽 흐름에서 온 것이므로 GAME_END를 다시 보내지 않는다.
     private bool isApplyingRemoteGameState;
-    private int currentTargetNoteCount;
-    private int currentReceivedNoteCount;
-
-    private double scheduledAttackViewDspTime;
-    private bool pendingAttackVisualStart;
-    private double scheduledDefenseTransitionDspTime;
-    private bool pendingDefenseVisualTransition;
-    private AttackSide pendingDefenseAttackerSide;
 
     /// <summary>
     /// 필수 참조를 확인하고 각 시스템의 이벤트를 구독한다.
@@ -73,7 +72,7 @@ public class GameManager : MonoBehaviour
         // 정신력 이벤트를 HUD 갱신으로 연결
         sanitySystem.OnSanityChanged += HandleSanityChanged;
         sanitySystem.OnPlayerDefeated += HandlePlayerDefeated;
-        
+
         // 공격/방어 턴 이벤트를 받아 다음 상태로 전환
         attackTurn.OnAttackEnded += HandleAttackEnded;
         attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
@@ -88,11 +87,9 @@ public class GameManager : MonoBehaviour
             attackerPlayerId = net.FirstAttackerId;
             attackTurnRenderer?.SetLocalPlayer(myLocalPlayerId);
 
-            net.OnAttackStart        += HandleNetworkAttackStart;
             net.OnNoteCreated        += HandleNetworkNoteCreated;
-            net.OnAttackEnd          += HandleNetworkAttackEnd;
             net.OnJudgmentReceived   += HandleNetworkJudgment;
-            net.OnDefenseEnd         += HandleNetworkDefenseEnd;
+            net.OnSanityChange       += HandleNetworkSanityChange;
             net.OnGameEnd            += HandleNetworkGameEnd;
             net.OnDisconnected       += HandleNetworkDisconnected;
         }
@@ -107,7 +104,7 @@ public class GameManager : MonoBehaviour
     /// 오브젝트 제거 시 구독한 이벤트 해제
     /// </summary>
     private void OnDestroy()
-    {   
+    {
         if (attackTurn != null)
         {
             attackTurn.OnAttackEnded -= HandleAttackEnded;
@@ -124,18 +121,15 @@ public class GameManager : MonoBehaviour
         if (sanitySystem != null)
         {
             sanitySystem.OnSanityChanged -= HandleSanityChanged;
-            // sanitySystem.OnSanityDamaged -= HandleSanityDamaged;
             sanitySystem.OnPlayerDefeated -= HandlePlayerDefeated;
         }
 
         var net = NetworkManager.Instance;
         if (net != null)
         {
-            net.OnAttackStart        -= HandleNetworkAttackStart;
             net.OnNoteCreated        -= HandleNetworkNoteCreated;
-            net.OnAttackEnd          -= HandleNetworkAttackEnd;
             net.OnJudgmentReceived   -= HandleNetworkJudgment;
-            net.OnDefenseEnd         -= HandleNetworkDefenseEnd;
+            net.OnSanityChange       -= HandleNetworkSanityChange;
             net.OnGameEnd            -= HandleNetworkGameEnd;
             net.OnDisconnected       -= HandleNetworkDisconnected;
         }
@@ -145,8 +139,7 @@ public class GameManager : MonoBehaviour
     /// 네트워크 모드에서 씬 로드 직후 자동으로 게임을 시작한다.
     /// </summary>
     private void Start()
-    {   
-        //결과 패널 숨기기
+    {
         resultPanelUI?.HideAll();
 
         completedTurnCount = 0;
@@ -159,60 +152,37 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if (currentState == GameState.END) return;
+
         double now = AudioSettings.dspTime;
-
-        if (pendingAttackVisualStart && now >= scheduledAttackViewDspTime)
-        {
-            pendingAttackVisualStart = false;
-            gameCamera?.SetAttackView(pendingDefenseAttackerSide);
-        }
-
-        if (pendingDefenseVisualTransition && now >= scheduledDefenseTransitionDspTime)
-        {
-            pendingDefenseVisualTransition = false;
-            gameCamera?.SetDefenseView(pendingDefenseAttackerSide);
-            attackTurnRenderer?.StopLine();
-        }
+        if (now >= nextPhaseDspTime)
+            AdvancePhase();
     }
 
     /// <summary>
-    /// 게임을 초기화하고 첫 공격 턴을 시작.
-    /// 정신력, BPM 단계, 리듬 클락을 초기화한 뒤 P1 공격부터 시작
+    /// 게임을 초기화하고 DSP 페이즈 루프를 시작한다.
+    /// 정신력, BPM 단계, 리듬 클락을 초기화한 뒤 첫 공격 phase를 예약한다.
     /// </summary>
     public void StartGame()
-    {   
+    {
         resultPanelUI?.HideAll();
+        sanitySystem?.ResetSanity();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
 
-        completedTurnCount = 0;
+        phaseIndex           = 0;
         currentBpmStageIndex = 0;
-        attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
-        
-        // 첫 턴 시작 전 대기 중에는 입력이 공격/방어로 들어가면 안 되므로 TURN_CHANGE 상태로 둔다.
-        currentState = GameState.TURN_CHANGE;
-
-        if (sanitySystem != null)
-        {
-            sanitySystem.ResetSanity();
-        }
-        
         ApplyCurrentBpm();
+        currentTurnDuration  = GetCurrentTurnDuration();
 
-        double rhythmStartDspTime = AudioSettings.dspTime;
+        var net = NetworkManager.Instance;
+        double rhythmStart = net?.LocalGameStartDspTime ?? AudioSettings.dspTime;
 
-        if (RhythmClock.Instance != null)
-        {
-            rhythmStartDspTime = NetworkManager.Instance != null
-                ? NetworkManager.Instance.LocalGameStartDspTime
-                : AudioSettings.dspTime;
+        RhythmClock.Instance?.StartClock(rhythmStart);
 
-            RhythmClock.Instance.StartClock(rhythmStartDspTime);
-        }
-        if (gameStartDelayCoroutine != null)
-        {
-            StopCoroutine(gameStartDelayCoroutine);
-        }
-
-        gameStartDelayCoroutine = StartCoroutine(StartFirstTurnAfterDelay(rhythmStartDspTime));
+        nextPhaseDspTime = rhythmStart + GetGameStartDelaySeconds();
+        currentState     = GameState.TURN_CHANGE;
+        attackerPlayerId = net?.FirstAttackerId ?? 1;
     }
 
     /// <summary>
@@ -242,98 +212,177 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void OnTapLow() => OnTap(NoteType.LOW);
 
-    /// <summary>
-    /// 공격 턴을 시작하고 HUD와 카메라를 업데이트.
-    /// </summary>
-    private void StartAttackPhase()
+    // ── DSP 페이즈 루프 ──────────────────────────────────────────────────────────
+
+    private void AdvancePhase()
+    {
+        double thisPhaseStart = nextPhaseDspTime;
+        bool   isAttackPhase  = (phaseIndex % 2 == 0);
+        int    attackPhaseIdx = phaseIndex / 2;
+
+        if (isAttackPhase)
+        {
+            int nextStage = Mathf.Clamp(attackPhaseIdx / turnsPerBpmIncrease, 0, bpmStages.Length - 1);
+            if (nextStage != currentBpmStageIndex)
+            {
+                currentBpmStageIndex = nextStage;
+                ApplyCurrentBpm();
+            }
+            currentTurnDuration     = GetCurrentTurnDuration();
+            localAttackStartDspTime = thisPhaseStart;
+            attackerPlayerId        = GetAttackerForPhase(attackPhaseIdx);
+        }
+
+        nextPhaseDspTime = thisPhaseStart + currentTurnDuration;
+
+        if (isAttackPhase)
+            StartAttackPhase(thisPhaseStart, attackPhaseIdx);
+        else
+            StartDefensePhase(thisPhaseStart);
+
+        phaseIndex++;
+    }
+
+    private int GetAttackerForPhase(int attackPhaseIdx)
+    {
+        int first = NetworkManager.Instance?.FirstAttackerId ?? 1;
+        int other = (first == 1) ? 2 : 1;
+        return (attackPhaseIdx % 2 == 0) ? first : other;
+    }
+
+    private double GetCurrentTurnDuration()
+    {
+        if (RhythmClock.Instance == null) return 2.0;
+        return RhythmClock.Instance.GetNoteDuration() * 8.0;
+    }
+
+    private System.Random GetSharedRng(int attackPhaseIdx)
+    {
+        double t = NetworkManager.Instance?.LocalGameStartDspTime ?? 0.0;
+        int seed = unchecked((int)(t * 1000) + attackPhaseIdx * 997);
+        return new System.Random(seed);
+    }
+
+    // ── Attack Phase ─────────────────────────────────────────────────────────────
+
+    private void StartAttackPhase(double phaseStartDspTime, int attackPhaseIdx)
     {
         currentState = GameState.ATTACK;
-        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+
+        attackTurnRenderer?.ClearAll();
+        hud?.ClearJudgments();
         gameCamera?.SetAttackView(attackerSide);
 
-        bool isNetworkMode   = NetworkManager.Instance != null;
-        bool isLocalAttacker = !isNetworkMode
-            ? attackerPlayerId == 1
-            : attackerPlayerId == myLocalPlayerId;
+        var rng       = GetSharedRng(attackPhaseIdx);
+        int noteCount = noteCountGenerator.CreateRandomNoteCount(rng);
+        string msg    = randomMessageProvider.GetRandomMessage(noteCount, rng);
+
+        bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId ||
+                                NetworkManager.Instance == null);
 
         if (isLocalAttacker)
         {
-            int targetNoteCount  = noteCountGenerator.CreateRandomNoteCount();
-            string attackMessage = randomMessageProvider.GetRandomMessage(targetNoteCount);
-            attackTurn.StartLocalPlayerAttack(attackerSide, targetNoteCount, attackMessage);
+            attackTurn.StartLocalPlayerAttack(attackerSide, noteCount, msg, phaseStartDspTime);
+            hud?.ShowAttackMessage(msg, attackerSide);
+            hud?.UpdateAttackProgress(0, noteCount);
+        }
+        else if (NetworkManager.Instance == null)
+        {
+            attackTurn.StartOpponentAttackDemo(msg);
+            hud?.ShowAttackMessage(msg, attackerSide);
+            hud?.UpdateAttackProgress(0, noteCount);
+        }
+        else
+        {
+            currentTargetNoteCount   = noteCount;
+            currentReceivedNoteCount = 0;
+            hud?.ShowAttackMessage(msg, attackerSide);
+            hud?.UpdateAttackProgress(0, noteCount);
+
+            defenseTurn?.PrepareForIncomingAttack(attackerSide, currentTurnDuration);
+            attackTurnRenderer?.BeginAttackVisual(attackerSide, phaseStartDspTime,
+                currentTurnDuration, noteCount);
+        }
+    }
+
+    // ── Defense Phase ─────────────────────────────────────────────────────────────
+
+    private void StartDefensePhase(double phaseStartDspTime)
+    {
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+        gameCamera?.SetDefenseView(attackerSide);
+        attackTurnRenderer?.StopLine();
+
+        float judgeLineX   = attackTurnRenderer?.GetJudgeLineX(attackerSide) ?? 0f;
+        float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
+        float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
+
+        bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId);
+        bool isNetworkMode   = NetworkManager.Instance != null;
+
+        if (!isLocalAttacker && isNetworkMode)
+        {
+            currentState = GameState.DEFENSE;
+            defenseTurn?.BeginTransfer(judgeLineX, attackStartX, attackEndX,
+                currentTurnDuration, NetworkManager.Instance, phaseStartDspTime);
         }
         else if (!isNetworkMode)
         {
-            // 로컬 전용: 상대 공격은 데모로 처리
-            int targetNoteCount  = attackTurn.OpponentDemoNoteCount;
-            string attackMessage = randomMessageProvider.GetRandomMessage(targetNoteCount);
-            attackTurn.StartOpponentAttackDemo(attackMessage);
+            currentState = GameState.DEFENSE;
         }
-        // 네트워크 원격 공격: NOTE_CREATED / ATTACK_END 수신 대기, 로컬 AttackTurn 실행 안 함
+        // isLocalAttacker && isNetworkMode: 공격자 미러뷰는 HandleAttackEnded에서 처리
     }
 
+    // ── Attack/Defense Event Handlers ─────────────────────────────────────────────
+
     /// <summary>
-    /// 공격 턴 종료 시 공격자 패널티를 적용하고 방어 턴을 시작한다.
+    /// 공격 턴 종료 시 공격자 패널티를 적용하고 네트워크 모드에서 미러뷰를 시작한다.
     /// 공격자의 정신력이 0이 되는 경우 게임 종료 처리는 SanitySystem.OnPlayerDefeated 이벤트가 담당한다.
     /// </summary>
     private void HandleAttackEnded(AttackResult attackResult)
     {
         if (currentState == GameState.END) return;
 
-        currentState = GameState.DEFENSE;
-
-        // 공격 실패 패널티 적용.
-        // 이 과정에서 정신력이 0이 되면 SanitySystem.OnPlayerDefeated가 발생한다.
         sanitySystem?.ApplyAttackResult(attackerPlayerId, attackResult);
-
-        // ApplyAttackResult 중 게임이 종료되었으면 방어 턴을 시작하지 않는다.
-        if (currentState == GameState.END) return;
-
-        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
-        gameCamera?.SetDefenseView(attackerSide);
-
-        float judgeLineX = attackTurnRenderer.GetJudgeLineX(attackerSide);
-        float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
-        float attackEndX = attackTurnRenderer.GetEndX(attackerSide);
 
         if (NetworkManager.Instance != null)
         {
-            // 네트워크 모드에서 로컬이 공격자라면,
-            // 공격자 화면에서도 방어 노트 이동을 미러뷰로 보여준다.
-            // networkManager:null → DEFENSE_END 전송 안 함.
-            // 실제 판정 결과는 상대가 보낸 JUDGMENT 패킷으로 처리한다.
-            if (attackerPlayerId == myLocalPlayerId)
+            int penalty = sanitySystem?.CalculateAttackPenalty(attackResult) ?? 0;
+            if (penalty > 0)
             {
-                defenseTurn.Begin(
-                    attackResult.Notes,
-                    judgeLineX,
-                    attackStartX,
-                    attackEndX,
-                    attackTurn.AttackDuration,
-                    isAiDefense: false,
-                    networkManager: null,
-                    remoteAttackStartDspTime: attackTurn.AttackStartDspTime
-                );
+                byte targetId = (byte)attackerPlayerId;
+                NetworkManager.Instance.Send(w =>
+                    PacketSerializer.WriteSanityChange(w, targetId, penalty));
             }
-
-            return;
         }
 
-        // 로컬 테스트 모드.
-        defenseTurn.Begin(
-            attackResult.Notes,
-            judgeLineX,
-            attackStartX,
-            attackEndX,
-            attackTurn.AttackDuration,
-            isAiDefense: attackerPlayerId == 1
-        );
+        if (currentState == GameState.END) return;
+
+        // 공격자 미러 뷰 (로컬 공격자가 방어 phase에서 반대편 뷰로)
+        if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId)
+        {
+            AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+            float judgeLineX   = attackTurnRenderer?.GetJudgeLineX(attackerSide) ?? 0f;
+            float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
+            float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
+
+            defenseTurn?.Begin(
+                attackResult.Notes,
+                judgeLineX,
+                attackStartX,
+                attackEndX,
+                attackTurn.AttackDuration,
+                isAiDefense: true,
+                networkManager: null,
+                remoteAttackStartDspTime: attackTurn.AttackStartDspTime
+            );
+        }
     }
 
     /// <summary>
     /// 실제 방어자의 노트 판정 결과를 처리한다.
-    /// MISS일 경우 방어자의 정신력을 감소시킨다.
-    /// 정신력이 0이 되는 순간의 게임 종료 처리는 SanitySystem.OnPlayerDefeated 이벤트가 담당한다.
+    /// MISS일 경우 방어자의 정신력을 감소시키고 SANITY_CHANGE를 전송한다.
     /// </summary>
     private void HandleJudgment(Judgment judgment)
     {
@@ -349,17 +398,153 @@ public class GameManager : MonoBehaviour
         if (judgment != Judgment.MISS) return;
 
         int defenderPlayerId = GetDefenderPlayerId();
+        int penalty = sanitySystem?.ApplyDefenseMiss(defenderPlayerId) ?? 0;
 
-        // 여기서는 정신력만 깎는다.
-        // 정신력이 0이 되면 SanitySystem 내부에서 OnPlayerDefeated 이벤트가 발생한다.
-        sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
+        if (NetworkManager.Instance != null && penalty > 0)
+        {
+            byte targetId = (byte)defenderPlayerId;
+            NetworkManager.Instance.Send(w =>
+                PacketSerializer.WriteSanityChange(w, targetId, penalty));
+        }
     }
 
     /// <summary>
-    /// 특정 플레이어의 정신력이 0이 되어 게임이 종료되었을 때 호출한다.
+    /// 방어 턴 종료 이벤트. DSP 페이즈 루프가 자동으로 다음 phase를 시작하므로 별도 전환 불필요.
+    /// </summary>
+    private void HandleDefenseEnded(DefenseResult result)
+    {
+        if (currentState == GameState.END) return;
+        // DSP 페이즈 루프가 자동으로 다음 phase를 시작 — SwitchTurn 불필요
+        Debug.Log($"Defense End / miss:{result.MissCount}");
+    }
+
+    // ── Network Event Handlers ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// 원격 공격자가 생성한 노트 패킷을 처리한다.
+    /// DefenseTurn에는 노트 데이터를 전달하고, HUD에는 수신된 노트 개수 진행도를 표시한다.
+    /// </summary>
+    private void HandleNetworkNoteCreated(NoteCreatedPacket packet)
+    {
+        defenseTurn?.OnNoteReceived(packet, localAttackStartDspTime);
+        currentReceivedNoteCount++;
+        if (currentTargetNoteCount > 0)
+            hud?.UpdateAttackProgress(currentReceivedNoteCount, currentTargetNoteCount);
+    }
+
+    /// <summary>
+    /// 상대 클라이언트에서 전송한 SANITY_CHANGE 패킷을 처리한다.
+    /// </summary>
+    private void HandleNetworkSanityChange(SanityChangePacket packet)
+    {
+        if (currentState == GameState.END) return;
+        isApplyingRemoteGameState = true;
+        try
+        {
+            sanitySystem?.ApplyDirect(packet.targetPlayerId, packet.amount);
+        }
+        finally
+        {
+            isApplyingRemoteGameState = false;
+        }
+    }
+
+    /// <summary>
+    /// 상대 클라이언트에서 받은 판정 패킷을 처리한다.
+    /// JUDGMENT는 시각 동기화 전용 — 정신력 처리 없음 (SANITY_CHANGE가 별도 처리).
+    /// </summary>
+    private void HandleNetworkJudgment(JudgmentPacket packet)
+    {
+        if (currentState == GameState.END) return;
+
+        Judgment judgment = (Judgment)packet.judgment;
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+
+        // JUDGMENT는 시각 동기화 전용 — 정신력 처리 없음 (SANITY_CHANGE가 별도 처리)
+        attackTurnRenderer?.RemoveNote(packet.noteId);  // 공격자 미러뷰에서 노트 제거
+        hud?.ShowJudgment(judgment, attackerSide);
+    }
+
+    /// <summary>
+    /// 특정 플레이어의 정신력이 0이 되어 게임이 종료되었을 때 호출된다.
     /// 내 화면에는 localPlayerId 기준으로 승리/패배 패널을 표시하고,
     /// 내가 직접 감지한 종료라면 상대에게 GAME_END 패킷을 전송한다.
     /// </summary>
+    private void HandlePlayerDefeated(int defeatedPlayerId)
+    {
+        bool shouldSendNetworkPacket =
+            NetworkManager.Instance != null &&
+            !isApplyingRemoteGameState;
+
+        EndGameByDefeatedPlayer(defeatedPlayerId, shouldSendNetworkPacket);
+    }
+
+    /// <summary>
+    /// 상대 클라이언트에서 전송한 GAME_END 패킷을 처리한다.
+    /// 패킷 내용은 공통이지만, 결과 패널은 각자의 localPlayerId 기준으로 다르게 표시된다.
+    /// </summary>
+    private void HandleNetworkGameEnd(GameEndPacket packet)
+    {
+        if (currentState == GameState.END) return;
+
+        switch (packet.reason)
+        {
+            case GameEndReason.PlayerDefeated:
+                EndGameByDefeatedPlayer(packet.defeatedPlayerId, shouldSendNetworkPacket: false);
+                break;
+
+            case GameEndReason.CommunicationSuccess:
+                EndGameByCommunicationSuccess(shouldSendNetworkPacket: false);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 상대방 연결이 예기치 않게 끊어졌을 때 호출.
+    /// </summary>
+    private void HandleNetworkDisconnected()
+    {
+        if (currentState == GameState.END) return;
+        currentState = GameState.END;
+        Debug.Log("GameManager: 상대방 연결 끊김");
+    }
+
+    // ── AttackTurn 이벤트 포워딩 ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// AttackTurn에서 선택된 공격 메시지를 HUD에 표시한다.
+    /// </summary>
+    private void HandleAttackMessageSelected(string message, int noteCount)
+    {
+        if (hud == null) return;
+
+        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
+        hud.ShowAttackMessage(message, attackerSide);
+    }
+
+    /// <summary>
+    /// AttackTurn의 노트 생성 진행도를 HUD의 별 UI에 반영한다.
+    /// </summary>
+    private void HandleAttackProgressChanged(int currentCount, int targetCount)
+    {
+        if (hud == null) return;
+
+        hud.UpdateAttackProgress(currentCount, targetCount);
+    }
+
+    // ── SanitySystem 이벤트 ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// SanitySystem의 정신력 변경 이벤트를 HUD에 반영한다.
+    /// </summary>
+    private void HandleSanityChanged(int p1Sanity, int p2Sanity, int maxSanity)
+    {
+        if (hud == null) return;
+        hud.UpdateSanity(p1Sanity, p2Sanity, maxSanity);
+    }
+
+    // ── Game End ─────────────────────────────────────────────────────────────────
+
     private void EndGameByDefeatedPlayer(int defeatedPlayerId, bool shouldSendNetworkPacket)
     {
         if (currentState == GameState.END) return;
@@ -391,290 +576,6 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 공격자의 반대 플레이어를 방어자로 반환한다.
-    /// P1이 공격 중이면 P2가 방어자, P2가 공격 중이면 P1이 방어자다.
-    /// </summary>
-    private int GetDefenderPlayerId()
-    {
-        return attackerPlayerId == 1 ? 2 : 1;
-    }
-
-    /// <summary>
-    /// 플레이어 ID를 HUD와 Renderer에서 사용하는 AttackSide 값으로 변환한다.
-    /// </summary>
-    private AttackSide GetAttackSide(int playerId)
-    {
-        return playerId == 1 ? AttackSide.P1 : AttackSide.P2;
-    }
-    /// <summary>
-    /// 방어 턴의 개별 노트 판정 이벤트 처리.
-    /// 판정 결과를 HUD에 표시하고, MISS인 경우 방어자의 정신력을 즉시 감소시킨다.
-    /// </summary>
-    private void HandleDefenseEnded(DefenseResult result)
-    {
-        if (currentState == GameState.END) return;
-
-        if (NetworkManager.Instance != null)
-        {
-            // 공격자 미러 뷰(networkManager:null로 Begin된 경우)는 무시
-            // 로컬이 실제 방어자인 경우에만 턴 전환 (DEFENSE_END는 DefenseTurn이 이미 전송)
-            if (attackerPlayerId == myLocalPlayerId) return;
-            completedTurnCount++;
-            UpdateBpmByTurnCount();
-            SwitchTurn();
-            return;
-        }
-
-        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
-        Debug.Log($"Turn End / attacker:P{attackerPlayerId}, defender:P{defenderPlayerId}, miss:{result.MissCount}");
-        completedTurnCount++;
-        UpdateBpmByTurnCount();
-        SwitchTurn();
-    }
-
-    /// <summary>
-    /// 턴을 전환하고 다음 공격 턴을 시작.
-    /// </summary>
-    private void SwitchTurn()
-    {
-        currentState = GameState.TURN_CHANGE;
-        pendingAttackVisualStart = false;
-        pendingDefenseVisualTransition = false;
-        attackTurnRenderer.ClearAll();
-        if (hud != null) hud.ClearJudgments();
-        attackerPlayerId = attackerPlayerId == 1 ? 2 : 1;
-        StartAttackPhase();
-    }
-
-    /// <summary>
-    /// SanitySystem의 정신력 변경 이벤트를 HUD에 반영한다.
-    /// </summary>
-    private void HandleSanityChanged(int p1Sanity, int p2Sanity, int maxSanity)
-    {
-        if (hud == null) return;
-        hud.UpdateSanity(p1Sanity, p2Sanity, maxSanity);
-    }
-
-    /// <summary>
-    /// SanitySystem에서 플레이어 정신력이 0이 되었을 때 호출된다.
-    /// 로컬 플레이어 기준으로 승리/패배 결과를 표시하고,
-    /// 내가 직접 만든 게임 종료라면 상대에게 GAME_END 패킷을 전송한다.
-    /// </summary>
-    private void HandlePlayerDefeated(int defeatedPlayerId)
-    {
-        bool shouldSendNetworkPacket =
-            NetworkManager.Instance != null &&
-            !isApplyingRemoteGameState;
-
-        EndGameByDefeatedPlayer(defeatedPlayerId, shouldSendNetworkPacket);
-    }
-
-    /// <summary>
-    /// AttackTurn에서 선택된 공격 메시지를 HUD에 표시한다.
-    /// </summary>
-    private void HandleAttackMessageSelected(string message, int noteCount)
-    {
-        if (hud == null) return;
-
-        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-        hud.ShowAttackMessage(message, attackerSide);
-    }
-    
-    /// <summary>
-    /// AttackTurn의 노트 생성 진행도를 HUD의 별 UI에 반영한다.
-    /// </summary>
-    private void HandleAttackProgressChanged(int currentCount, int targetCount)
-    {
-        if (hud == null) return;
-
-        hud.UpdateAttackProgress(currentCount, targetCount);
-    }
-    
-    /// <summary>
-    /// 현재 BPM 단계 인덱스에 해당하는 BPM을 RhythmClock과 HUD에 적용한다.
-    /// </summary>
-    private void ApplyCurrentBpm()
-    {
-        if (bpmStages == null || bpmStages.Length == 0)
-        {
-            Debug.LogWarning("BPM Stages가 비어 있습니다.");
-            return;
-        }
-
-        currentBpmStageIndex = Mathf.Clamp(currentBpmStageIndex, 0, bpmStages.Length - 1);
-        float bpm = bpmStages[currentBpmStageIndex];
-
-        if (RhythmClock.Instance != null)
-        {
-            RhythmClock.Instance.SetBpm(bpm);
-        }
-
-        if (hud != null)
-        {
-            hud.UpdateBpm(bpm);
-        }
-
-        Debug.Log($"BPM Changed / stage:{currentBpmStageIndex}, bpm:{bpm}");
-    }
-
-    /// <summary>
-    /// 완료 턴 수를 기준으로 BPM 단계 상승 여부를 확인한다.
-    /// turnsPerBpmIncrease마다 다음 BPM 단계로 이동한다.
-    /// </summary>
-    private void UpdateBpmByTurnCount()
-    {
-        if (turnsPerBpmIncrease <= 0) return;
-        if (bpmStages == null || bpmStages.Length == 0) return;
-
-        int nextStageIndex = completedTurnCount / turnsPerBpmIncrease;
-        nextStageIndex = Mathf.Clamp(nextStageIndex, 0, bpmStages.Length - 1);
-
-        if (nextStageIndex == currentBpmStageIndex) return;
-
-        currentBpmStageIndex = nextStageIndex;
-        ApplyCurrentBpm();
-    }
-
-    /// <summary>
-    /// 원격 공격자의 ATTACK_START 수신 시 호출.
-    /// 방어자 화면을 준비하고, 공격자가 생성한 목표 노트 수와 메시지를 그대로 사용한다.
-    /// </summary>
-    private void HandleNetworkAttackStart(AttackStartPacket packet)
-    {
-        if (gameStartDelayCoroutine != null)
-        {
-            StopCoroutine(gameStartDelayCoroutine);
-            gameStartDelayCoroutine = null;
-        }
-
-        attackerPlayerId = packet.attackerPlayerId;
-        AttackSide attackerSide = GetAttackSide(packet.attackerPlayerId);
-
-        currentTargetNoteCount = packet.targetNoteCount;
-        currentReceivedNoteCount = 0;
-
-        // 중요:
-        // 방어자는 RandomMessageProvider를 돌리지 않는다.
-        // 공격자가 보낸 메시지를 그대로 표시한다.
-        hud?.ShowAttackMessage(packet.attackMessage, attackerSide);
-        hud?.UpdateAttackProgress(0, currentTargetNoteCount);
-
-        var net = NetworkManager.Instance;
-        if (net != null && attackTurnRenderer != null)
-        {
-            double correctedStart = net.TimeSync.CorrectTime(packet.attackStartDspTime);
-
-            Debug.Log(
-                $"[Net] ATTACK_START 수신 / attacker:P{packet.attackerPlayerId}, " +
-                $"target:{packet.targetNoteCount}, message:{packet.attackMessage}, " +
-                $"correctedStart:{correctedStart:F3}, now:{AudioSettings.dspTime:F3}"
-            );
-
-            scheduledAttackViewDspTime = correctedStart;
-            pendingAttackVisualStart = true;
-            scheduledDefenseTransitionDspTime = correctedStart + packet.attackDuration;
-            pendingDefenseAttackerSide = GetAttackSide(packet.attackerPlayerId);
-            pendingDefenseVisualTransition = true;
-
-            attackTurnRenderer.BeginAttackVisual(
-                attackerSide,
-                correctedStart,
-                packet.attackDuration,
-                packet.targetNoteCount
-            );
-        }
-
-        defenseTurn.OnAttackStartReceived(packet);
-    }
-
-    /// <summary>
-    /// 원격 공격자가 생성한 노트 패킷을 처리한다.
-    /// DefenseTurn에는 노트 데이터를 전달하고, HUD에는 수신된 노트 개수 진행도를 표시한다.
-    /// </summary>
-    private void HandleNetworkNoteCreated(NoteCreatedPacket packet)
-    {
-        defenseTurn?.OnNoteReceived(packet);
-
-        currentReceivedNoteCount++;
-
-        if (currentTargetNoteCount > 0)
-        {
-            hud?.UpdateAttackProgress(currentReceivedNoteCount, currentTargetNoteCount);
-        }
-    }
-
-    /// <summary>
-    /// 원격 공격자의 ATTACK_END 수신 시 호출. 로컬에서 방어 턴을 시작한다.
-    /// </summary>
-    private void HandleNetworkAttackEnd(AttackEndPacket packet)
-    {
-        var net = NetworkManager.Instance;
-        if (net == null) return;
-
-        currentState = GameState.DEFENSE;
-
-        ApplyRemoteAttackResult(packet);
-        if (currentState == GameState.END) return;
-
-        if (attackTurnRenderer == null) return;
-
-        AttackSide attackerSide = GetAttackSide(packet.attackerPlayerId);
-        float judgeLineX   = attackTurnRenderer.GetJudgeLineX(attackerSide);
-        float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
-        float attackEndX   = attackTurnRenderer.GetEndX(attackerSide);
-
-        defenseTurn.OnAttackEndReceived(packet, judgeLineX, attackStartX, attackEndX, net);
-    }
-
-    /// <summary>
-    /// 원격 공격자가 보낸 공격 결과 패널티를 로컬 SanitySystem에 반영한다.
-    /// 방어자 쪽에서는 목표 노트 수를 다시 계산하지 않고, 패킷에 담긴 결과를 그대로 사용한다.
-    /// </summary>
-    private void ApplyRemoteAttackResult(AttackEndPacket packet)
-    {
-        AttackResult result = new AttackResult
-        {
-            Notes = new NoteData[0],
-            BadTimingInputCount = packet.badTimingInputCount,
-            MissingNoteCount = packet.missingNoteCount,
-            ExtraNoteCount = packet.extraNoteCount,
-            DuplicateInputCount = packet.duplicateInputCount
-        };
-
-        isApplyingRemoteGameState = true;
-
-        try
-        {
-            sanitySystem?.ApplyAttackResult(packet.attackerPlayerId, result);
-        }
-        finally
-        {
-            isApplyingRemoteGameState = false;
-        }
-    }
-
-    /// <summary>
-    /// 원격 방어자의 DEFENSE_END 수신 시 호출. 턴을 전환한다.
-    /// </summary>
-    private void HandleNetworkDefenseEnd(DefenseEndPacket packet)
-    {
-        if (currentState == GameState.END) return;
-        completedTurnCount++;
-        UpdateBpmByTurnCount();
-        SwitchTurn();
-    }
-
-    /// <summary>
-    /// 상대방 연결이 예기치 않게 끊어졌을 때 호출.
-    /// </summary>
-    private void HandleNetworkDisconnected()
-    {
-        if (currentState == GameState.END) return;
-        currentState = GameState.END;
-        Debug.Log("GameManager: 상대방 연결 끊김");
-    }
-
-    /// <summary>
     /// 양쪽 플레이어가 마지막까지 생존하여 교신 성공 조건을 만족했을 때 호출한다.
     /// 현재는 조건이 확정되지 않았으므로 추후 BGM 종료 또는 목표 달성 조건에서 호출한다.
     /// </summary>
@@ -703,100 +604,55 @@ public class GameManager : MonoBehaviour
             );
         }
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────────
+
     /// <summary>
-    /// 상대 클라이언트에서 전송한 GAME_END 패킷을 처리한다.
-    /// 패킷 내용은 공통이지만, 결과 패널은 각자의 localPlayerId 기준으로 다르게 표시된다.
+    /// 현재 공격자의 반대 플레이어를 방어자로 반환한다.
+    /// P1이 공격 중이면 P2가 방어자, P2가 공격 중이면 P1이 방어자다.
     /// </summary>
-    private void HandleNetworkGameEnd(GameEndPacket packet)
+    private int GetDefenderPlayerId()
     {
-        if (currentState == GameState.END) return;
-
-        switch (packet.reason)
-        {
-            case GameEndReason.PlayerDefeated:
-                EndGameByDefeatedPlayer(packet.defeatedPlayerId, shouldSendNetworkPacket: false);
-                break;
-
-            case GameEndReason.CommunicationSuccess:
-                EndGameByCommunicationSuccess(shouldSendNetworkPacket: false);
-                break;
-        }
+        return (attackerPlayerId == 1) ? 2 : 1;
     }
+
     /// <summary>
-    /// 상대 클라이언트에서 받은 판정 패킷을 처리한다.
-    /// MISS일 경우 로컬 정신력 상태도 맞춰주지만,
-    /// 이 과정에서 발생한 패배는 다시 GAME_END로 전송하지 않는다.
+    /// 플레이어 ID를 HUD와 Renderer에서 사용하는 AttackSide 값으로 변환한다.
     /// </summary>
-    private void HandleNetworkJudgment(JudgmentPacket packet)
+    private AttackSide GetAttackSide(int playerId)
     {
-        if (currentState == GameState.END) return;
-
-        Judgment judgment = (Judgment)packet.judgment;
-        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
-
-        defenseTurn?.RemoteRemoveNote(packet.noteId);
-        hud?.ShowJudgment(judgment, attackerSide);
-
-        if (judgment != Judgment.MISS) return;
-
-        int defenderPlayerId = GetDefenderPlayerId();
-
-        isApplyingRemoteGameState = true;
-
-        try
-        {
-            // 상대에게 받은 판정 결과를 내 로컬 정신력 상태에도 반영한다.
-            // 이 과정에서 OnPlayerDefeated가 발생해도 GAME_END를 다시 보내면 안 된다.
-            sanitySystem?.ApplyDefenseMiss(defenderPlayerId);
-        }
-        finally
-        {
-            isApplyingRemoteGameState = false;
-        }
+        return playerId == 1 ? AttackSide.P1 : AttackSide.P2;
     }
+
     /// <summary>
-    /// 리듬 클락 시작 시각을 기준으로 첫 공격 턴 시작 시간을 계산하고,
-    /// 해당 시간이 될 때까지 기다린 뒤 첫 공격 턴을 시작한다.
+    /// 현재 BPM 단계 인덱스에 해당하는 BPM을 RhythmClock과 HUD에 적용한다.
     /// </summary>
-    private IEnumerator StartFirstTurnAfterDelay(double rhythmStartDspTime)
+    private void ApplyCurrentBpm()
     {
-        double delaySeconds = GetGameStartDelaySeconds();
-
-        // 딜레이가 0이면 다음 프레임까지 기다리지 않고 바로 첫 공격 턴을 시작한다.
-        if (delaySeconds <= 0.0)
+        if (bpmStages == null || bpmStages.Length == 0)
         {
-            gameStartDelayCoroutine = null;
-            StartAttackPhase();
-            yield break;
+            Debug.LogWarning("BPM Stages가 비어 있습니다.");
+            return;
         }
 
-        double firstTurnStartDspTime = rhythmStartDspTime + delaySeconds;
+        currentBpmStageIndex = Mathf.Clamp(currentBpmStageIndex, 0, bpmStages.Length - 1);
+        float bpm = bpmStages[currentBpmStageIndex];
 
-        Debug.Log(
-            $"Game Start Delay / msEnabled:{useMillisecondStartDelay}, ms:{gameStartDelayMs}, " +
-            $"beatEnabled:{useBeatStartDelay}, beats:{gameStartDelayBeats}, " +
-            $"totalDelay:{delaySeconds:F3}s, firstTurnStart:{firstTurnStartDspTime:F3}"
-        );
-
-        while (AudioSettings.dspTime < firstTurnStartDspTime)
+        if (RhythmClock.Instance != null)
         {
-            if (currentState == GameState.END)
-            {
-                gameStartDelayCoroutine = null;
-                yield break;
-            }
-
-            yield return null;
+            RhythmClock.Instance.SetBpm(bpm);
         }
 
-        gameStartDelayCoroutine = null;
+        if (hud != null)
+        {
+            hud.UpdateBpm(bpm);
+        }
 
-        if (currentState == GameState.END) yield break;
-
-        StartAttackPhase();
+        Debug.Log($"BPM Changed / stage:{currentBpmStageIndex}, bpm:{bpm}");
     }
+
     /// <summary>
-    /// 인스펙터 체크박스 설정에 따라 첫 턴 시작 전 대기 시간을 초 단위로 계산한다.
+    /// インスペクター チェックボックス設定에 따라 첫 턴 시작 전 대기 시간을 초 단위로 계산한다.
     /// ms 체크박스와 beat 체크박스가 모두 켜져 있으면 두 값을 더해서 사용한다.
     /// 둘 다 꺼져 있으면 0초를 반환한다.
     /// </summary>
