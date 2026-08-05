@@ -94,17 +94,34 @@ public class SanitySystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 방어 MISS 1회에 대한 정신력 감소를 방어자에게 즉시 적용한다.
-    /// 방어 패널티는 방어 턴 종료 시 한 번에 처리하지 않고,
-    /// MISS가 발생하는 순간마다 GameManager에서 호출한다.
+    /// 공격 결과의 정신력 패널티 총합을 계산해 반환한다. 실제 적용은 하지 않는다.
+    /// GameManager가 네트워크 전송 전에 호출해 SANITY_CHANGE 페이로드 크기를 결정한다.
     /// </summary>
-    public void ApplyDefenseMiss(int defenderPlayerId)
+    public int CalculateAttackPenalty(AttackResult result)
     {
-        ApplyDamage(
-            defenderPlayerId,
-            defenseMissPenaltyPerNote,
-            "방어 실패"
-        );
+        int amount = result.BadTimingInputCount * badTimingInputPenalty
+                   + result.MissingNoteCount    * missingNotePenaltyPerNote
+                   + result.ExtraNoteCount      * extraNotePenaltyPerNote;
+        if (penalizeDuplicateInput)
+            amount += result.DuplicateInputCount * duplicateInputPenaltyPerInput;
+        return amount;
+    }
+
+    /// <summary>
+    /// 네트워크에서 수신한 정신력 변화를 직접 적용한다.
+    /// </summary>
+    public void ApplyDirect(int targetPlayerId, int amount)
+    {
+        ApplyDamage(targetPlayerId, amount, "네트워크 수신");
+    }
+
+    /// <summary>
+    /// 방어 MISS 1회에 대한 정신력 감소를 방어자에게 즉시 적용하고 감소량을 반환한다.
+    /// </summary>
+    public int ApplyDefenseMiss(int defenderPlayerId)
+    {
+        ApplyDamage(defenderPlayerId, defenseMissPenaltyPerNote, "방어 실패");
+        return defenseMissPenaltyPerNote;
     }
 
     /// <summary>

@@ -19,4 +19,14 @@ public class NoteCountGenerator : MonoBehaviour
 
         return Random.Range(safeMin, safeMax + 1);
     }
+
+    /// <summary>
+    /// 외부 난수 생성기로 노트 수를 결정한다. 양쪽 클라이언트가 같은 시드를 쓸 때 사용.
+    /// </summary>
+    public int CreateRandomNoteCount(System.Random rng)
+    {
+        int safeMin = Mathf.Clamp(minNoteCount, MinAllowedNoteCount, MaxAllowedNoteCount);
+        int safeMax = Mathf.Clamp(maxNoteCount, safeMin, MaxAllowedNoteCount);
+        return rng.Next(safeMin, safeMax + 1);
+    }
 }
