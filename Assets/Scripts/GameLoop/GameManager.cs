@@ -46,6 +46,9 @@ public class GameManager : MonoBehaviour
     private int currentTargetNoteCount;
     private int currentReceivedNoteCount;
 
+    // 로컬 모드 방어 페이즈에서 Begin()에 전달할 공격 결과
+    private AttackResult? lastLocalAttackResult;
+
     private int completedTurnCount;
     private int currentBpmStageIndex;
 
@@ -330,8 +333,30 @@ public class GameManager : MonoBehaviour
         else if (!isNetworkMode)
         {
             currentState = GameState.DEFENSE;
+            BeginLocalDefense();  // lastLocalAttackResult이 이미 세팅돼 있으면 즉시 시작, 아니면 HandleAttackEnded 쪽이 처리
         }
         // isLocalAttacker && isNetworkMode: 공격자 미러뷰는 HandleAttackEnded에서 처리
+    }
+
+    // AttackTurn.Update()와 GameManager.Update() 실행 순서에 무관하게 defenseTurn.Begin()을 정확히 한 번 호출한다.
+    private void BeginLocalDefense()
+    {
+        if (!lastLocalAttackResult.HasValue) return;
+
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+        float judgeLineX   = attackTurnRenderer?.GetJudgeLineX(attackerSide) ?? 0f;
+        float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
+        float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
+
+        defenseTurn?.Begin(
+            lastLocalAttackResult.Value.Notes,
+            judgeLineX, attackStartX, attackEndX,
+            currentTurnDuration,
+            isAiDefense: false,
+            networkManager: null,
+            remoteAttackStartDspTime: localAttackStartDspTime  // 로컬 모드: DSP 페이즈 루프 기준 정확한 이론 시작 시각
+        );
+        lastLocalAttackResult = null;
     }
 
     // ── Attack/Defense Event Handlers ─────────────────────────────────────────────
@@ -345,6 +370,11 @@ public class GameManager : MonoBehaviour
         if (currentState == GameState.END) return;
 
         sanitySystem?.ApplyAttackResult(attackerPlayerId, attackResult);
+        lastLocalAttackResult = attackResult;
+
+        // DSP 루프가 먼저 defense phase를 시작했고 이쪽이 늦게 실행된 경우 여기서 Begin() 호출
+        if (NetworkManager.Instance == null && currentState == GameState.DEFENSE)
+            BeginLocalDefense();
 
         if (NetworkManager.Instance != null)
         {
@@ -426,7 +456,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleNetworkNoteCreated(NoteCreatedPacket packet)
     {
-        defenseTurn?.OnNoteReceived(packet, localAttackStartDspTime);
+        defenseTurn?.OnNoteReceived(packet, localAttackStartDspTime + currentTurnDuration);
         currentReceivedNoteCount++;
         if (currentTargetNoteCount > 0)
             hud?.UpdateAttackProgress(currentReceivedNoteCount, currentTargetNoteCount);

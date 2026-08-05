@@ -22,6 +22,8 @@ public class DefenseTurn : MonoBehaviour
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private double fallbackMissTimeoutMs = 100.0;
     [SerializeField] private float fallbackTransferSpeed = 5f;
+    // 판정선 도달 예정 시각보다 이 시간(초) 이전의 노트는 MISS 판정 및 키 입력을 무시한다.
+    [SerializeField] private double noteActivationLeadTimeS = 1.0;
 
     private readonly List<NoteData> pendingNotes = new();
     private readonly List<NoteData> receivedNotes = new();
@@ -61,6 +63,7 @@ public class DefenseTurn : MonoBehaviour
 
                 for (int i = pendingNotes.Count - 1; i >= 0; i--)
                 {
+                    if (now < pendingNotes[i].judgeTime - noteActivationLeadTimeS) continue;
                     if (now <= pendingNotes[i].judgeTime + missTimeout) continue;
                     int missedNoteId = pendingNotes[i].noteId;
                     judgments.Add(Judgment.MISS);
@@ -144,16 +147,16 @@ public class DefenseTurn : MonoBehaviour
     /// <summary>
     /// NOTE_CREATED 수신 시 GameManager를 통해 호출.
     /// judgeTime을 즉시 계산해 설정하고 노트를 스폰한다.
-    /// localTurnStart는 GameManager가 DSP 페이즈 루프에서 계산한 이번 공격 phase 시작 시각.
+    /// localDefenseStart는 localAttackStartDspTime + currentTurnDuration, 즉 방어 페이즈 시작 시각.
     /// </summary>
-    public void OnNoteReceived(NoteCreatedPacket packet, double localTurnStart)
+    public void OnNoteReceived(NoteCreatedPacket packet, double localDefenseStart)
     {
         var note = new NoteData
         {
             noteId           = packet.noteId,
             noteType         = packet.noteType,
             noteRelativeTime = packet.noteRelativeTime,
-            judgeTime        = localTurnStart + packet.noteRelativeTime
+            judgeTime        = localDefenseStart + packet.noteRelativeTime
         };
         receivedNotes.Add(note);
         if (attackTurnRenderer != null)
@@ -272,6 +275,8 @@ public class DefenseTurn : MonoBehaviour
         foreach (var note in pendingNotes)
         {
             if (note.noteType != noteType) continue;
+            // 아직 활성화 구간에 진입하지 않은 노트는 키 입력 대상에서 제외
+            if (inputTime < note.judgeTime - noteActivationLeadTimeS) continue;
             double dist = System.Math.Abs(note.judgeTime - inputTime);
             if (dist >= minDist) continue;
             minDist = dist;
