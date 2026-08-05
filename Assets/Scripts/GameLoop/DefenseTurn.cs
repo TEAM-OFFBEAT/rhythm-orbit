@@ -61,10 +61,14 @@ public class DefenseTurn : MonoBehaviour
                 for (int i = pendingNotes.Count - 1; i >= 0; i--)
                 {
                     if (now <= pendingNotes[i].judgeTime + missTimeout) continue;
+                    int missedNoteId = pendingNotes[i].noteId;
                     judgments.Add(Judgment.MISS);
                     OnJudgment?.Invoke(Judgment.MISS);
-                    attackTurnRenderer.RemoveNote(pendingNotes[i].noteId);
+                    attackTurnRenderer.RemoveNote(missedNoteId);
                     pendingNotes.RemoveAt(i);
+
+                    if (networkManager != null)
+                        networkManager.Send(w => PacketSerializer.WriteJudgment(w, missedNoteId, Judgment.MISS));
                 }
             }
         }
