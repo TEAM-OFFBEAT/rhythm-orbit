@@ -326,6 +326,70 @@ PrefabInstance:
       propertyPath: m_Resource
       value: 
       objectReference: {fileID: 8300000, guid: 3c450153aa5e63540a711757e87d2b19, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: bgmEntries.Array.data[2].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 35e6ed8dc5b72554f868a39782e5683d, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: bgmEntries.Array.data[3].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 716db8f57db517840b5f447f10eef5b0, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: bgmEntries.Array.data[4].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: a741aa8f472b4e54e8ea6337d162ab44, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[0].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 264a91176e66fea4a96de433adaa479e, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[1].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: c89ce8213efe5ae4c91dd3d605e7d3eb, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[2].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 43296fd37876a9648a77541b6b8e4922, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[3].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: b908170d75a9e9446b8d7fd1bda4c677, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[4].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 6eafc7c325aaf864e9c9350108b41d81, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[5].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2557475ba466c2c429b35221349ee56a, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[6].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 264a91176e66fea4a96de433adaa479e, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[7].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 6931e9feab8c1eb479a4e7b452428ceb, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[8].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 6931e9feab8c1eb479a4e7b452428ceb, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[9].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 6931e9feab8c1eb479a4e7b452428ceb, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[10].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 099c742a63706b249ae3ddc65b313f1c, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[11].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 7e1a14333249fca4fb3cccffbc234d75, type: 3}
+    - target: {fileID: 5082261578518569677, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
+      propertyPath: sfxEntries.Array.data[12].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: dd9f08376b3209a4f89ba7b7d90a9cd5, type: 3}
     - target: {fileID: 5176468647633228088, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
       propertyPath: m_Name
       value: Core
