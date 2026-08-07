@@ -12,14 +12,13 @@ public class SanitySystem : MonoBehaviour
     [SerializeField] private int maxSanity = 100;
 
     [Header("Attack Penalties")]
-    [SerializeField] private int badTimingInputPenalty = 1;
-    [SerializeField] private int missingNotePenaltyPerNote = 1;
-    [SerializeField] private int extraNotePenaltyPerNote = 1;
+    [SerializeField] private int badTimingInputPenalty = 2;
+    [SerializeField] private int noteCountMismatchPenalty = 15;
     [SerializeField] private bool penalizeDuplicateInput = false;
     [SerializeField] private int duplicateInputPenaltyPerInput = 1;
 
     [Header("Defense Penalties")]
-    [SerializeField] private int defenseMissPenaltyPerNote = 1;
+    [SerializeField] private int defenseMissPenaltyPerNote = 5;
 
     /// <summary>
     /// 정신력 수치가 변경될 때 발행.
@@ -68,20 +67,21 @@ public class SanitySystem : MonoBehaviour
         ApplyDamage(
             attackerPlayerId,
             result.BadTimingInputCount * badTimingInputPenalty,
-            "공격 박자 이탈"
+            "공격 박자 어긋남"
         );
 
-        ApplyDamage(
-            attackerPlayerId,
-            result.MissingNoteCount * missingNotePenaltyPerNote,
-            "공격 노트 부족"
-        );
+        bool hasNoteCountMismatch =
+            result.MissingNoteCount > 0 ||
+            result.ExtraNoteCount > 0;
 
-        ApplyDamage(
-            attackerPlayerId,
-            result.ExtraNoteCount * extraNotePenaltyPerNote,
-            "공격 초과 입력"
-        );
+        if (hasNoteCountMismatch)
+        {
+            ApplyDamage(
+                attackerPlayerId,
+                noteCountMismatchPenalty,
+                "공격 목표 탭 수 초과/미달"
+            );
+        }
 
         if (penalizeDuplicateInput)
         {
@@ -99,11 +99,22 @@ public class SanitySystem : MonoBehaviour
     /// </summary>
     public int CalculateAttackPenalty(AttackResult result)
     {
-        int amount = result.BadTimingInputCount * badTimingInputPenalty
-                   + result.MissingNoteCount    * missingNotePenaltyPerNote
-                   + result.ExtraNoteCount      * extraNotePenaltyPerNote;
+        int amount = result.BadTimingInputCount * badTimingInputPenalty;
+
+        bool hasNoteCountMismatch =
+            result.MissingNoteCount > 0 ||
+            result.ExtraNoteCount > 0;
+
+        if (hasNoteCountMismatch)
+        {
+            amount += noteCountMismatchPenalty;
+        }
+
         if (penalizeDuplicateInput)
+        {
             amount += result.DuplicateInputCount * duplicateInputPenaltyPerInput;
+        }
+
         return amount;
     }
 
