@@ -29,4 +29,16 @@ public class NoteCountGenerator : MonoBehaviour
         int safeMax = Mathf.Clamp(maxNoteCount, safeMin, MaxAllowedNoteCount);
         return rng.Next(safeMin, safeMax + 1);
     }
+
+    /// <summary>
+    /// 라운드별 min/max를 받는 오버로드    
+    /// </summary>
+
+    public int CreateRandomNoteCount(System.Random rng, int minNoteCount, int maxNoteCount)
+    {
+        int safeMin = Mathf.Clamp(minNoteCount, MinAllowedNoteCount, MaxAllowedNoteCount);
+        int safeMax = Mathf.Clamp(maxNoteCount, safeMin, MaxAllowedNoteCount);
+
+        return rng.Next(safeMin, safeMax + 1);
+    }
 }
