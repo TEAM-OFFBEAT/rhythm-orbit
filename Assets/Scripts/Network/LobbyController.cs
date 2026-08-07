@@ -40,6 +40,11 @@ public class LobbyController : MonoBehaviour
 
     private void Awake()
     {
+        // 씬 재로드 시 Singleton이 씬의 NetworkManager를 즉시 Destroy한다.
+        // 실제 지속 인스턴스(DontDestroyOnLoad)를 참조해야 한다.
+        if (NetworkManager.Instance != null)
+            networkManager = NetworkManager.Instance;
+
         createRoomButton.onClick.AddListener(OnCreateRoom);
         joinRoomButton.onClick.AddListener(OnJoinRoom);
         cancelHostButton.onClick.AddListener(OnCancel);

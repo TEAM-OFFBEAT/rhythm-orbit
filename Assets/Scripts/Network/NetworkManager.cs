@@ -63,6 +63,7 @@ public class NetworkManager : Singleton<NetworkManager>
     /// </summary>
     public void StartHost()
     {
+        Disconnect();
         IsHost = true;
         TimeSync = new TimeSyncManager(5, Send);
         listener = new TcpListener(IPAddress.Any, port);
@@ -76,6 +77,7 @@ public class NetworkManager : Singleton<NetworkManager>
     /// </summary>
     public void Connect(string ip)
     {
+        Disconnect();
         IsHost = false;
         TimeSync = new TimeSyncManager(5, Send);
         client = new TcpClient();
@@ -95,6 +97,8 @@ public class NetworkManager : Singleton<NetworkManager>
         stream = null;
         writer = null;
         reader = null;
+        client = null;
+        listener = null;
         Debug.Log("NetworkManager: 연결 종료");
     }
 
