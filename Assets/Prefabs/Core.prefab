@@ -61,7 +61,102 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad560af9aefd66844b1152b68e2cc306, type: 3}
   m_Name: 
   m_EditorClassIdentifier: RhythmOrbit.Runtime::RhythmOrbit.Core.SoundManager
-  audioSource: {fileID: 3221796485719918226}
+  bgmSourceA: {fileID: 3221796485719918226}
+  bgmSourceB: {fileID: 0}
+  sfxPoolSize: 12
+  bgmEntries:
+  - id: 0
+    clip: {fileID: 0}
+    volume: 0.52
+    loop: 0
+  - id: 1
+    clip: {fileID: 0}
+    volume: 0.57
+    loop: 0
+  - id: 2
+    clip: {fileID: 0}
+    volume: 0.58
+    loop: 0
+  - id: 3
+    clip: {fileID: 0}
+    volume: 0.57
+    loop: 0
+  - id: 4
+    clip: {fileID: 0}
+    volume: 0.57
+    loop: 0
+  - id: 5
+    clip: {fileID: 0}
+    volume: 0.53
+    loop: 0
+  sfxEntries:
+  - id: 0
+    clip: {fileID: 0}
+    volume: 0.53
+    maxSimultaneous: 0
+  - id: 1
+    clip: {fileID: 0}
+    volume: 0.54
+    maxSimultaneous: 0
+  - id: 2
+    clip: {fileID: 0}
+    volume: 0.56
+    maxSimultaneous: 0
+  - id: 3
+    clip: {fileID: 0}
+    volume: 0.46
+    maxSimultaneous: 0
+  - id: 4
+    clip: {fileID: 0}
+    volume: 0.84
+    maxSimultaneous: 0
+  - id: 5
+    clip: {fileID: 0}
+    volume: 0.92
+    maxSimultaneous: 0
+  - id: 6
+    clip: {fileID: 0}
+    volume: 0.88
+    maxSimultaneous: 0
+  - id: 7
+    clip: {fileID: 0}
+    volume: 0.49
+    maxSimultaneous: 0
+  - id: 8
+    clip: {fileID: 0}
+    volume: 0.53
+    maxSimultaneous: 0
+  - id: 9
+    clip: {fileID: 0}
+    volume: 0.57
+    maxSimultaneous: 0
+  - id: 10
+    clip: {fileID: 0}
+    volume: 0.49
+    maxSimultaneous: 0
+  - id: 11
+    clip: {fileID: 0}
+    volume: 0.44
+    maxSimultaneous: 0
+  - id: 12
+    clip: {fileID: 0}
+    volume: 0.55
+    maxSimultaneous: 0
+  - id: 13
+    clip: {fileID: 0}
+    volume: 0.55
+    maxSimultaneous: 0
+  coreLoopBgmMaps:
+  - bpm: 106
+    bgmId: 2
+  - bpm: 120
+    bgmId: 3
+  - bpm: 144
+    bgmId: 4
+  bgmScheduleLeadTime: 0.1
+  masterVolume: 1
+  bgmMasterVolume: 0.6
+  sfxMasterVolume: 0.8
 --- !u!82 &3221796485719918226
 AudioSource:
   m_ObjectHideFlags: 0
