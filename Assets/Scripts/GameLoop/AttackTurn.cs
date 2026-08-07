@@ -40,7 +40,7 @@ public class AttackTurn : MonoBehaviour
     private int attackMeasureCount = 1;
 
     [Header("Attack input window [공격 성공 범위]")]
-    [SerializeField] private double attackInputWindowMs = 100.0;
+    [SerializeField, Range(0f, 0.5f)] private float attackTimingWindowRatio = 0.25f;
     
     
     [Header("References [참조]")]
@@ -93,6 +93,13 @@ public class AttackTurn : MonoBehaviour
     /// GameManager가 AttackResult를 받아 방어 턴 시작 및 정신력 패널티 처리를 진행한다.
     /// </summary>
     public event System.Action<AttackResult> OnAttackEnded;
+
+    /// <summary>
+    /// 공격 입력이 성공/실패로 확정됐을 때 발행한다.
+    /// GameManager가 구독해 성공이면 HitHigh/HitLow, 실패면 Miss 사운드를 재생한다.
+    /// </summary>
+    public event System.Action<NoteType, bool> OnAttackInputResolved;
+    
     public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
 
     /// <summary>
@@ -143,8 +150,9 @@ public class AttackTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 턴 입력을 처리.
-    /// 유효한 입력이면 가장 가까운 박자선에 스냅하여 공격 노트를 생성한다.
+    /// 공격 턴 입력을 처리한다.
+    /// 공격 시간 안의 입력은 가장 가까운 박자선에 스냅한다.
+    /// 박자 어긋남은 감점 카운트에 기록하되, 스냅된 노트는 생성한다.
     /// </summary>
     public void OnTap(NoteType noteType)
     {
@@ -153,10 +161,11 @@ public class AttackTurn : MonoBehaviour
         double noteDuration = NoteDuration;
         double relativeTime = GetCorrectedRelativeInputTime();
 
-        // 공격 시간 밖 입력은 노트를 생성하지 않고 bad timing으로 기록한다.
+        // 공격 시간 자체 밖 입력은 스냅 보정 대상이 아니므로 노트를 생성하지 않는다.
         if (relativeTime < 0.0 || relativeTime > attackDuration)
         {
             badTimingInputCount++;
+            OnAttackInputResolved?.Invoke(noteType, false);
             return;
         }
 
@@ -164,18 +173,21 @@ public class AttackTurn : MonoBehaviour
         double snappedRelativeTime = nearestGridStep * noteDuration;
         double offsetMs = System.Math.Abs(relativeTime - snappedRelativeTime) * 1000.0;
 
-        // 허용 판정창을 벗어난 입력은 노트를 생성하지 않는다.
-        if (offsetMs > attackInputWindowMs)
-        {
-            badTimingInputCount++;
-            return;
-        }
+        double timingWindowMs = noteDuration * attackTimingWindowRatio * 1000.0;
+        bool isTimingSuccess = offsetMs <= timingWindowMs;
 
-        // 같은 박자선에 이미 노트가 있으면 중복 입력으로 처리한다.
+        // 같은 박자선에 이미 노트가 있으면 중복 입력으로 처리하고 노트를 생성하지 않는다.
         if (createdGridSteps.Contains(nearestGridStep))
         {
             duplicateInputCount++;
+            OnAttackInputResolved?.Invoke(noteType, false);
             return;
+        }
+
+        // 박자 어긋남은 감점 대상이지만, 기획 기준상 가장 가까운 박자선으로 보정해 전달한다.
+        if (!isTimingSuccess)
+        {
+            badTimingInputCount++;
         }
 
         // 목표 개수를 초과한 입력은 패널티 카운트에 기록하지만, 노트 자체는 생성한다.
@@ -184,7 +196,7 @@ public class AttackTurn : MonoBehaviour
             extraNoteCount++;
         }
 
-        CreateAttackNote(snappedRelativeTime, noteType);
+        CreateAttackNote(snappedRelativeTime, noteType, isTimingSuccess);
     }
 
     private void Update()
@@ -252,7 +264,7 @@ public class AttackTurn : MonoBehaviour
     /// 공격 노트를 생성하고 렌더러와 진행도 UI에 반영한다.
     /// judgeTime은 방어 턴 전환 시 DefenseTurn에서 설정한다.
     /// </summary>
-    private void CreateAttackNote(double noteRelativeTime, NoteType noteType)
+    private void CreateAttackNote(double noteRelativeTime, NoteType noteType, bool isInputSuccessForSfx = true)
     {
         NoteData note = new NoteData
         {
@@ -277,6 +289,8 @@ public class AttackTurn : MonoBehaviour
         if (attackTurnRenderer != null)
             attackTurnRenderer.SpawnAttackNote(currentSide, note, attackDuration);
 
+        OnAttackInputResolved?.Invoke(noteType, isInputSuccessForSfx);
+        
         Debug.Log($"Attack Note Created / id: {note.noteId}, type: {note.noteType}, relativeTime: {note.noteRelativeTime:0.000}s");
     }
 
