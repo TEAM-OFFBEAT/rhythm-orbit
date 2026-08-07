@@ -1,8 +1,27 @@
 using UnityEngine;
+using System.Collections.Generic;
+
 /// <summary>
 /// 게임 상태 머신 + 컴포넌트 간 이벤트 중계자 역할.
 /// DSP 페이즈 루프로 턴 흐름을 제어하고, 입력 라우팅, 이벤트 중계, 카메라 뷰 전환 등 게임 루프 전반을 관리.
 /// </summary>
+
+[System.Serializable]
+public class RoundSetting
+{
+    [Header("Round")]
+    public string roundName = "R1";
+
+    [Header("BPM")]
+    public float bpm = 106f;
+
+    [Header("Target Note Count")]
+    public int minTargetNoteCount = 2;
+    public int maxTargetNoteCount = 4;
+
+    [Header("Sound")]
+    public SfxId roundUpSfx = SfxId.RoundStart1;
+}
 public class GameManager : MonoBehaviour
 {
     [Header("Turn Components")]
@@ -25,9 +44,36 @@ public class GameManager : MonoBehaviour
     [Header("Result UI")]
     [SerializeField] private ResultPanelUI resultPanelUI;
 
-    [Header("BPM Progression")]
-    [SerializeField] private int turnsPerBpmIncrease = 2;
-    [SerializeField] private float[] bpmStages = { 106f, 120f, 144f };
+    [Header("Round Progression")]
+    [SerializeField] private int attackPhasesPerRound = 2;
+
+    [SerializeField] private RoundSetting[] roundSettings =
+    {
+        new RoundSetting
+        {
+            roundName = "R1",
+            bpm = 106f,
+            minTargetNoteCount = 2,
+            maxTargetNoteCount = 4,
+            roundUpSfx = SfxId.RoundStart1
+        },
+        new RoundSetting
+        {
+            roundName = "R2",
+            bpm = 120f,
+            minTargetNoteCount = 2,
+            maxTargetNoteCount = 6,
+            roundUpSfx = SfxId.RoundStart2
+        },
+        new RoundSetting
+        {
+            roundName = "R3",
+            bpm = 144f,
+            minTargetNoteCount = 2,
+            maxTargetNoteCount = 7,
+            roundUpSfx = SfxId.RoundStart3
+        }
+    };
 
     [Header("Game Start Delay")]
     [SerializeField] private bool useMillisecondStartDelay = true;
@@ -35,6 +81,10 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private bool useBeatStartDelay = true;
     [SerializeField] private int gameStartDelayBeats = 4;
+    
+    [Header("Sound")]
+    [SerializeField] private bool playCoreLoopBgm = true;
+    [SerializeField] private double bpmChangeBgmLeadTime = 0.1;
 
     // DSP 페이즈 루프
     private int    phaseIndex;
@@ -46,11 +96,20 @@ public class GameManager : MonoBehaviour
     private int currentTargetNoteCount;
     private int currentReceivedNoteCount;
 
+    // noteId로 HIGH/LOW 타입을 다시 찾기 위한 캐시.
+    // 상대 방어 JUDGMENT 패킷은 noteId만 들고 오므로, HitHigh/HitLow 재생에 필요하다.
+    private readonly Dictionary<int, NoteType> noteTypeByNoteId = new();
+
+    // 내가 공격자일 때 상대 방어 결과를 JUDGMENT 패킷으로 추적한다.
+    // 최신 네트워크 구조에는 DEFENSE_END 패킷이 없으므로, 다음 공격 phase 진입 시 이 값으로 상대 방어 성공/실패음을 재생한다.
+    private int remoteDefenseMissCount;
+    private bool isWaitingRemoteDefenseResult;
+
     // 로컬 모드 방어 페이즈에서 Begin()에 전달할 공격 결과
     private AttackResult? lastLocalAttackResult;
 
-    private int completedTurnCount;
-    private int currentBpmStageIndex;
+    //private int completedTurnCount;
+    private int currentRoundIndex;
 
     private GameState currentState;
     private int attackerPlayerId = 1;
@@ -80,8 +139,11 @@ public class GameManager : MonoBehaviour
         attackTurn.OnAttackEnded += HandleAttackEnded;
         attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
         attackTurn.OnAttackProgressChanged += HandleAttackProgressChanged;
+        attackTurn.OnAttackInputResolved += HandleHitResolved;
+
         defenseTurn.OnDefenseEnded += HandleDefenseEnded;
         defenseTurn.OnJudgment += HandleJudgment;
+        defenseTurn.OnDefenseInputResolved += HandleHitResolved;
 
         var net = NetworkManager.Instance;
         if (net != null)
@@ -113,12 +175,14 @@ public class GameManager : MonoBehaviour
             attackTurn.OnAttackEnded -= HandleAttackEnded;
             attackTurn.OnAttackMessageSelected -= HandleAttackMessageSelected;
             attackTurn.OnAttackProgressChanged -= HandleAttackProgressChanged;
+            attackTurn.OnAttackInputResolved -= HandleHitResolved;
         }
 
         if (defenseTurn != null)
         {
             defenseTurn.OnDefenseEnded -= HandleDefenseEnded;
             defenseTurn.OnJudgment -= HandleJudgment;
+            defenseTurn.OnDefenseInputResolved -= HandleHitResolved;
         }
 
         if (sanitySystem != null)
@@ -145,8 +209,8 @@ public class GameManager : MonoBehaviour
     {
         resultPanelUI?.HideAll();
 
-        completedTurnCount = 0;
-        currentBpmStageIndex = 0;
+        //completedTurnCount = 0;
+        currentRoundIndex = 0;
         attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
 
         if (NetworkManager.Instance != null)
@@ -173,10 +237,11 @@ public class GameManager : MonoBehaviour
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
 
-        phaseIndex           = 0;
-        currentBpmStageIndex = 0;
-        ApplyCurrentBpm();
-        currentTurnDuration  = GetCurrentTurnDuration();
+        phaseIndex = 0;
+        currentRoundIndex = 0;
+
+        ApplyCurrentBpm(scheduleBgm: false);
+        currentTurnDuration = GetCurrentTurnDuration();
 
         var net = NetworkManager.Instance;
         double rhythmStart = net?.LocalGameStartDspTime ?? AudioSettings.dspTime;
@@ -186,6 +251,13 @@ public class GameManager : MonoBehaviour
         nextPhaseDspTime = rhythmStart + GetGameStartDelaySeconds();
         currentState     = GameState.TURN_CHANGE;
         attackerPlayerId = net?.FirstAttackerId ?? 1;
+
+        // 첫 공격 phase 시작 시점에 현재 라운드 BGM을 맞춰 예약한다.
+        ScheduleCurrentCoreLoopBgm(nextPhaseDspTime);
+
+        // R1 시작 효과음이 필요하면 사용.
+        // GameStart 사운드와 겹치면 이 줄은 빼도 된다.
+        PlayRoundStartSfx();
     }
 
     /// <summary>
@@ -223,14 +295,25 @@ public class GameManager : MonoBehaviour
         bool   isAttackPhase  = (phaseIndex % 2 == 0);
         int    attackPhaseIdx = phaseIndex / 2;
 
+        // 직전 phase가 방어 phase였고, 내가 공격자였던 네트워크 미러뷰라면
+        // 상대 방어 결과를 JUDGMENT 누적값으로 판단해 결과음을 재생한다.
         if (isAttackPhase)
         {
-            int nextStage = Mathf.Clamp(attackPhaseIdx / turnsPerBpmIncrease, 0, bpmStages.Length - 1);
-            if (nextStage != currentBpmStageIndex)
+            PlayPendingRemoteDefenseResultSfx();
+        }
+
+        if (isAttackPhase)
+        {
+            int nextRoundIndex = GetRoundIndexByAttackPhase(attackPhaseIdx);
+
+            if (nextRoundIndex != currentRoundIndex)
             {
-                currentBpmStageIndex = nextStage;
+                currentRoundIndex = nextRoundIndex;
+
                 ApplyCurrentBpm();
+                PlayRoundStartSfx();
             }
+
             currentTurnDuration     = GetCurrentTurnDuration();
             localAttackStartDspTime = thisPhaseStart;
             attackerPlayerId        = GetAttackerForPhase(attackPhaseIdx);
@@ -270,6 +353,8 @@ public class GameManager : MonoBehaviour
 
     private void StartAttackPhase(double phaseStartDspTime, int attackPhaseIdx)
     {
+        noteTypeByNoteId.Clear();
+        
         currentState = GameState.ATTACK;
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
 
@@ -277,9 +362,17 @@ public class GameManager : MonoBehaviour
         hud?.ClearJudgments();
         gameCamera?.SetAttackView(attackerSide);
 
-        var rng       = GetSharedRng(attackPhaseIdx);
-        int noteCount = noteCountGenerator.CreateRandomNoteCount(rng);
-        string msg    = randomMessageProvider.GetRandomMessage(noteCount, rng);
+        var rng = GetSharedRng(attackPhaseIdx);
+        RoundSetting setting = GetRoundSettingByAttackPhase(attackPhaseIdx);
+
+        int noteCount = setting == null
+            ? noteCountGenerator.CreateRandomNoteCount(rng)
+            : noteCountGenerator.CreateRandomNoteCount(
+                rng,
+                setting.minTargetNoteCount,
+                setting.maxTargetNoteCount);
+
+        string msg = randomMessageProvider.GetRandomMessage(noteCount, rng);
 
         bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId ||
                                 NetworkManager.Instance == null);
@@ -327,6 +420,10 @@ public class GameManager : MonoBehaviour
         if (!isLocalAttacker && isNetworkMode)
         {
             currentState = GameState.DEFENSE;
+
+            bool remoteAttackSuccess = currentReceivedNoteCount == currentTargetNoteCount;
+            PlayTurnResultSfx(remoteAttackSuccess);
+
             defenseTurn?.BeginTransfer(judgeLineX, attackStartX, attackEndX,
                 currentTurnDuration, NetworkManager.Instance, phaseStartDspTime);
         }
@@ -369,6 +466,11 @@ public class GameManager : MonoBehaviour
     {
         if (currentState == GameState.END) return;
 
+        RegisterNoteTypes(attackResult.Notes);
+
+        bool attackSuccess = IsAttackTurnSuccess(attackResult);
+        PlayTurnResultSfx(attackSuccess);
+        
         sanitySystem?.ApplyAttackResult(attackerPlayerId, attackResult);
         lastLocalAttackResult = attackResult;
 
@@ -392,6 +494,9 @@ public class GameManager : MonoBehaviour
         // 공격자 미러 뷰 (로컬 공격자가 방어 phase에서 반대편 뷰로)
         if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId)
         {
+            remoteDefenseMissCount = 0;
+            isWaitingRemoteDefenseResult = true;
+            
             AttackSide attackerSide = GetAttackSide(attackerPlayerId);
             float judgeLineX   = attackTurnRenderer?.GetJudgeLineX(attackerSide) ?? 0f;
             float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
@@ -439,12 +544,25 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 방어 턴 종료 이벤트. DSP 페이즈 루프가 자동으로 다음 phase를 시작하므로 별도 전환 불필요.
+    /// 방어 턴 종료 이벤트를 처리한다.
+    /// DSP 페이즈 루프가 다음 phase를 자동으로 시작하므로 턴 전환은 하지 않는다.
+    /// 실제 방어자인 경우 방어 성공/실패 효과음만 재생한다.
     /// </summary>
     private void HandleDefenseEnded(DefenseResult result)
     {
         if (currentState == GameState.END) return;
-        // DSP 페이즈 루프가 자동으로 다음 phase를 시작 — SwitchTurn 불필요
+
+        // 네트워크 모드에서 내가 공격자라면 이 DefenseTurn은 미러뷰/AI 처리이므로
+        // 실제 상대 방어 결과음은 JUDGMENT 누적값으로 따로 재생한다.
+        if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId)
+        {
+            Debug.Log($"Defense Mirror End / miss:{result.MissCount}");
+            return;
+        }
+
+        bool defenseSuccess = IsDefenseTurnSuccess(result);
+        PlayTurnResultSfx(defenseSuccess);
+
         Debug.Log($"Defense End / miss:{result.MissCount}");
     }
 
@@ -452,14 +570,22 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 원격 공격자가 생성한 노트 패킷을 처리한다.
-    /// DefenseTurn에는 노트 데이터를 전달하고, HUD에는 수신된 노트 개수 진행도를 표시한다.
+    /// 노트 타입을 캐시에 저장하고, 상대 공격 성공 입력음으로 HitHigh/HitLow를 재생한다.
     /// </summary>
     private void HandleNetworkNoteCreated(NoteCreatedPacket packet)
     {
         defenseTurn?.OnNoteReceived(packet, localAttackStartDspTime + currentTurnDuration);
+
+        RegisterNoteType(packet.noteId, packet.noteType);
+
         currentReceivedNoteCount++;
+
         if (currentTargetNoteCount > 0)
+        {
             hud?.UpdateAttackProgress(currentReceivedNoteCount, currentTargetNoteCount);
+        }
+
+        PlayHitResultSfx(packet.noteType, true);
     }
 
     /// <summary>
@@ -489,6 +615,13 @@ public class GameManager : MonoBehaviour
 
         Judgment judgment = (Judgment)packet.judgment;
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+
+        PlayHitResultSfxByNoteId(packet.noteId, judgment);
+
+        if (judgment == Judgment.MISS)
+        {
+            remoteDefenseMissCount++;
+        }
 
         // JUDGMENT는 시각 동기화 전용 — 정신력 처리 없음 (SANITY_CHANGE가 별도 처리)
         attackTurnRenderer?.RemoveNote(packet.noteId);  // 공격자 미러뷰에서 노트 제거
@@ -591,6 +724,12 @@ public class GameManager : MonoBehaviour
 
         resultPanelUI?.Show(resultType);
 
+        SoundManager.Instance?.PlaySfx(
+            resultType == GameResultType.Win
+                ? SfxId.GameWin
+                : SfxId.GameLose
+        );
+
         Debug.Log($"Game End / P{defeatedPlayerId} sanity depleted. Result: {resultType}");
 
         if (shouldSendNetworkPacket && NetworkManager.Instance != null)
@@ -620,6 +759,8 @@ public class GameManager : MonoBehaviour
         hud?.ClearJudgments();
 
         resultPanelUI?.Show(GameResultType.CommunicationSuccess);
+
+        SoundManager.Instance?.PlaySfx(SfxId.HappyEnding);
 
         Debug.Log("Game End / Communication Success.");
 
@@ -655,30 +796,31 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 BPM 단계 인덱스에 해당하는 BPM을 RhythmClock과 HUD에 적용한다.
+    /// 현재 라운드 설정에 맞는 BPM을 RhythmClock과 HUD에 적용한다.
+    /// 필요하면 SoundManager에 현재 BPM의 코어 루프 BGM 전환도 요청한다.
     /// </summary>
-    private void ApplyCurrentBpm()
+    private void ApplyCurrentBpm(bool scheduleBgm = true)
     {
-        if (bpmStages == null || bpmStages.Length == 0)
+        RoundSetting setting = GetCurrentRoundSetting();
+
+        if (setting == null)
         {
-            Debug.LogWarning("BPM Stages가 비어 있습니다.");
+            Debug.LogWarning("GameManager: RoundSetting이 비어 있습니다.");
             return;
         }
 
-        currentBpmStageIndex = Mathf.Clamp(currentBpmStageIndex, 0, bpmStages.Length - 1);
-        float bpm = bpmStages[currentBpmStageIndex];
+        float bpm = Mathf.Max(1f, setting.bpm);
 
-        if (RhythmClock.Instance != null)
+        RhythmClock.Instance?.SetBpm(bpm);
+        hud?.UpdateBpm(bpm);
+
+        if (scheduleBgm)
         {
-            RhythmClock.Instance.SetBpm(bpm);
+            double scheduleTime = AudioSettings.dspTime + bpmChangeBgmLeadTime;
+            ScheduleCurrentCoreLoopBgm(scheduleTime);
         }
 
-        if (hud != null)
-        {
-            hud.UpdateBpm(bpm);
-        }
-
-        Debug.Log($"BPM Changed / stage:{currentBpmStageIndex}, bpm:{bpm}");
+        Debug.Log($"Round Applied / round:{setting.roundName}, index:{currentRoundIndex}, bpm:{bpm}");
     }
 
     /// <summary>
@@ -704,19 +846,245 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 BPM 단계 기준으로 1박자의 길이를 초 단위로 반환한다.
-    /// 첫 턴 시작 전에는 ApplyCurrentBpm()으로 currentBpmStageIndex가 먼저 설정되어 있어야 한다.
+    /// 현재 라운드 BPM 기준으로 1박자의 길이를 초 단위로 반환한다.
+    /// 게임 시작 딜레이를 beat 단위로 계산할 때 사용한다.
     /// </summary>
     private double GetCurrentBeatDurationSeconds()
     {
-        if (bpmStages == null || bpmStages.Length == 0)
+        float bpm = GetCurrentBpm();
+        return 60.0 / Mathf.Max(1f, bpm);
+    }
+
+    /// <summary>
+    /// 현재 라운드 인덱스에 해당하는 RoundSetting을 반환한다.
+    /// 라운드 설정이 비어 있으면 null을 반환한다.
+    /// </summary>
+    private RoundSetting GetCurrentRoundSetting()
+    {
+        if (roundSettings == null || roundSettings.Length == 0)
         {
-            return 60.0 / 120.0;
+            return null;
         }
 
-        int safeIndex = Mathf.Clamp(currentBpmStageIndex, 0, bpmStages.Length - 1);
-        float bpm = Mathf.Max(1f, bpmStages[safeIndex]);
+        int safeIndex = Mathf.Clamp(currentRoundIndex, 0, roundSettings.Length - 1);
+        return roundSettings[safeIndex];
+    }
 
-        return 60.0 / bpm;
+    /// <summary>
+    /// 공격 phase 인덱스를 기준으로 현재 라운드 인덱스를 계산한다.
+    /// attackPhasesPerRound가 2이면 두 번의 공격 phase마다 다음 라운드로 넘어간다.
+    /// </summary>
+    private int GetRoundIndexByAttackPhase(int attackPhaseIdx)
+    {
+        if (roundSettings == null || roundSettings.Length == 0)
+        {
+            return 0;
+        }
+
+        int safePhasesPerRound = Mathf.Max(1, attackPhasesPerRound);
+
+        return Mathf.Clamp(
+            attackPhaseIdx / safePhasesPerRound,
+            0,
+            roundSettings.Length - 1
+        );
+    }
+
+    /// <summary>
+    /// 공격 phase 인덱스를 기준으로 해당 phase에서 사용할 RoundSetting을 반환한다.
+    /// 라운드별 목표 노트 수 범위를 결정할 때 사용한다.
+    /// </summary>
+    private RoundSetting GetRoundSettingByAttackPhase(int attackPhaseIdx)
+    {
+        if (roundSettings == null || roundSettings.Length == 0)
+        {
+            return null;
+        }
+
+        int roundIndex = GetRoundIndexByAttackPhase(attackPhaseIdx);
+        return roundSettings[roundIndex];
+    }
+
+    /// <summary>
+    /// 현재 라운드 BPM 값을 반환한다.
+    /// 라운드 설정이 없으면 기본 BPM 120을 반환한다.
+    /// </summary>
+    private float GetCurrentBpm()
+    {
+        RoundSetting setting = GetCurrentRoundSetting();
+
+        if (setting == null)
+        {
+            return 120f;
+        }
+
+        return Mathf.Max(1f, setting.bpm);
+    }
+
+    /// <summary>
+    /// 현재 BPM에 매핑된 코어 루프 BGM을 지정한 DSP 시각에 예약 재생한다.
+    /// SoundManager가 없거나 BGM 재생이 꺼져 있으면 아무것도 하지 않는다.
+    /// </summary>
+    private void ScheduleCurrentCoreLoopBgm(double dspTime)
+    {
+        if (!playCoreLoopBgm) return;
+        if (SoundManager.Instance == null) return;
+
+        float bpm = GetCurrentBpm();
+        SoundManager.Instance.ScheduleCoreLoopBgm(bpm, dspTime);
+    }
+
+    /// <summary>
+    /// 현재 라운드의 시작 효과음을 재생한다.
+    /// R1, R2, R3 라운드 진입 연출에 사용한다.
+    /// </summary>
+    private void PlayRoundStartSfx()
+    {
+        RoundSetting setting = GetCurrentRoundSetting();
+
+        if (setting == null) return;
+        if (SoundManager.Instance == null) return;
+
+        SoundManager.Instance.PlaySfx(setting.roundUpSfx);
+
+        Debug.Log($"Round Start SFX / round:{setting.roundName}, sfx:{setting.roundUpSfx}");
+    }
+
+    /// <summary>
+    /// 공격/방어 입력 결과에 따라 성공 타격음 또는 MISS음을 재생한다.
+    /// AttackTurn과 DefenseTurn의 입력 결과 이벤트가 이 함수를 호출한다.
+    /// </summary>
+    private void HandleHitResolved(NoteType noteType, bool isSuccess)
+    {
+        PlayHitResultSfx(noteType, isSuccess);
+    }
+
+    /// <summary>
+    /// 여러 노트의 noteId와 NoteType을 캐시에 등록한다.
+    /// 상대 방어 JUDGMENT 패킷이 noteId만 들고 오기 때문에 HitHigh/HitLow 재생에 필요하다.
+    /// </summary>
+    private void RegisterNoteTypes(IEnumerable<NoteData> notes)
+    {
+        if (notes == null) return;
+
+        foreach (NoteData note in notes)
+        {
+            if (note == null) continue;
+            RegisterNoteType(note.noteId, note.noteType);
+        }
+    }
+
+    /// <summary>
+    /// noteId와 NoteType을 캐시에 등록한다.
+    /// NOTE_CREATED 수신 또는 로컬 공격 결과 저장 시 호출한다.
+    /// </summary>
+    private void RegisterNoteType(int noteId, NoteType noteType)
+    {
+        noteTypeByNoteId[noteId] = noteType;
+    }
+
+    /// <summary>
+    /// 입력 또는 판정 결과에 따라 HitHigh, HitLow, Miss 중 하나를 재생한다.
+    /// 성공 시 NoteType에 따라 고주파/저주파 타격음을 선택한다.
+    /// </summary>
+    private void PlayHitResultSfx(NoteType noteType, bool isSuccess)
+    {
+        if (SoundManager.Instance == null) return;
+
+        if (!isSuccess)
+        {
+            SoundManager.Instance.PlaySfx(SfxId.Miss);
+            return;
+        }
+
+        SfxId sfxId = noteType == NoteType.HIGH
+            ? SfxId.HitHigh
+            : SfxId.HitLow;
+
+        SoundManager.Instance.PlaySfx(sfxId);
+    }
+
+    /// <summary>
+    /// noteId 기반 JUDGMENT 결과에 따라 상대 방어 타격음 또는 MISS음을 재생한다.
+    /// 성공 판정이면 noteId로 NoteType을 찾아 HitHigh/HitLow를 재생한다.
+    /// </summary>
+    private void PlayHitResultSfxByNoteId(int noteId, Judgment judgment)
+    {
+        bool isSuccess = judgment != Judgment.MISS;
+
+        if (!isSuccess)
+        {
+            SoundManager.Instance?.PlaySfx(SfxId.Miss);
+            return;
+        }
+
+        if (!noteTypeByNoteId.TryGetValue(noteId, out NoteType noteType))
+        {
+            Debug.LogWarning($"GameManager: noteId에 해당하는 NoteType을 찾을 수 없습니다. noteId:{noteId}");
+            return;
+        }
+
+        PlayHitResultSfx(noteType, true);
+    }
+
+    /// <summary>
+    /// 공격 턴에서 목표 노트 수에 맞게 노트를 생성했는지 판단한다.
+    /// 박자 어긋남과 중복 입력은 턴 성공/실패 기준에 포함하지 않는다.
+    /// </summary>
+    private bool IsAttackTurnSuccess(AttackResult result)
+    {
+        return result.MissingNoteCount <= 0
+            && result.ExtraNoteCount <= 0;
+    }
+
+    /// <summary>
+    /// 방어 턴에서 MISS 없이 모든 노트를 처리했는지 판단한다.
+    /// MISS가 하나라도 있으면 방어 턴 실패로 본다.
+    /// </summary>
+    private bool IsDefenseTurnSuccess(DefenseResult result)
+    {
+        return result.MissCount <= 0;
+    }
+
+    /// <summary>
+    /// 턴 성공/실패 여부에 따라 TurnSuccess 또는 TurnFail 효과음을 재생한다.
+    /// 공격/방어/상대 턴 결과음에 공통으로 사용한다.
+    /// </summary>
+    private void PlayTurnResultSfx(bool isSuccess)
+    {
+        if (SoundManager.Instance == null)
+        {
+            Debug.LogWarning("[TurnResultSFX] SoundManager.Instance가 없습니다.");
+            return;
+        }
+
+        SfxId sfxId = isSuccess
+            ? SfxId.TurnSuccess
+            : SfxId.TurnFail;
+
+        Debug.Log(
+            $"[TurnResultSFX] {sfxId} / success:{isSuccess}, " +
+            $"state:{currentState}, attacker:P{attackerPlayerId}, local:P{myLocalPlayerId}, " +
+            $"network:{NetworkManager.Instance != null}"
+        );
+
+        SoundManager.Instance.PlaySfx(sfxId);
+    }
+
+    /// <summary>
+    /// DEFENSE_END 패킷이 없는 최신 네트워크 구조에서,
+    /// 내가 공격자였던 직전 방어 phase의 상대 방어 성공/실패음을 재생한다.
+    /// 상대가 보낸 JUDGMENT 패킷 중 MISS가 하나도 없으면 방어 성공으로 본다.
+    /// </summary>
+    private void PlayPendingRemoteDefenseResultSfx()
+    {
+        if (!isWaitingRemoteDefenseResult) return;
+        if (NetworkManager.Instance == null) return;
+
+        bool defenseSuccess = remoteDefenseMissCount <= 0;
+        PlayTurnResultSfx(defenseSuccess);
+
+        isWaitingRemoteDefenseResult = false;
+        remoteDefenseMissCount = 0;
     }
 }
