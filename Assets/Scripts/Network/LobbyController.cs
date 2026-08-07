@@ -29,7 +29,6 @@ public class LobbyController : MonoBehaviour
     [SerializeField] private TMP_Text roomCodeText;
     [SerializeField] private TMP_Text waitingStatusText;
     [SerializeField] private Button cancelHostButton;
-    [SerializeField] private Button copyCodeButton;   // 추가
 
     [Header("Join Room")]
     [SerializeField] private TMP_InputField codeInputField;
@@ -44,7 +43,6 @@ public class LobbyController : MonoBehaviour
         createRoomButton.onClick.AddListener(OnCreateRoom);
         joinRoomButton.onClick.AddListener(OnJoinRoom);
         cancelHostButton.onClick.AddListener(OnCancel);
-        copyCodeButton?.onClick.AddListener(OnCopyCode);
         connectButton.onClick.AddListener(OnConnect);
         cancelJoinButton.onClick.AddListener(OnCancel);
 
@@ -58,14 +56,11 @@ public class LobbyController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (networkManager != null)
-        {
-            networkManager.OnConnected -= HandleConnected;
-            networkManager.OnConnectionFailed -= HandleConnectionFailed;
-            networkManager.OnDisconnected -= HandleLobbyDisconnected;
-            networkManager.OnGameStart -= HandleGameStart;
-        }
-        copyCodeButton?.onClick.RemoveListener(OnCopyCode);
+        if (networkManager == null) return;
+        networkManager.OnConnected -= HandleConnected;
+        networkManager.OnConnectionFailed -= HandleConnectionFailed;
+        networkManager.OnDisconnected -= HandleLobbyDisconnected;
+        networkManager.OnGameStart -= HandleGameStart;
     }
 
     // ── 버튼 핸들러 ──────────────────────────────────────────────────────────
@@ -77,8 +72,8 @@ public class LobbyController : MonoBehaviour
 
         mainMenuPanel.SetActive(false);
         hostWaitingPanel.SetActive(true);
-        roomCodeText.text = $"{localIP}:{networkManager.Port}";
-        waitingStatusText.text = "플레이어 대기 중...\n같은 Wi-Fi에 연결된 Guest가 위 주소를 입력하고 접속하면 됩니다.";
+        roomCodeText.text = localIP;
+        waitingStatusText.text = "플레이어 대기 중...";
     }
 
     private void OnJoinRoom()
@@ -104,21 +99,11 @@ public class LobbyController : MonoBehaviour
         ShowMainMenu();
     }
 
-    private void OnCopyCode()
-    {
-        GUIUtility.systemCopyBuffer = roomCodeText.text;
-    }
-
     // ── 네트워크 이벤트 ──────────────────────────────────────────────────────
 
     private void HandleConnectionFailed()
     {
-        joinStatusText.text =
-            "연결에 실패했습니다.\n\n" +
-            "확인 사항:\n" +
-            "• IP 주소가 정확한지 확인\n" +
-            "• 두 기기가 같은 Wi-Fi에 연결되어 있는지 확인\n" +
-            "• Windows 방화벽에서 포트 7777 허용 여부 확인";
+        joinStatusText.text = "연결에 실패했습니다. IP 주소를 확인해 주세요.";
         connectButton.interactable = true;
     }
 
