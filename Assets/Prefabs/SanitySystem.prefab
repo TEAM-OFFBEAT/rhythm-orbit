@@ -45,10 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SanitySystem
   maxSanity: 100
-  initialSanity: 100
-  badTimingInputPenalty: 1
-  missingNotePenaltyPerNote: 1
-  extraNotePenaltyPerNote: 1
+  badTimingInputPenalty: 2
+  noteCountMismatchPenalty: 15
   penalizeDuplicateInput: 0
   duplicateInputPenaltyPerInput: 1
-  defenseMissPenaltyPerNote: 1
+  defenseMissPenaltyPerNote: 5
