@@ -733,6 +733,10 @@ public class GameManager : MonoBehaviour
 
         resultPanelUI?.Show(resultType);
 
+        // 승리/패배 종료에서는 코어루프 BGM을 멈춘다.
+        // GameWin/GameLose는 효과음이므로 별개로 재생한다.
+        SoundManager.Instance?.StopBgm();
+
         SoundManager.Instance?.PlaySfx(
             resultType == GameResultType.Win
                 ? SfxId.GameWin

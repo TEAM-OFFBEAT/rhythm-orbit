@@ -40,6 +40,8 @@ public class LobbyController : MonoBehaviour
 
     private void Awake()
     {
+        StopGameplayBgmOnLobbyEnter();
+
         // 씬 재로드 시 Singleton이 씬의 NetworkManager를 즉시 Destroy한다.
         // 실제 지속 인스턴스(DontDestroyOnLoad)를 참조해야 한다.
         if (NetworkManager.Instance != null)
@@ -66,6 +68,18 @@ public class LobbyController : MonoBehaviour
         networkManager.OnConnectionFailed -= HandleConnectionFailed;
         networkManager.OnDisconnected -= HandleLobbyDisconnected;
         networkManager.OnGameStart -= HandleGameStart;
+    }
+
+    /// <summary>
+    /// 로비 씬에 진입했을 때 게임 플레이 BGM을 정리한다.
+    /// 로비 전용 BGM은 추후 이 처리 이후에 따로 재생하면 된다.
+    /// 효과음은 별개로 두기 위해 StopAllSfx는 호출하지 않는다.
+    /// </summary>
+    private void StopGameplayBgmOnLobbyEnter()
+    {
+        SoundManager.Instance?.StopBgm();
+
+        Debug.Log("LobbyController: 게임 플레이 BGM 정리 완료.");
     }
 
     // ── 버튼 핸들러 ──────────────────────────────────────────────────────────
