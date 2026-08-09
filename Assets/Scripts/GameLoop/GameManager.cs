@@ -86,6 +86,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool playCoreLoopBgm = true;
     [SerializeField] private double bpmChangeBgmLeadTime = 0.1;
 
+    [Header("Communication Success")]
+    [SerializeField] private bool onlyHostSendsCommunicationSuccessPacket = true;
+
     // DSP 페이즈 루프
     private int    phaseIndex;
     private double nextPhaseDspTime;
@@ -295,11 +298,17 @@ public class GameManager : MonoBehaviour
         bool   isAttackPhase  = (phaseIndex % 2 == 0);
         int    attackPhaseIdx = phaseIndex / 2;
 
-        // 직전 phase가 방어 phase였고, 내가 공격자였던 네트워크 미러뷰라면
-        // 상대 방어 결과를 JUDGMENT 누적값으로 판단해 결과음을 재생한다.
+        // 새 공격 phase로 넘어가기 직전, 직전 방어 phase 결과를 먼저 정리한다.
+        // 예정된 모든 공격 턴과 그에 대한 방어 phase가 끝났다면 다음 공격을 시작하지 않고 교신 성공으로 종료한다.
         if (isAttackPhase)
         {
             PlayPendingRemoteDefenseResultSfx();
+
+            if (ShouldEndByCommunicationSuccess(attackPhaseIdx))
+            {
+                EndGameByCommunicationSuccess(ShouldSendCommunicationSuccessPacket());
+                return;
+            }
         }
 
         if (isAttackPhase)
@@ -888,6 +897,60 @@ public class GameManager : MonoBehaviour
             0,
             roundSettings.Length - 1
         );
+    }
+
+    /// <summary>
+    /// 현재 라운드 설정 기준으로 전체 예정 공격 턴 수를 계산한다.
+    /// roundSettings.Length * attackPhasesPerRound 만큼의 공격 턴을 전체 게임 길이로 본다.
+    /// </summary>
+    private int GetTotalPlannedAttackTurnCount()
+    {
+        if (roundSettings == null || roundSettings.Length == 0)
+        {
+            return 0;
+        }
+
+        int safePhasesPerRound = Mathf.Max(1, attackPhasesPerRound);
+        return roundSettings.Length * safePhasesPerRound;
+    }
+
+    /// <summary>
+    /// 정해진 모든 공격 턴과 그에 대한 방어 phase가 끝났는지 확인한다.
+    /// attackPhaseIdx는 지금 새로 시작하려는 공격 phase 번호이므로,
+    /// 전체 예정 공격 턴 수 이상이면 이전 방어 phase까지 끝난 상태로 본다.
+    /// </summary>
+    private bool ShouldEndByCommunicationSuccess(int attackPhaseIdx)
+    {
+        int totalPlannedAttackTurnCount = GetTotalPlannedAttackTurnCount();
+
+        if (totalPlannedAttackTurnCount <= 0)
+        {
+            return false;
+        }
+
+        return attackPhaseIdx >= totalPlannedAttackTurnCount;
+    }
+
+    /// <summary>
+    /// 교신 성공 GAME_END 패킷을 보낼지 결정한다.
+    /// 양쪽 클라이언트가 같은 DSP phase 기준으로 동시에 교신 성공을 판단할 수 있으므로,
+    /// 네트워크 중복 전송을 줄이기 위해 기본적으로 Host만 전송한다.
+    /// </summary>
+    private bool ShouldSendCommunicationSuccessPacket()
+    {
+        NetworkManager net = NetworkManager.Instance;
+
+        if (net == null)
+        {
+            return false;
+        }
+
+        if (!onlyHostSendsCommunicationSuccessPacket)
+        {
+            return true;
+        }
+
+        return net.IsHost;
     }
 
     /// <summary>

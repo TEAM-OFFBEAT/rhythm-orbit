@@ -26,5 +26,7 @@ public enum SfxId
     TurnSuccess,
     TurnFail,
     SceneTransition,
-    GameStart
+    GameStart,
+
+    CountInTick
 }
