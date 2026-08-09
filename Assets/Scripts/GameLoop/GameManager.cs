@@ -91,7 +91,7 @@ public class GameManager : MonoBehaviour
 
     // DSP 페이즈 루프
     private int    phaseIndex;
-    private double nextPhaseDspTime;
+    private double nextPhaseDspTime  = double.MaxValue;  // StartGame() 호출 전 루프 실행 방지
     private double currentTurnDuration;
     private double localAttackStartDspTime;
 
