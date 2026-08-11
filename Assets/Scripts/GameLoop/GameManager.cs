@@ -353,8 +353,8 @@ public class GameManager : MonoBehaviour
 
     private System.Random GetSharedRng(int attackPhaseIdx)
     {
-        double t = NetworkManager.Instance?.LocalGameStartDspTime ?? 0.0;
-        int seed = unchecked((int)(t * 1000) + attackPhaseIdx * 997);
+        int baseSeed = NetworkManager.Instance?.SharedSeed ?? 0;
+        int seed = unchecked(baseSeed + attackPhaseIdx * 997);
         return new System.Random(seed);
     }
 

@@ -149,14 +149,16 @@ public class LobbyController : MonoBehaviour
     {
         double hostDspTime = AudioSettings.dspTime;
         double clockOffset = networkManager.TimeSync.ClockOffset;
+        int sharedSeed = new System.Random().Next();
 
         // Host = P1, Guest = P2, 첫 공격자 = P1
         networkManager.SetSessionData(localPlayerId: 1, firstAttackerId: 1,
-            localGameStartDspTime: hostDspTime);
+            localGameStartDspTime: hostDspTime, sharedSeed: sharedSeed);
         networkManager.Send(w => PacketSerializer.WriteGameStart(w,
             myPlayerId: 2, firstAttackerId: 1,
             clockOffset: clockOffset,
-            gameStartDspTime: hostDspTime));
+            gameStartDspTime: hostDspTime,
+            sharedSeed: sharedSeed));
         LoadMainLoop();
     }
 
@@ -170,7 +172,8 @@ public class LobbyController : MonoBehaviour
         networkManager.SetSessionData(
             localPlayerId:        packet.myPlayerId,
             firstAttackerId:      packet.firstAttackerId,
-            localGameStartDspTime: guestGameStartDspTime);
+            localGameStartDspTime: guestGameStartDspTime,
+            sharedSeed:           packet.sharedSeed);
         LoadMainLoop();
     }
 
