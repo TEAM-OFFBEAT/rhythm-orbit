@@ -9,6 +9,7 @@ public struct GameStartPacket
     public byte firstAttackerId;       // 첫 번째 공격자 ID (1 or 2)
     public double clockOffset;         // guest_clock - host_clock (Host가 측정한 오프셋)
     public double gameStartDspTime;    // Host의 AudioSettings.dspTime (RhythmClock 동기화 기준)
+    public int sharedSeed;             // 양측 RNG 동기화용 공유 시드 (Host가 생성해 전송)
 }
 
 /// <summary>

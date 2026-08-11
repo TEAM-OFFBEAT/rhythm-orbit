@@ -37,6 +37,9 @@ public class NetworkManager : Singleton<NetworkManager>
     /// <summary>로컬 기준 게임 시작 dspTime. LobbyController가 씬 전환 전 SetSessionData()로 설정.</summary>
     public double LocalGameStartDspTime { get; private set; }
 
+    /// <summary>Host가 생성한 RNG 공유 시드. LobbyController가 씬 전환 전 SetSessionData()로 설정.</summary>
+    public int SharedSeed { get; private set; }
+
     // ── 수신 이벤트 ──────────────────────────────────────────────────────────
     public event Action OnConnected;
     public event Action OnConnectionFailed;
@@ -120,6 +123,17 @@ public class NetworkManager : Singleton<NetworkManager>
         LocalPlayerId = localPlayerId;
         FirstAttackerId = firstAttackerId;
         LocalGameStartDspTime = localGameStartDspTime;
+    }
+
+    /// <summary>
+    /// LobbyController가 씬 전환 직전에 호출해 세션 데이터, 게임 시작 dspTime, RNG 공유 시드를 저장한다.
+    /// </summary>
+    public void SetSessionData(int localPlayerId, int firstAttackerId, double localGameStartDspTime, int sharedSeed)
+    {
+        LocalPlayerId = localPlayerId;
+        FirstAttackerId = firstAttackerId;
+        LocalGameStartDspTime = localGameStartDspTime;
+        SharedSeed = sharedSeed;
     }
 
     // ── 송신 ─────────────────────────────────────────────────────────────────
