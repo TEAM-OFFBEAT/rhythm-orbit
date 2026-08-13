@@ -22,7 +22,10 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [SerializeField] private Slider sanitySlider;
 
     [Header("Judgment")]
-    [SerializeField] private TMP_Text judgmentLabel;
+    [SerializeField] private Image judgmentImage;
+    [SerializeField] private Sprite perfectSprite;
+    [SerializeField] private Sprite goodSprite;
+    [SerializeField] private Sprite missSprite;
 
     private void Awake()
     {
@@ -81,25 +84,29 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 판정 결과를 이 슬롯의 판정 라벨에 표시한다.
+    /// 판정 결과를 이 슬롯의 판정 이미지에 표시한다.
     /// </summary>
     public void ShowJudgment(Judgment judgment)
     {
-        if (judgmentLabel == null) return;
+        if (judgmentImage == null) return;
 
-        judgmentLabel.text = judgment.ToString();
-        judgmentLabel.gameObject.SetActive(true);
+        judgmentImage.sprite = judgment switch
+        {
+            Judgment.PERFECT => perfectSprite,
+            Judgment.GOOD    => goodSprite,
+            _                => missSprite,
+        };
+        judgmentImage.gameObject.SetActive(judgmentImage.sprite != null);
     }
 
     /// <summary>
-    /// 판정 라벨을 비운다.
+    /// 판정 이미지를 숨긴다.
     /// </summary>
     public void ClearJudgment()
     {
-        if (judgmentLabel == null) return;
+        if (judgmentImage == null) return;
 
-        judgmentLabel.text = string.Empty;
-        judgmentLabel.gameObject.SetActive(false);
+        judgmentImage.gameObject.SetActive(false);
     }
 
     /// <summary>
