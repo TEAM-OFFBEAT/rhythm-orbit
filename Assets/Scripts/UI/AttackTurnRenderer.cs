@@ -16,11 +16,10 @@ public class AttackTurnRenderer : MonoBehaviour
     [SerializeField] private Transform attackNoteContainer;
 
     [Header("Positions")]
-    [SerializeField] private float p1StartX = 5f;
-    [SerializeField] private float p1EndX = -5f;
-    [SerializeField] private float p2StartX = -5f;
-    [SerializeField] private float p2EndX = 5f;
-    [SerializeField] private float noteY = 0f;
+    [SerializeField] private float p1StartX;
+    [SerializeField] private float p1EndX;
+    [SerializeField] private float p2StartX;
+    [SerializeField] private float p2EndX;
 
     [Header("Defense Lines")]
     [SerializeField] private Transform p1DefenseLine;
@@ -105,7 +104,7 @@ public class AttackTurnRenderer : MonoBehaviour
         float ratio = Mathf.Clamp01((float)(note.noteRelativeTime / safeDuration));
         float x = Mathf.Lerp(GetStartXDirect(visual), GetEndXDirect(visual), ratio);
 
-        t.localPosition = new Vector3(x, noteY, 0f);
+        t.localPosition = new Vector3(x, 0f, 0f);
         spawnedNotes.Add(new NoteEntry { rect = t, noteId = note.noteId, initialX = x });
     }
 
