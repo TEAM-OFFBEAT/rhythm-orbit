@@ -25,9 +25,6 @@ public class HUD : MonoBehaviour
     [SerializeField] private HUDPlayerSlotUI mySlot;
     [SerializeField] private HUDPlayerSlotUI opponentSlot;
 
-    [Header("Default Name")]
-    [SerializeField] private string defaultPlayerName = "Player";
-
     // 로컬 플레이어의 ID.
     // 네트워크 모드에서는 NetworkManager.LocalPlayerId를 GameManager가 전달한다.
     // 로컬 테스트 모드에서는 기본값 1을 사용한다.
@@ -44,23 +41,7 @@ public class HUD : MonoBehaviour
     {
         this.localPlayerId = Mathf.Clamp(localPlayerId, 1, 2);
 
-        int opponentPlayerId = this.localPlayerId == 1 ? 2 : 1;
-
-        mySlot?.SetPlayerName(defaultPlayerName);
-        opponentSlot?.SetPlayerName(defaultPlayerName);
-
-        mySlot?.SetHostRole(IsHostPlayer(this.localPlayerId));
-        opponentSlot?.SetHostRole(IsHostPlayer(opponentPlayerId));
-
         ClearJudgments();
-    }
-
-    /// <summary>
-    /// 현재 규칙상 P1은 Host, P2는 Client로 취급한다.
-    /// </summary>
-    private bool IsHostPlayer(int playerId)
-    {
-        return playerId == 1;
     }
 
     /// <summary>
