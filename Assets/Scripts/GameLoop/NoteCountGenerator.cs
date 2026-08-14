@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class NoteCountGenerator : MonoBehaviour
 {
-    private const int MinAllowedNoteCount = 1;
-    private const int MaxAllowedNoteCount = 7;
+    public const int MinAllowedNoteCount = 1;
+    public const int MaxAllowedNoteCount = 7;
 
     [Header("Note Count Range")]
     [SerializeField] private int minNoteCount = 2;

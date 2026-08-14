@@ -108,8 +108,18 @@ public class GameManager : MonoBehaviour
     private int remoteDefenseMissCount;
     private bool isWaitingRemoteDefenseResult;
 
+    // 공격자 미러뷰에서 수신한 JUDGMENT 패킷을 noteId 순으로 보관한다.
+    // 모든 판정이 도착하면 GetDefenderPanelMessage에 전달해 방어자 패널 메세지를 구성한다.
+    private readonly List<Judgment> remoteJudgmentBuffer = new();
+
     // 로컬 모드 방어 페이즈에서 Begin()에 전달할 공격 결과
     private AttackResult? lastLocalAttackResult;
+
+    // 패널 메세지 표시에 필요한 턴 상태 캐시
+    private string currentAttackMessage = "";
+    private bool currentAttackSuccess;
+    private int currentJudgmentIndex;
+    private int currentPhaseNoteCount; // 네트워크 공격자 클라이언트에서 방어 종료 판단에 사용
 
     //private int completedTurnCount;
     private int currentRoundIndex;
@@ -369,6 +379,7 @@ public class GameManager : MonoBehaviour
 
         attackTurnRenderer?.ClearAll();
         hud?.ClearJudgments();
+        hud?.ClearPanelMessages();
         gameCamera?.SetAttackView(attackerSide);
 
         var rng = GetSharedRng(attackPhaseIdx);
@@ -389,20 +400,17 @@ public class GameManager : MonoBehaviour
         if (isLocalAttacker)
         {
             attackTurn.StartLocalPlayerAttack(attackerSide, noteCount, msg, phaseStartDspTime);
-            hud?.ShowAttackMessage(msg, attackerSide);
             hud?.UpdateAttackProgress(0, noteCount);
         }
         else if (NetworkManager.Instance == null)
         {
             attackTurn.StartOpponentAttackDemo(msg);
-            hud?.ShowAttackMessage(msg, attackerSide);
             hud?.UpdateAttackProgress(0, noteCount);
         }
         else
         {
             currentTargetNoteCount   = noteCount;
             currentReceivedNoteCount = 0;
-            hud?.ShowAttackMessage(msg, attackerSide);
             hud?.UpdateAttackProgress(0, noteCount);
 
             defenseTurn?.PrepareForIncomingAttack(attackerSide, currentTurnDuration);
@@ -415,6 +423,8 @@ public class GameManager : MonoBehaviour
 
     private void StartDefensePhase(double phaseStartDspTime)
     {
+        currentJudgmentIndex = 0;
+
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         gameCamera?.SetDefenseView(attackerSide);
         attackTurnRenderer?.StopLine();
@@ -431,7 +441,10 @@ public class GameManager : MonoBehaviour
             currentState = GameState.DEFENSE;
 
             bool remoteAttackSuccess = currentReceivedNoteCount == currentTargetNoteCount;
+            currentAttackSuccess = remoteAttackSuccess;
             PlayTurnResultSfx(remoteAttackSuccess);
+
+            remoteJudgmentBuffer.Clear();
 
             defenseTurn?.BeginTransfer(judgeLineX, attackStartX, attackEndX,
                 currentTurnDuration, NetworkManager.Instance, phaseStartDspTime);
@@ -478,8 +491,12 @@ public class GameManager : MonoBehaviour
         RegisterNoteTypes(attackResult.Notes);
 
         bool attackSuccess = IsAttackTurnSuccess(attackResult);
+        currentAttackSuccess = attackSuccess;
         PlayTurnResultSfx(attackSuccess);
-        
+
+        currentPhaseNoteCount = attackResult.Notes.Count;
+
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         sanitySystem?.ApplyAttackResult(attackerPlayerId, attackResult);
         lastLocalAttackResult = attackResult;
 
@@ -505,8 +522,7 @@ public class GameManager : MonoBehaviour
         {
             remoteDefenseMissCount = 0;
             isWaitingRemoteDefenseResult = true;
-            
-            AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+
             float judgeLineX   = attackTurnRenderer?.GetJudgeLineX(attackerSide) ?? 0f;
             float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
             float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
@@ -538,6 +554,10 @@ public class GameManager : MonoBehaviour
 
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         hud?.ShowJudgment(judgment, attackerSide);
+
+        if (judgment != Judgment.MISS)
+            hud?.SetStarSuccess(currentJudgmentIndex);
+        currentJudgmentIndex++;
 
         if (judgment != Judgment.MISS) return;
 
@@ -571,6 +591,10 @@ public class GameManager : MonoBehaviour
 
         bool defenseSuccess = IsDefenseTurnSuccess(result);
         PlayTurnResultSfx(defenseSuccess);
+
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+        string defensePanelMsg = randomMessageProvider?.GetDefenderPanelMessage(currentAttackMessage, result.Judgments, currentAttackSuccess) ?? "";
+        hud?.ShowInDefenderPanel(defensePanelMsg, attackerSide);
 
         Debug.Log($"Defense End / miss:{result.MissCount}");
     }
@@ -627,9 +651,27 @@ public class GameManager : MonoBehaviour
 
         PlayHitResultSfxByNoteId(packet.noteId, judgment);
 
+        // noteId 순서대로 버퍼 확장 후 판정 기록
+        while (remoteJudgmentBuffer.Count <= packet.noteId)
+            remoteJudgmentBuffer.Add(Judgment.MISS);
+        remoteJudgmentBuffer[packet.noteId] = judgment;
+
         if (judgment == Judgment.MISS)
         {
             remoteDefenseMissCount++;
+        }
+        else
+        {
+            hud?.SetStarSuccess(currentJudgmentIndex);
+        }
+        currentJudgmentIndex++;
+
+        // 모든 판정이 도착했을 때 공격자 클라이언트의 방어자 패널(상대 패널)에 결과 메세지 표시
+        if (currentPhaseNoteCount > 0 && currentJudgmentIndex >= currentPhaseNoteCount)
+        {
+            Judgment[] judgments = remoteJudgmentBuffer.ToArray();
+            string observeMsg = randomMessageProvider?.GetDefenderPanelMessage(currentAttackMessage, judgments, currentAttackSuccess) ?? "";
+            hud?.ShowInDefenderPanel(observeMsg, attackerSide);
         }
 
         // JUDGMENT는 시각 동기화 전용 — 정신력 처리 없음 (SANITY_CHANGE가 별도 처리)
@@ -688,20 +730,17 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleAttackMessageSelected(string message, int noteCount)
     {
-        if (hud == null) return;
-
-        AttackSide attackerSide = attackerPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-        hud.ShowAttackMessage(message, attackerSide);
+        currentAttackMessage = message;
     }
 
     /// <summary>
     /// AttackTurn의 노트 생성 진행도를 HUD의 별 UI에 반영한다.
     /// </summary>
-    private void HandleAttackProgressChanged(int currentCount, int targetCount)
+    private void HandleAttackProgressChanged(int actualCount, int targetCount)
     {
         if (hud == null) return;
 
-        hud.UpdateAttackProgress(currentCount, targetCount);
+        hud.UpdateAttackProgress(actualCount, targetCount);
     }
 
     // ── SanitySystem 이벤트 ───────────────────────────────────────────────────────
