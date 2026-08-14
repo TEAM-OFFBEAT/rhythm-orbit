@@ -44,4 +44,68 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 318e2a3e82b73f143811c475af614431, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomMessageProvider
-  messageGroups: []
+  messageGroups:
+  - characterCount: 2
+    messages:
+    - "안녕"
+    - "누구"
+    - "친구"
+    - "이름"
+    - "좋아"
+    - "우주"
+    - "신호"
+    - "놀자"
+    - "오빗"
+    - "은하"
+    - "리모"
+    - "전파"
+  - characterCount: 3
+    messages:
+    - "반가워"
+    - "궁금해"
+    - "신기해"
+    - "어서와"
+    - "말해줘"
+    - "너누구"
+    - "다가와"
+    - "놀아줘"
+    - "외계어"
+    - "은하수"
+  - characterCount: 4
+    messages:
+    - "친해지자"
+    - "놀러올래"
+    - "신호를줘"
+    - "같이놀자"
+    - "우린친구"
+    - "대화하자"
+    - "친구하자"
+    - "우주친구"
+    - "신호포착"
+    - "미지의별"
+    - "은하너머"
+  - characterCount: 5
+    messages:
+    - "이름이뭐야"
+    - "너는누구야"
+    - "어디서왔어"
+    - "나랑친구해"
+    - "반가워친구"
+    - "신호를보내"
+    - "지구의인간"
+    - "어느별이야"
+  - characterCount: 6
+    messages:
+    - "만나서반가워"
+    - "어디서왔나요"
+    - "우리친구하자"
+    - "별에서온친구"
+    - "신호가잡혔어"
+    - "우린이제친구"
+  - characterCount: 7
+    messages:
+    - "이름을알려줄래"
+    - "우리친구가되자"
+    - "너를더알고싶어"
+    - "나랑친구가될래"
+    - "은하를건너왔어"
