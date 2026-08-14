@@ -1,24 +1,17 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
 /// 플레이어 한 명의 HUD 슬롯을 표시하는 UI 컴포넌트.
-/// 이름, Host/Client 역할, 프로필 이미지, 정신력, 판정 라벨을 갱신한다.
+/// 프로필 이미지, 정신력 바, 판정 이미지를 갱신한다.
 /// </summary>
 public class HUDPlayerSlotUI : MonoBehaviour
 {
     [Header("Profile")]
     [SerializeField] private Image profileImage;
     [SerializeField] private Sprite defaultPortrait;
-    [SerializeField] private TMP_Text nameText;
-    [SerializeField] private TMP_Text roleText;
-
-    [Header("Role Display")]
-    [SerializeField] private bool showGuestRole = true;
 
     [Header("Sanity")]
-    [SerializeField] private TMP_Text sanityText;
     [SerializeField] private Image sanityBarFill;
 
     [Header("Judgment")]
@@ -34,50 +27,15 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 이 슬롯에 표시할 플레이어 이름을 설정한다.
-    /// </summary>
-    public void SetPlayerName(string playerName)
-    {
-        if (nameText == null) return;
-
-        nameText.text = string.IsNullOrEmpty(playerName) ? "Player" : playerName;
-    }
-
-    /// <summary>
-    /// 이 슬롯의 네트워크 역할 표시를 설정한다.
-    /// isHost가 true면 Host, false면 Guest로 표시한다.
-    /// </summary>
-    public void SetHostRole(bool isHost)
-    {
-        if (roleText == null) return;
-
-        if (isHost)
-        {
-            roleText.text = "Host";
-            roleText.gameObject.SetActive(true);
-        }
-        else
-        {
-            roleText.text = "Guest";
-            roleText.gameObject.SetActive(showGuestRole);
-        }
-    }
-
-    /// <summary>
-    /// 정신력 텍스트와 슬라이더를 갱신한다.
+    /// 정신력 바를 현재/최대 비율로 갱신한다.
     /// </summary>
     public void UpdateSanity(int currentSanity, int maxSanity)
     {
+        if (sanityBarFill == null) return;
+
         int safeMax = Mathf.Max(1, maxSanity);
         int safeCurrent = Mathf.Clamp(currentSanity, 0, safeMax);
-
-        if (sanityText != null)
-        {
-            sanityText.text = $"{safeCurrent} / {safeMax}";
-        }
-
-        if (sanityBarFill != null)
-            sanityBarFill.fillAmount = (float)safeCurrent / safeMax;
+        sanityBarFill.fillAmount = (float)safeCurrent / safeMax;
     }
 
     /// <summary>
