@@ -19,7 +19,7 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     [Header("Sanity")]
     [SerializeField] private TMP_Text sanityText;
-    [SerializeField] private Slider sanitySlider;
+    [SerializeField] private Image sanityBarFill;
 
     [Header("Judgment")]
     [SerializeField] private Image judgmentImage;
@@ -76,11 +76,8 @@ public class HUDPlayerSlotUI : MonoBehaviour
             sanityText.text = $"{safeCurrent} / {safeMax}";
         }
 
-        if (sanitySlider != null)
-        {
-            sanitySlider.maxValue = safeMax;
-            sanitySlider.value = safeCurrent;
-        }
+        if (sanityBarFill != null)
+            sanityBarFill.fillAmount = (float)safeCurrent / safeMax;
     }
 
     /// <summary>
