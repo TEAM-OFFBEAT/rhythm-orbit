@@ -10,6 +10,11 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [Header("Profile")]
     [SerializeField] private Image profileImage;
     [SerializeField] private Sprite defaultPortrait;
+    [SerializeField] private Sprite perfectPortrait;
+    [SerializeField] private Sprite goodPortrait;
+    [SerializeField] private Sprite missPortrait;
+    [SerializeField] private Sprite failPortrait;
+    [SerializeField] private Sprite successPortrait;
 
     [Header("Sanity")]
     [SerializeField] private Image sanityBarFill;
@@ -22,7 +27,7 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     private void Awake()
     {
-        ApplyDefaultPortrait();
+        SetPortrait(defaultPortrait);
         ClearJudgment();
     }
 
@@ -39,43 +44,52 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 판정 결과를 이 슬롯의 판정 이미지에 표시한다.
+    /// 판정 결과를 이 슬롯의 판정 이미지 및 프로필 이미지에 표시한다.
     /// </summary>
     public void ShowJudgment(Judgment judgment)
     {
-        if (judgmentImage == null) return;
-
-        judgmentImage.sprite = judgment switch
+        if (judgmentImage != null)
         {
-            Judgment.PERFECT => perfectSprite,
-            Judgment.GOOD    => goodSprite,
-            _                => missSprite,
-        };
-        judgmentImage.gameObject.SetActive(judgmentImage.sprite != null);
+            judgmentImage.sprite = judgment switch
+            {
+                Judgment.PERFECT => perfectSprite,
+                Judgment.GOOD    => goodSprite,
+                _                => missSprite,
+            };
+            judgmentImage.gameObject.SetActive(judgmentImage.sprite != null);
+        }
+
+        SetPortrait(judgment switch
+        {
+            Judgment.PERFECT => perfectPortrait,
+            Judgment.GOOD    => goodPortrait,
+            _                => missPortrait,
+        });
     }
 
     /// <summary>
-    /// 판정 이미지를 숨긴다.
+    /// 판정 이미지를 숨기고 프로필을 기본 상태로 되돌린다.
     /// </summary>
     public void ClearJudgment()
     {
-        if (judgmentImage == null) return;
+        if (judgmentImage != null)
+            judgmentImage.gameObject.SetActive(false);
 
-        judgmentImage.gameObject.SetActive(false);
+        SetPortrait(defaultPortrait);
     }
 
     /// <summary>
-    /// 프로필 이미지를 설정한다. 
+    /// 교신 성공(true) 또는 실패(false)에 따라 프로필 이미지를 영구 변경한다.
     /// </summary>
-    private void ApplyDefaultPortrait()
+    public void SetGameEndPortrait(bool communicationSuccess)
+    {
+        SetPortrait(communicationSuccess ? successPortrait : failPortrait);
+    }
+
+    private void SetPortrait(Sprite sprite)
     {
         if (profileImage == null) return;
-
-        if (defaultPortrait != null)
-        {
-            profileImage.sprite = defaultPortrait;
-        }
-
-        profileImage.enabled = profileImage.sprite != null;
+        profileImage.sprite = sprite;
+        profileImage.enabled = sprite != null;
     }
 }
