@@ -15,6 +15,9 @@ public class RandomMessageProvider : MonoBehaviour
     [Header("Random Messages")]
     [SerializeField] private List<RandomMessageGroup> messageGroups = new();
 
+    [Header("Message Panel Display")]
+    [SerializeField] private string noiseSymbol = "▨";
+
     /// <summary>
     /// 글자수에 맞는 메시지 목록 중 하나를 랜덤으로 반환.
     /// </summary>
@@ -46,6 +49,46 @@ public class RandomMessageProvider : MonoBehaviour
         }
         Debug.LogWarning($"{characterCount}글자 공격 메시지가 없습니다.");
         return CreateFallbackMessage(characterCount);
+    }
+
+    /// <summary>
+    /// 방어 턴 종료 시 방어자 패널에 표시할 메세지.
+    /// MISS 인덱스 위치의 글자를 노이즈 기호로 교체하고, 공격/방어 성공 여부로 종결 기호를 결정한다.
+    /// judgments가 attackMessage보다 짧으면(공격 노트 미달) 나머지 위치도 노이즈로 표시한다.
+    /// </summary>
+    public string GetDefenderPanelMessage(string attackMessage, Judgment[] judgments, bool attackSuccess)
+    {
+        if (string.IsNullOrEmpty(attackMessage))
+            return "";
+
+        char[] chars = attackMessage.ToCharArray();
+        char noiseChar = noiseSymbol.Length > 0 ? noiseSymbol[0] : '▨';
+        bool defenseSuccess = true;
+
+        int judgeLimit = Mathf.Min(chars.Length, judgments?.Length ?? 0);
+
+        for (int i = 0; i < judgeLimit; i++)
+        {
+            if (judgments[i] == Judgment.MISS)
+            {
+                chars[i] = noiseChar;
+                defenseSuccess = false;
+            }
+        }
+
+        // 공격 노트가 모자라 판정을 받지 못한 위치는 깨진 글자로 표시
+        for (int i = judgeLimit; i < chars.Length; i++)
+            chars[i] = noiseChar;
+
+        string suffix = (attackSuccess, defenseSuccess) switch
+        {
+            (true,  true)  => "!",
+            (true,  false) => "?",
+            (false, true)  => "?",
+            (false, false) => "???",
+        };
+
+        return new string(chars) + suffix;
     }
 
     private string CreateFallbackMessage(int characterCount)

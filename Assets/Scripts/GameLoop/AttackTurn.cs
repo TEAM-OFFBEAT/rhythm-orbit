@@ -284,8 +284,7 @@ public class AttackTurn : MonoBehaviour
             networkManager.Send(w => PacketSerializer.WriteNoteCreated(w, id, rel, nt));
         }
         createdGridSteps.Add(GetNearestPlayableGridStep(noteRelativeTime, NoteDuration));
-        int filledCount = Mathf.Min(createdNotes.Count, targetTapCount);
-        OnAttackProgressChanged?.Invoke(filledCount, targetTapCount);
+        OnAttackProgressChanged?.Invoke(createdNotes.Count, targetTapCount);
         if (attackTurnRenderer != null)
             attackTurnRenderer.SpawnAttackNote(currentSide, note, attackDuration);
 
