@@ -72,7 +72,6 @@ MonoBehaviour:
   p1EndX: -9
   p2StartX: -9
   p2EndX: 9
-  noteY: 0
   p1DefenseLine: {fileID: 0}
   p2DefenseLine: {fileID: 0}
 --- !u!1 &3212286826712870564
@@ -154,7 +153,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 4
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7436860926580171409, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -276,7 +275,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 4
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7801491425260804980, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
