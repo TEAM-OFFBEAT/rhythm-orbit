@@ -44,6 +44,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
         }
         Transform t = pool.Pop();
         t.name = $"Note_{noteId}";
+        HideKeyHint(t);
         t.gameObject.SetActive(true);
         activeNotes[noteId] = (t, noteType);
         return t;
@@ -57,6 +58,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
         if (!activeNotes.TryGetValue(noteId, out var entry)) return;
         activeNotes.Remove(noteId);
         if (entry.obj == null) return;
+        HideKeyHint(entry.obj);
         entry.obj.gameObject.SetActive(false);
         Stack<Transform> pool = entry.type == NoteType.HIGH ? poolHigh : poolLow;
         pool.Push(entry.obj);
@@ -70,10 +72,49 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
         foreach (var kvp in activeNotes)
         {
             if (kvp.Value.obj == null) continue;
+            HideKeyHint(kvp.Value.obj);
             kvp.Value.obj.gameObject.SetActive(false);
             Stack<Transform> pool = kvp.Value.type == NoteType.HIGH ? poolHigh : poolLow;
             pool.Push(kvp.Value.obj);
         }
         activeNotes.Clear();
+    }
+
+    /// <summary>
+    /// 튜토리얼용 F/J 키 힌트를 노트 위에 표시한다.
+    /// </summary>
+    public void ShowKeyHint(int noteId, string text, Color color)
+    {
+        if (!activeNotes.TryGetValue(noteId, out var entry))
+            return;
+
+        Transform noteTransform = entry.obj;
+
+        if (noteTransform == null)
+            return;
+
+        NoteKeyHintView hint = noteTransform.GetComponentInChildren<NoteKeyHintView>(true);
+        hint?.Show(text, color);
+    }
+
+    private void HideKeyHint(Transform noteTransform)
+    {
+        if (noteTransform == null)
+            return;
+
+        NoteKeyHintView hint = noteTransform.GetComponentInChildren<NoteKeyHintView>(true);
+        hint?.Hide();
+    }
+
+    /// <summary>
+    /// 튜토리얼용 F/J 키 힌트를 숨긴다.
+    /// 풀링된 노트가 재사용될 때 이전 힌트가 남지 않도록 사용한다.
+    /// </summary>
+    public void HideKeyHint(int noteId)
+    {
+        if (!activeNotes.TryGetValue(noteId, out var entry))
+            return;
+
+        HideKeyHint(entry.obj);
     }
 }
