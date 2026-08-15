@@ -77,6 +77,12 @@ public class AttackTurn : MonoBehaviour
     }
 
     /// <summary>
+    /// 공격 노트가 생성됐을 때 발행.
+    /// TutorialManager가 받아서 방어 연습 때 힌트 표시
+    /// </summary>
+    public event System.Action<NoteData> OnAttackNoteCreated;
+
+    /// <summary>
     /// 공격 메시지가 정해졌을 때 발행.
     /// GameManager가 받아서 HUD에 현재 공격 메시지를 표시한다.
     /// </summary>
@@ -147,6 +153,45 @@ public class AttackTurn : MonoBehaviour
 
         targetTapCount = opponentDemoRelativeTimes.Count;
         nextOpponentDemoIndex = 0;
+    }
+
+    public void StartOpponentAttackDemo(string attackMessage, NoteType[] demoPattern)
+    {
+        if (demoPattern == null || demoPattern.Length == 0)
+        {
+            Debug.LogWarning("AttackTurn: 데모 패턴이 비어 있음.");
+            return;
+        }
+
+        StartAttack(
+            AttackSide.P2,
+            false,
+            demoPattern.Length,
+            attackMessage,
+            AudioSettings.dspTime
+        );
+
+        opponentDemoRelativeTimes.Clear();
+
+        double noteDuration = NoteDuration;
+
+        for (int i = 0; i < demoPattern.Length; i++)
+        {
+            int step = 2 + i * 2;
+            double relativeTime = step * noteDuration;
+
+            if (relativeTime <= attackDuration)
+            {
+                opponentDemoRelativeTimes.Add(
+                    (relativeTime, demoPattern[i])
+                );
+            }
+        }
+
+        targetTapCount = opponentDemoRelativeTimes.Count;
+        nextOpponentDemoIndex = 0;
+
+        OnAttackProgressChanged?.Invoke(0, targetTapCount);
     }
 
     /// <summary>
@@ -289,6 +334,8 @@ public class AttackTurn : MonoBehaviour
             attackTurnRenderer.SpawnAttackNote(currentSide, note, attackDuration);
 
         OnAttackInputResolved?.Invoke(noteType, isInputSuccessForSfx);
+        
+        OnAttackNoteCreated?.Invoke(note);
         
         Debug.Log($"Attack Note Created / id: {note.noteId}, type: {note.noteType}, relativeTime: {note.noteRelativeTime:0.000}s");
     }
