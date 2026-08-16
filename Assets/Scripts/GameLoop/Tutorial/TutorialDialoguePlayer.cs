@@ -17,6 +17,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [SerializeField] private float fallbackBpm = 90f;
     [SerializeField] private bool hideOnAwake = true;
 
+    [Header("Line Blink")]
+    [SerializeField] private bool useBlinkBetweenLines = true;
+
+    [Tooltip("다음 문장으로 넘어가기 직전 깜빡이는 시간. 0.08~0.15초 추천.")]
+    [SerializeField, Min(0f)] private float blinkSecondsBetweenLines = 0.1f;
+
+    [Tooltip("깜빡임 동안 패널 전체를 숨길지 여부. 꺼두면 글자만 사라진다.")]
+    [SerializeField] private bool hidePanelDuringBlink = false;
+
     private float currentBpm;
     private Coroutine temporaryMessageCoroutine;
 
@@ -89,10 +98,10 @@ public class TutorialDialoguePlayer : MonoBehaviour
     /// lineIndex는 0부터 시작한다.
     /// </summary>
     public IEnumerator PlayLines(
-        string[] lines,
-        int beatsPerLine,
-        bool hideWhenFinished = true,
-        Action<int, string> onLineStarted = null
+    string[] lines,
+    int beatsPerLine,
+    bool hideWhenFinished = true,
+    Action<int, string> onLineStarted = null
     )
     {
         if (lines == null || lines.Length == 0)
@@ -103,7 +112,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
         StopTemporaryMessage();
 
         int safeBeats = Mathf.Max(1, beatsPerLine);
-        float waitSeconds = GetBeatSeconds() * safeBeats;
+        float lineSeconds = GetBeatSeconds() * safeBeats;
 
         for (int i = 0; i < lines.Length; i++)
         {
@@ -112,12 +121,24 @@ public class TutorialDialoguePlayer : MonoBehaviour
                 continue;
             }
 
+            bool hasNextLine = i < lines.Length - 1;
+
+            float blinkSeconds = useBlinkBetweenLines && hasNextLine
+                ? Mathf.Clamp(blinkSecondsBetweenLines, 0f, lineSeconds * 0.5f)
+                : 0f;
+
+            float showSeconds = lineSeconds - blinkSeconds;
+
             Show(lines[i]);
             onLineStarted?.Invoke(i, lines[i]);
 
-            Debug.Log($"Tutorial Dialogue: {lines[i]}");
+            yield return new WaitForSecondsRealtime(showSeconds);
 
-            yield return new WaitForSecondsRealtime(waitSeconds);
+            if (blinkSeconds > 0f)
+            {
+                ShowBlinkBlank();
+                yield return new WaitForSecondsRealtime(blinkSeconds);
+            }
         }
 
         if (hideWhenFinished)
@@ -197,5 +218,28 @@ public class TutorialDialoguePlayer : MonoBehaviour
         return 60f / Mathf.Max(1f, currentBpm);
     }
 
+    private void ShowBlinkBlank()
+    {
+        if (hidePanelDuringBlink)
+        {
+            if (guidePanel != null)
+            {
+                guidePanel.SetActive(false);
+            }
+
+            return;
+        }
+
+        if (guidePanel != null)
+        {
+            guidePanel.SetActive(true);
+        }
+
+        if (guideText != null)
+        {
+            guideText.text = string.Empty;
+            guideText.gameObject.SetActive(false);
+        }
+    }
     
 }
