@@ -1,3 +1,5 @@
+
+using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,6 +31,9 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private GameCamera gameCamera;
 
+    [SerializeField] private GameObject lobbyButtonRoot;
+    [SerializeField] private string lobbySceneName = "Lobby";
+    
     [Header("UI")]
     [SerializeField] private HUD hud;
     [SerializeField] private TutorialDialoguePlayer dialoguePlayer;
@@ -252,6 +257,11 @@ public class TutorialManager : MonoBehaviour
 
         dialoguePlayer?.SetBpm(tutorialBpm);
         dialoguePlayer?.Hide();
+
+        if (lobbyButtonRoot != null)
+        {
+            lobbyButtonRoot.SetActive(false);
+        }
 
         attackTurnRenderer.SetLocalPlayer(GetPlayerId(playerSide));
         attackTurnRenderer.ClearAll();
@@ -874,6 +884,11 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearJudgments();
         hud?.ClearPanelMessages();
 
+        if (lobbyButtonRoot != null)
+        {
+            lobbyButtonRoot.SetActive(true);
+        }
+
         Debug.Log("TutorialManager: Complete");
     }
 
@@ -1143,7 +1158,26 @@ public class TutorialManager : MonoBehaviour
 
         SoundManager.Instance.PlaySfx(sfxId);
     }
+
+    /// <summary>
+    /// 튜토리얼 완료 후 로비 씬으로 이동한다.
+    /// 완료 버튼 OnClick에서 호출한다.
+    /// </summary>
+    public void GoToLobby()
+    {
+        if (string.IsNullOrWhiteSpace(lobbySceneName))
+        {
+            Debug.LogError("TutorialManager: lobbySceneName이 비어 있음.");
+            return;
+        }
+
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(lobbySceneName);
+    }
+
 }
+
+
 /// <summary>
 /// 튜토리얼 방어 연습용 메시지/노트 패턴/키 힌트 표시 여부를 함께 담는다.
 /// </summary>
