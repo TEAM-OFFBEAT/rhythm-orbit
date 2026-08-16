@@ -175,7 +175,6 @@ public class TutorialManager : MonoBehaviour
             attackTurn.OnAttackEnded += HandleAttackEnded;
             attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
             attackTurn.OnAttackProgressChanged += HandleAttackProgressChanged;
-            attackTurn.OnAttackInputResolved += HandleAttackInputResolved;
             attackTurn.OnAttackNoteCreated += HandleTutorialAttackNoteCreated;
         }
 
@@ -194,7 +193,6 @@ public class TutorialManager : MonoBehaviour
             attackTurn.OnAttackEnded -= HandleAttackEnded;
             attackTurn.OnAttackMessageSelected -= HandleAttackMessageSelected;
             attackTurn.OnAttackProgressChanged -= HandleAttackProgressChanged;
-            attackTurn.OnAttackInputResolved -= HandleAttackInputResolved;
             attackTurn.OnAttackNoteCreated -= HandleTutorialAttackNoteCreated;
         }
 
@@ -1031,6 +1029,8 @@ public class TutorialManager : MonoBehaviour
 
     private void HandleTutorialAttackNoteCreated(NoteData note)
     {
+        PlayNoteHitSfx(note.noteType);
+
         if (NoteRenderer.Instance == null)
             return;
 
@@ -1089,14 +1089,6 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 입력 또는 상대 데모 노트 생성 결과에 따라 타격음을 재생한다.
-    /// </summary>
-    private void HandleAttackInputResolved(NoteType noteType, bool isSuccess)
-    {
-        PlayNoteSfx(noteType, isSuccess);
-    }
-
-    /// <summary>
     /// 방어 입력 결과에 따라 타격음을 재생한다.
     /// AI 자동 방어는 DefenseTurn 쪽에서 이 이벤트를 발행하지 않으므로 중복 재생되지 않는다.
     /// </summary>
@@ -1137,6 +1129,20 @@ public class TutorialManager : MonoBehaviour
         SoundManager.Instance.PlaySfx(sfxId);
     }
 
+    private void PlayNoteHitSfx(NoteType noteType)
+    {
+        if (!playHitSfx)
+            return;
+
+        if (SoundManager.Instance == null)
+            return;
+
+        SfxId sfxId = noteType == NoteType.HIGH
+            ? SfxId.HitHigh
+            : SfxId.HitLow;
+
+        SoundManager.Instance.PlaySfx(sfxId);
+    }
 }
 /// <summary>
 /// 튜토리얼 방어 연습용 메시지/노트 패턴/키 힌트 표시 여부를 함께 담는다.
@@ -1157,6 +1163,7 @@ public class TutorialDefensePattern
         this.showKeyHints = showKeyHints;
     }
 
+    
 
     
 }
