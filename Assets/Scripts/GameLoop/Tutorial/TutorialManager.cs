@@ -59,6 +59,13 @@ public class TutorialManager : MonoBehaviour
     [Header("Defense Reaction")]
     [SerializeField] private int defenseReactionBeats = 4;
 
+    [Header("Tutorial Sound")]
+    [SerializeField] private bool playTutorialBgmOnStart = false;
+    [SerializeField] private BgmId tutorialBgmId = BgmId.Tutorial;
+
+    [SerializeField] private bool playHitSfx = true;
+    [SerializeField] private bool playMissSfx = false;
+
     private bool latestDefenseResultAvailable;
     private int latestDefenseTotalCount;
     private int latestDefenseMissCount;
@@ -143,19 +150,11 @@ public class TutorialManager : MonoBehaviour
     private void OnEnable()
     {
         SubscribeEvents();
-        if (attackTurn != null)
-        {
-            attackTurn.OnAttackNoteCreated += HandleTutorialAttackNoteCreated;
-        }
     }
 
     private void OnDisable()
     {
         UnsubscribeEvents();
-        if (attackTurn != null)
-        {
-            attackTurn.OnAttackNoteCreated -= HandleTutorialAttackNoteCreated;
-        }
     }
 
     private void Start()
@@ -176,12 +175,15 @@ public class TutorialManager : MonoBehaviour
             attackTurn.OnAttackEnded += HandleAttackEnded;
             attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
             attackTurn.OnAttackProgressChanged += HandleAttackProgressChanged;
+            attackTurn.OnAttackInputResolved += HandleAttackInputResolved;
+            attackTurn.OnAttackNoteCreated += HandleTutorialAttackNoteCreated;
         }
 
         if (defenseTurn != null)
         {
             defenseTurn.OnDefenseEnded += HandleDefenseEnded;
             defenseTurn.OnJudgment += HandleJudgment;
+            defenseTurn.OnDefenseInputResolved += HandleDefenseInputResolved;
         }
     }
 
@@ -192,12 +194,15 @@ public class TutorialManager : MonoBehaviour
             attackTurn.OnAttackEnded -= HandleAttackEnded;
             attackTurn.OnAttackMessageSelected -= HandleAttackMessageSelected;
             attackTurn.OnAttackProgressChanged -= HandleAttackProgressChanged;
+            attackTurn.OnAttackInputResolved -= HandleAttackInputResolved;
+            attackTurn.OnAttackNoteCreated -= HandleTutorialAttackNoteCreated;
         }
 
         if (defenseTurn != null)
         {
             defenseTurn.OnDefenseEnded -= HandleDefenseEnded;
             defenseTurn.OnJudgment -= HandleJudgment;
+            defenseTurn.OnDefenseInputResolved -= HandleDefenseInputResolved;
         }
     }
 
@@ -244,6 +249,8 @@ public class TutorialManager : MonoBehaviour
         }
         RhythmClock.Instance?.SetBpm(tutorialBpm);
         RhythmClock.Instance?.StartClock(AudioSettings.dspTime);
+        
+        TryPlayTutorialBgm();
 
         dialoguePlayer?.SetBpm(tutorialBpm);
         dialoguePlayer?.Hide();
@@ -1052,12 +1059,6 @@ public class TutorialManager : MonoBehaviour
     {   
         if (pattern == null || pattern.NoteCount <= 0)
         {
-            Debug.LogWarning("TutorialManager: 비어 있는 방어 데모 패턴.");
-            yield break;
-        }
-
-        if (pattern == null || pattern.NoteCount <= 0)
-        {
             Debug.LogWarning("TutorialManager: 비어 있는 상대 데모 패턴.");
             yield break;
         }
@@ -1073,6 +1074,69 @@ public class TutorialManager : MonoBehaviour
             defenseInputStep
         );
     }
+    /// <summary>
+    /// 튜토리얼 BGM 재생 자리.
+    /// 아직 BGM이 없으면 playTutorialBgmOnStart를 꺼두면 된다.
+    /// </summary>
+    private void TryPlayTutorialBgm()
+    {
+        if (!playTutorialBgmOnStart)
+        {
+            return;
+        }
+
+        SoundManager.Instance?.PlayBgm(tutorialBgmId);
+    }
+
+    /// <summary>
+    /// 공격 입력 또는 상대 데모 노트 생성 결과에 따라 타격음을 재생한다.
+    /// </summary>
+    private void HandleAttackInputResolved(NoteType noteType, bool isSuccess)
+    {
+        PlayNoteSfx(noteType, isSuccess);
+    }
+
+    /// <summary>
+    /// 방어 입력 결과에 따라 타격음을 재생한다.
+    /// AI 자동 방어는 DefenseTurn 쪽에서 이 이벤트를 발행하지 않으므로 중복 재생되지 않는다.
+    /// </summary>
+    private void HandleDefenseInputResolved(NoteType noteType, bool isSuccess)
+    {
+        PlayNoteSfx(noteType, isSuccess);
+    }
+
+    /// <summary>
+    /// 고주파/저주파 성공 타격음과 선택적 MISS 효과음을 재생한다.
+    /// </summary>
+    private void PlayNoteSfx(NoteType noteType, bool isSuccess)
+    {
+        if (SoundManager.Instance == null)
+        {
+            return;
+        }
+
+        if (!isSuccess)
+        {
+            if (playMissSfx)
+            {
+                SoundManager.Instance.PlaySfx(SfxId.Miss);
+            }
+
+            return;
+        }
+
+        if (!playHitSfx)
+        {
+            return;
+        }
+
+        SfxId sfxId = noteType == NoteType.HIGH
+            ? SfxId.HitHigh
+            : SfxId.HitLow;
+
+        SoundManager.Instance.PlaySfx(sfxId);
+    }
+
 }
 /// <summary>
 /// 튜토리얼 방어 연습용 메시지/노트 패턴/키 힌트 표시 여부를 함께 담는다.
@@ -1092,6 +1156,7 @@ public class TutorialDefensePattern
         this.notes = notes;
         this.showKeyHints = showKeyHints;
     }
+
 
     
 }
