@@ -1761,6 +1761,50 @@ PrefabInstance:
       propertyPath: opponentSanityUiRoot
       value: 
       objectReference: {fileID: 1390550758}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'introGuideLines.Array.data[1]'
+      value: "\uB9AC\uB4EC\uC624\uBE57\uC758 \uD575\uC2EC \uC694\uC18C\uC778 \"\uBE44\uD2B8\"\uC5D0
+        \uB300\uD574 \uC124\uBA85\uD574\uC904\uAC8C."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'introGuideLines.Array.data[6]'
+      value: "\uC55E\uC73C\uB85C \uB450 \uBE44\uD2B8\uB97C \uBCF4\uB0B4\uACE0 \uBC1B\uB294
+        \uC77C\uC774 \uBC18\uBCF5\uB420 \uAC70\uC57C! "
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'attackGuideLines.Array.data[0]'
+      value: "\uB2E4\uC74C\uC73C\uB860 \uACF5\uACA9 \uD134\uC5D0 \uB300\uD574 \uC124\uBA85\uD574\uC904\uAC8C."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'attackGuideLines.Array.data[1]'
+      value: "\uACF5\uACA9 \uD134\uC5D0\uB294 \uBAA9\uD45C \uD0ED \uC218\uB9CC\uD07C
+        \uD0A4\uB97C \uC785\uB825\uD558\uC5EC \uBE44\uD2B8\uB97C \uC0DD\uC131\uD574\uC57C
+        \uD574."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'attackGuideLines.Array.data[3]'
+      value: "\uD310\uC815\uC120\uC5D0 \uD0C0\uC774\uBC0D\uC744 \uB9DE\uCDB0, \uC6D0\uD558\uB294
+        \uC870\uD569\uC73C\uB85C \uBE44\uD2B8\uB97C \uC0DD\uC131\uD558\uBA74 \uB3FC."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'attackGuideLines.Array.data[4]'
+      value: "\uC544 \uCC38, \uC6B0\uCE21 \uD558\uB2E8\uC5D0 \uD45C\uC2DC\uB418\uB294
+        \uBAA9\uD45C \uD0ED \uC218\uB97C \uC9C0\uCF1C\uC57C \uD574."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'attackGuideLines.Array.data[5]'
+      value: "\uC0DD\uC131\uD55C \uBE44\uD2B8\uB294 \uBC14\uB85C \uC0C1\uB300 \uC9C4\uC601\uC73C\uB85C
+        \uB118\uC5B4\uAC00\uAC8C \uB3FC."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'attackGuideLines.Array.data[6]'
+      value: "\uC790, \uC774\uC81C \uACF5\uACA9 \uD134\uC744 \uC5F0\uC2B5\uD574\uBCF4\uC790!"
+      objectReference: {fileID: 0}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: 'defenseGuideLines.Array.data[1]'
+      value: "\uBE44\uD2B8\uAC00 \uC6B0\uB9AC\uCABD\uC73C\uB85C \uB118\uC5B4\uC624\uBA74,
+        \uD0C0\uC774\uBC0D\uC744 \uB9DE\uCDB0\uC11C \uD0A4\uB97C \uB204\uB974\uC790."
+      objectReference: {fileID: 0}
     - target: {fileID: 6427101917554206500, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
       propertyPath: m_LocalPosition.x
       value: 960

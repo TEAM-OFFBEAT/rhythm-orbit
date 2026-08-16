@@ -404,7 +404,7 @@ public class TutorialManager : MonoBehaviour
         SetSanityVisible(true);
         UpdateTutorialSanityHud();
 
-        dialoguePlayer?.Show("랠리 시작! 이제 정신력 게이지를 보면서 공격과 방어를 번갈아 해보자.");
+        //dialoguePlayer?.Show("랠리 시작! 이제 정신력 게이지를 보면서 공격과 방어를 번갈아 해보자.");
         yield return new WaitForSecondsRealtime(1.2f);
         dialoguePlayer?.Hide();
 
