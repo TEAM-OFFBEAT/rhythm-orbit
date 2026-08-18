@@ -31,6 +31,14 @@ public class GameCamera : MonoBehaviour
     }
 
     /// <summary>
+    /// 라운드 인트로 시 GameManager에서 호출. 뷰를 화면 중앙으로 복귀.
+    /// </summary>
+    public void SetCenterView()
+    {
+        targetX = 0f;
+    }
+
+    /// <summary>
     /// 방어 전환 시 GameManager에서 호출. 뷰를 그리드 중앙과 판정선 사이 지점으로 이동.
     /// </summary>
     public void SetDefenseView(AttackSide attackerSide)

@@ -21,6 +21,9 @@ public class RoundSetting
 
     [Header("Sound")]
     public SfxId roundUpSfx = SfxId.RoundStart1;
+
+    [Header("Intro")]
+    public int introBeatCount = 16;
 }
 public class GameManager : MonoBehaviour
 {
@@ -123,6 +126,7 @@ public class GameManager : MonoBehaviour
 
     //private int completedTurnCount;
     private int currentRoundIndex;
+    private bool pendingRoundStartSfx;
 
     private GameState currentState;
     private int attackerPlayerId = 1;
@@ -252,6 +256,7 @@ public class GameManager : MonoBehaviour
 
         phaseIndex = 0;
         currentRoundIndex = 0;
+        pendingRoundStartSfx = false;
 
         ApplyCurrentBpm(scheduleBgm: false);
         currentTurnDuration = GetCurrentTurnDuration();
@@ -268,9 +273,18 @@ public class GameManager : MonoBehaviour
         // 첫 공격 phase 시작 시점에 현재 라운드 BGM을 맞춰 예약한다.
         ScheduleCurrentCoreLoopBgm(nextPhaseDspTime);
 
-        // R1 시작 효과음이 필요하면 사용.
-        // GameStart 사운드와 겹치면 이 줄은 빼도 된다.
-        PlayRoundStartSfx();
+        // BGM 시작 후 introBeatCount 박자 대기, 그 뒤 SFX와 함께 게임루프 시작.
+        double introDuration = GetRoundIntroDuration();
+        if (introDuration > 0.0)
+        {
+            gameCamera?.SetCenterView();
+            pendingRoundStartSfx = true;
+            nextPhaseDspTime += introDuration;
+        }
+        else
+        {
+            PlayRoundStartSfx();
+        }
     }
 
     /// <summary>
@@ -329,7 +343,19 @@ public class GameManager : MonoBehaviour
             {
                 currentRoundIndex = nextRoundIndex;
 
-                ApplyCurrentBpm();
+                ApplyCurrentBpm(scheduleBgm: false);
+                ScheduleCurrentCoreLoopBgm(thisPhaseStart);
+
+                double introDuration = GetRoundIntroDuration();
+                if (introDuration > 0.0)
+                {
+                    gameCamera?.SetCenterView();
+                    pendingRoundStartSfx = true;
+                    nextPhaseDspTime = thisPhaseStart + introDuration;
+                    // phaseIndex를 증가시키지 않고 리턴 — 인트로 후 동일 phaseIndex로 재진입해 attack phase 시작
+                    return;
+                }
+
                 PlayRoundStartSfx();
             }
 
@@ -373,7 +399,13 @@ public class GameManager : MonoBehaviour
     private void StartAttackPhase(double phaseStartDspTime, int attackPhaseIdx)
     {
         noteTypeByNoteId.Clear();
-        
+
+        if (pendingRoundStartSfx)
+        {
+            pendingRoundStartSfx = false;
+            PlayRoundStartSfx();
+        }
+
         currentState = GameState.ATTACK;
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
 
@@ -831,6 +863,17 @@ public class GameManager : MonoBehaviour
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// 현재 라운드 설정의 introBeatCount 기준으로 인트로 구간 길이를 초 단위로 반환한다.
+    /// </summary>
+    private double GetRoundIntroDuration()
+    {
+        RoundSetting setting = GetCurrentRoundSetting();
+        if (setting == null || setting.introBeatCount <= 0 || RhythmClock.Instance == null)
+            return 0.0;
+        return RhythmClock.Instance.GetBeatDuration() * setting.introBeatCount;
+    }
 
     /// <summary>
     /// 현재 공격자의 반대 플레이어를 방어자로 반환한다.
