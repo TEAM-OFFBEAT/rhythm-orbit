@@ -88,6 +88,17 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
+    /// 현재 턴을 소유한 플레이어의 패널을 하이라이트하고 상대 패널은 기본 상태로 전환한다.
+    /// 공격 phase 진입 시 공격자 ID, 방어 phase 진입 시 방어자 ID를 전달한다.
+    /// </summary>
+    public void SetTurnOwner(int activePlayerId)
+    {
+        bool mySlotActive = activePlayerId == localPlayerId;
+        mySlot?.SetActiveState(mySlotActive);
+        opponentSlot?.SetActiveState(!mySlotActive);
+    }
+
+    /// <summary>
     /// My/Opponent 슬롯의 판정 라벨을 초기화한다.
     /// 턴 전환 시 GameManager가 호출한다.
     /// </summary>

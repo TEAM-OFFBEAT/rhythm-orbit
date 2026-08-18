@@ -380,6 +380,7 @@ public class GameManager : MonoBehaviour
         attackTurnRenderer?.ClearAll();
         hud?.ClearJudgments();
         hud?.ClearPanelMessages();
+        hud?.SetTurnOwner(attackerPlayerId);
         gameCamera?.SetAttackView(attackerSide);
 
         var rng = GetSharedRng(attackPhaseIdx);
@@ -426,6 +427,7 @@ public class GameManager : MonoBehaviour
         currentJudgmentIndex = 0;
 
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+        hud?.SetTurnOwner(GetDefenderPlayerId());
         gameCamera?.SetDefenseView(attackerSide);
         attackTurnRenderer?.StopLine();
 

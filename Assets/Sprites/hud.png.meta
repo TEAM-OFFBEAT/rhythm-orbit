@@ -215,10 +215,10 @@ TextureImporter:
       name: hud_4
       rect:
         serializedVersion: 2
-        x: 1169
-        y: 746
-        width: 811
-        height: 377
+        x: 1131
+        y: 713
+        width: 850
+        height: 410
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -283,8 +283,8 @@ TextureImporter:
         serializedVersion: 2
         x: 56
         y: 37
-        width: 813
-        height: 376
+        width: 850
+        height: 410
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}

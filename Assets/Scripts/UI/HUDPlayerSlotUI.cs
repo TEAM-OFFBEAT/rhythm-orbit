@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,16 +20,27 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [Header("Sanity")]
     [SerializeField] private Image sanityBarFill;
 
+    [Header("Panel")]
+    [SerializeField] private Image panelImage;
+    [SerializeField] private Sprite defaultPanelSprite;
+    [SerializeField] private Sprite highlightPanelSprite;
+    [SerializeField] private Color pulseColorMin = new Color(1f, 1f, 1f, 0.5f);
+    [SerializeField] private Color pulseColorMax = Color.white;
+    [SerializeField] private float pulseSpeed = 2f;
+
     [Header("Judgment")]
     [SerializeField] private Image judgmentImage;
     [SerializeField] private Sprite perfectSprite;
     [SerializeField] private Sprite goodSprite;
     [SerializeField] private Sprite missSprite;
 
+    private Coroutine pulseCoroutine;
+
     private void Awake()
     {
         SetPortrait(defaultPortrait);
         ClearJudgment();
+        SetActiveState(false);
     }
 
     /// <summary>
@@ -84,6 +96,37 @@ public class HUDPlayerSlotUI : MonoBehaviour
     public void SetGameEndPortrait(bool communicationSuccess)
     {
         SetPortrait(communicationSuccess ? successPortrait : failPortrait);
+    }
+
+    /// <summary>
+    /// 이 플레이어가 현재 턴(공격 또는 방어)을 소유하면 하이라이트 스프라이트로 교체하고 발광 펄스를 시작한다.
+    /// 그렇지 않으면 기본 패널 이미지로 복원한다.
+    /// </summary>
+    public void SetActiveState(bool isActive)
+    {
+        if (panelImage == null) return;
+
+        if (pulseCoroutine != null)
+        {
+            StopCoroutine(pulseCoroutine);
+            pulseCoroutine = null;
+        }
+
+        panelImage.sprite = isActive ? highlightPanelSprite : defaultPanelSprite;
+        panelImage.color = Color.white;
+
+        if (isActive)
+            pulseCoroutine = StartCoroutine(PulseColor());
+    }
+
+    private IEnumerator PulseColor()
+    {
+        while (true)
+        {
+            float t = (Mathf.Sin(Time.time * pulseSpeed * Mathf.PI) + 1f) * 0.5f;
+            panelImage.color = Color.Lerp(pulseColorMin, pulseColorMax, t);
+            yield return null;
+        }
     }
 
     private void SetPortrait(Sprite sprite)

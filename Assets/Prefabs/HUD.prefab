@@ -260,7 +260,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -103, y: 58}
+  m_AnchoredPosition: {x: -115, y: 51}
   m_SizeDelta: {x: 450, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8641312207841538542
@@ -821,7 +821,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 18, y: 141}
+  m_AnchoredPosition: {x: 35, y: 151}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &6361418301651662807
@@ -978,7 +978,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 147, y: 5}
+  m_AnchoredPosition: {x: 164, y: 15}
   m_SizeDelta: {x: 450, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7445309267396514156
@@ -1647,8 +1647,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -553.5, y: -352}
-  m_SizeDelta: {x: 813, y: 376}
+  m_AnchoredPosition: {x: -539, y: -338}
+  m_SizeDelta: {x: 850, y: 410}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1581723553563831
 CanvasRenderer:
@@ -1708,6 +1708,9 @@ MonoBehaviour:
   failPortrait: {fileID: -3303779423006393323, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   successPortrait: {fileID: -790699523677361007, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   sanityBarFill: {fileID: 2726978777307346578}
+  panelImage: {fileID: 4897033064702728408}
+  defaultPanelSprite: {fileID: 9165623242308869086, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
+  highlightPanelSprite: {fileID: 5464961714324258731, guid: cc68ca4077c42f6478714f9aac7dce6c, type: 3}
   judgmentImage: {fileID: 7258118523757375264}
   perfectSprite: {fileID: -7483751810003268922, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
   goodSprite: {fileID: 3210145055518743399, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
@@ -1751,8 +1754,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 554.5, y: 351.5}
-  m_SizeDelta: {x: 811, y: 377}
+  m_AnchoredPosition: {x: 539, y: 337}
+  m_SizeDelta: {x: 850, y: 410}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3984331865006067101
 CanvasRenderer:
@@ -1812,6 +1815,9 @@ MonoBehaviour:
   failPortrait: {fileID: 5377859178988851676, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   successPortrait: {fileID: -8090365562718305141, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   sanityBarFill: {fileID: 360101682030975484}
+  panelImage: {fileID: 7702125488828697384}
+  defaultPanelSprite: {fileID: -5356235205854507632, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
+  highlightPanelSprite: {fileID: -3456634472872534739, guid: cc68ca4077c42f6478714f9aac7dce6c, type: 3}
   judgmentImage: {fileID: 1304483787252212804}
   perfectSprite: {fileID: -7483751810003268922, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
   goodSprite: {fileID: 3210145055518743399, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
@@ -1925,6 +1931,6 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -18, y: -142}
+  m_AnchoredPosition: {x: -30, y: -149}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
