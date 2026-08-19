@@ -20,6 +20,7 @@ public class HUD : MonoBehaviour
     [SerializeField] private TMP_Text myPanelMessageLabel;
     [SerializeField] private GameObject opponentPanelBubble;
     [SerializeField] private TMP_Text opponentPanelMessageLabel;
+    [SerializeField] private string defaultBubbleMessage = "...";
 
     [Header("Player HUD Slots")]
     [SerializeField] private HUDPlayerSlotUI mySlot;
@@ -32,6 +33,14 @@ public class HUD : MonoBehaviour
 
     private Coroutine myPanelHideCoroutine;
     private Coroutine opponentPanelHideCoroutine;
+
+    private void Awake()
+    {
+        if (myPanelBubble != null) myPanelBubble.SetActive(true);
+        if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
+        if (opponentPanelBubble != null) opponentPanelBubble.SetActive(true);
+        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
+    }
 
     /// <summary>
     /// 로컬 플레이어 기준으로 My/Opponent 슬롯의 이름과 Host/Client 역할 표시를 설정한다.
@@ -197,75 +206,76 @@ public class HUD : MonoBehaviour
         bool isLocalDefender = (attackerSide == AttackSide.P1 && localPlayerId == 2) ||
                                (attackerSide == AttackSide.P2 && localPlayerId == 1);
         if (isLocalDefender)
-            ShowMyPanelMessage(message);
-        else
             ShowOpponentPanelMessage(message);
+        else
+            ShowMyPanelMessage(message);
     }
 
     /// <summary>
-    /// 내 패널 메세지 레이블에 텍스트를 표시하고, 0.5박자 후 자동으로 숨긴다.
+    /// 내 패널 메세지 레이블에 텍스트를 표시하고, 2박자 후 디폴트 메세지로 되돌린다.
     /// </summary>
     public void ShowMyPanelMessage(string message)
     {
-        if (myPanelMessageLabel != null) myPanelMessageLabel.text = message;
-        bool show = !string.IsNullOrEmpty(message);
-        if (myPanelBubble != null) myPanelBubble.SetActive(show);
-        else if (myPanelMessageLabel != null) myPanelMessageLabel.gameObject.SetActive(show);
+        if (myPanelHideCoroutine != null) { StopCoroutine(myPanelHideCoroutine); myPanelHideCoroutine = null; }
 
-        if (myPanelHideCoroutine != null) StopCoroutine(myPanelHideCoroutine);
-        myPanelHideCoroutine = show ? StartCoroutine(HideMyPanel()) : null;
+        if (string.IsNullOrEmpty(message))
+        {
+            if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
+            return;
+        }
+
+        if (myPanelMessageLabel != null) myPanelMessageLabel.text = message;
+        myPanelHideCoroutine = StartCoroutine(RevertMyPanelToDefault());
     }
 
     /// <summary>
-    /// 상대 패널 메세지 레이블에 텍스트를 표시하고, 0.5박자 후 자동으로 숨긴다.
+    /// 상대 패널 메세지 레이블에 텍스트를 표시하고, 2박자 후 디폴트 메세지로 되돌린다.
     /// </summary>
     public void ShowOpponentPanelMessage(string message)
     {
-        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = message;
-        bool show = !string.IsNullOrEmpty(message);
-        if (opponentPanelBubble != null) opponentPanelBubble.SetActive(show);
-        else if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.gameObject.SetActive(show);
+        if (opponentPanelHideCoroutine != null) { StopCoroutine(opponentPanelHideCoroutine); opponentPanelHideCoroutine = null; }
 
-        if (opponentPanelHideCoroutine != null) StopCoroutine(opponentPanelHideCoroutine);
-        opponentPanelHideCoroutine = show ? StartCoroutine(HideOpponentPanel()) : null;
+        if (string.IsNullOrEmpty(message))
+        {
+            if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
+            return;
+        }
+
+        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = message;
+        opponentPanelHideCoroutine = StartCoroutine(RevertOpponentPanelToDefault());
     }
 
     /// <summary>
-    /// 양쪽 패널 메세지를 모두 즉시 숨긴다. 턴 시작 시 GameManager가 호출한다.
+    /// 양쪽 패널 메세지를 즉시 디폴트 메세지로 초기화한다. 턴 시작 시 GameManager가 호출한다.
     /// </summary>
     public void ClearPanelMessages()
     {
         if (myPanelHideCoroutine != null) { StopCoroutine(myPanelHideCoroutine); myPanelHideCoroutine = null; }
         if (opponentPanelHideCoroutine != null) { StopCoroutine(opponentPanelHideCoroutine); opponentPanelHideCoroutine = null; }
 
-        if (myPanelBubble != null) myPanelBubble.SetActive(false);
-        else if (myPanelMessageLabel != null) myPanelMessageLabel.gameObject.SetActive(false);
-
-        if (opponentPanelBubble != null) opponentPanelBubble.SetActive(false);
-        else if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.gameObject.SetActive(false);
+        if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
+        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
     }
 
-    private IEnumerator HideMyPanel()
+    private IEnumerator RevertMyPanelToDefault()
     {
-        yield return new WaitForSeconds(GetHalfBeatSeconds());
-        if (myPanelBubble != null) myPanelBubble.SetActive(false);
-        else if (myPanelMessageLabel != null) myPanelMessageLabel.gameObject.SetActive(false);
+        yield return new WaitForSeconds(GetTwoBeatSeconds());
+        if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
         myPanelHideCoroutine = null;
     }
 
-    private IEnumerator HideOpponentPanel()
+    private IEnumerator RevertOpponentPanelToDefault()
     {
-        yield return new WaitForSeconds(GetHalfBeatSeconds());
-        if (opponentPanelBubble != null) opponentPanelBubble.SetActive(false);
-        else if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.gameObject.SetActive(false);
+        yield return new WaitForSeconds(GetTwoBeatSeconds());
+        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
         opponentPanelHideCoroutine = null;
     }
 
-    // 0.5박자 = 1반박 = RhythmClock.GetNoteDuration()
-    private float GetHalfBeatSeconds()
+    // 2박자 = 4반박 = RhythmClock.GetNoteDuration() * 4
+    private float GetTwoBeatSeconds()
     {
-        if (RhythmClock.Instance == null) return 0.3f;
-        return (float)RhythmClock.Instance.GetNoteDuration();
+        if (RhythmClock.Instance == null) return 1.0f;
+        return (float)(RhythmClock.Instance.GetNoteDuration() * 4.0);
     }
 
     /// <summary>
