@@ -97,21 +97,23 @@ public class TutorialManager : MonoBehaviour
 
     [SerializeField, Min(0)] private int practiceStartMessageBeats = 1;
 
-    [Header("Intro Beat Demo")]
-    [SerializeField] private bool playIntroBeatDemo = true;
+    [Header("Attack Beat Demo")]
+    [SerializeField] private bool playAttackBeatDemo = true;
 
-    [Tooltip("인트로 몇 번째 문장에서 비트 소개 노트를 띄울지 설정한다. 1부터 시작한다.")]
-    [SerializeField, Min(1)] private int introBeatDemoLineNumber = 6;
+    [Tooltip("공격턴 설명 몇 번째 문장에서 고주파 비트를 보여줄지 설정한다. 1부터 시작한다.")]
+    [SerializeField, Min(1)] private int attackHighBeatDemoLineNumber = 4;
+
+    [Tooltip("공격턴 설명 몇 번째 문장에서 저주파 비트를 보여줄지 설정한다. 1부터 시작한다.")]
+    [SerializeField, Min(1)] private int attackLowBeatDemoLineNumber = 5;
 
     [Tooltip("고주파 노트가 공격 라인에서 생성될 위치 비율.0.5가 중앙이다.")]
-    [SerializeField, Range(0f, 1f)] private float introHighNotePositionRatio = 0.47f;
+    [SerializeField, Range(0f, 1f)] private float demoHighNotePositionRatio = 0.47f;
 
     [Tooltip("저주파 노트가 공격 라인에서 생성될 위치 비율. 0.5가 중앙이다.")]
-    [SerializeField, Range(0f, 1f)] private float introLowNotePositionRatio = 0.53f;
+    [SerializeField, Range(0f, 1f)] private float demoLowNotePositionRatio = 0.53f;
 
-    [SerializeField] private double introBeatDemoDuration = 2.0;
-    [SerializeField] private int introSecondNoteDelayBeats = 1;
-    [SerializeField] private int introDemoFirstNoteId = 900000;
+    [SerializeField] private double beatDemoDuration = 2.0;
+    [SerializeField] private int demoFirstNoteId = 900000;
 
     [Header("Guide Lines")]
     [SerializeField] private string[] introGuideLines =
@@ -156,10 +158,8 @@ public class TutorialManager : MonoBehaviour
     private bool defenseEnded;
     private bool showDefenseJudgmentUi;
     private bool currentDefenseIsAiDefense;
-    private bool introBeatDemoStarted;
     private bool showCurrentDefenseKeyHints;
 
-    private int nextIntroDemoNoteId;
     private int currentDefenseJudgmentIndex;
     
 
@@ -168,7 +168,9 @@ public class TutorialManager : MonoBehaviour
 
     private double lastAttackStartDspTime;
     private double lastAttackDuration;
-    
+    private bool attackHighBeatDemoStarted;
+    private bool attackLowBeatDemoStarted;
+    private int nextDemoNoteId;
 
     private readonly List<NoteData> lastAttackNotes = new List<NoteData>();
 
@@ -242,13 +244,12 @@ public class TutorialManager : MonoBehaviour
         yield return WaitUntilDspTime(tutorialStartDspTime);
 
         currentStep = TutorialStep.IntroDialogue;
-        yield return PlayIntroDialogueWithBeatDemo();
+        yield return PlayDialogue(introGuideLines);
 
         attackTurnRenderer.ClearAll();
 
         currentStep = TutorialStep.AttackDialogue;
-        yield return PlayDialogue(attackGuideLines);
-
+        yield return PlayAttackDialogueWithBeatDemo();
         yield return RunAttackPractice();
 
         currentStep = TutorialStep.DefenseDialogue;
@@ -294,8 +295,9 @@ public class TutorialManager : MonoBehaviour
         attackTurnRenderer.SetLocalPlayer(GetPlayerId(playerSide));
         attackTurnRenderer.ClearAll();
         
-        introBeatDemoStarted = false;
-        nextIntroDemoNoteId = introDemoFirstNoteId;
+        attackHighBeatDemoStarted = false;
+        attackLowBeatDemoStarted = false;
+        nextDemoNoteId = demoFirstNoteId;
 
         hud?.SetupPlayerPerspective(GetPlayerId(playerSide));
         hud?.UpdateBpm(tutorialBpm);
@@ -417,11 +419,6 @@ public class TutorialManager : MonoBehaviour
                 nextAttackStartDspTime += intervalSeconds;
                 continue;
             }
-        }
-
-        if (feedbackVisible)
-        {
-            dialoguePlayer?.Hide();
         }
 
         if (feedbackVisible)
@@ -846,101 +843,67 @@ public class TutorialManager : MonoBehaviour
         );
     }
 
-    /// <summary>
-    /// 인트로 대사를 재생한다.
-    /// 지정한 문장이 시작될 때 고주파/저주파 비트 소개 노트를 화면 중앙 부근에 띄운다.
-    /// </summary>
-    private IEnumerator PlayIntroDialogueWithBeatDemo()
+    private IEnumerator PlayDialogue(string[] lines, double forcedStartDspTime)
     {
         if (dialoguePlayer == null)
         {
             yield break;
         }
 
-        introBeatDemoStarted = false;
-
         yield return dialoguePlayer.PlayLines(
-            introGuideLines,
+            lines,
             guideBeatsPerLine,
             hideWhenFinished: true,
-            onLineStarted: HandleIntroLineStarted,
-            forcedStartDspTime: tutorialStartDspTime
+            onLineStarted: null,
+            forcedStartDspTime: forcedStartDspTime
         );
     }
 
     /// <summary>
-    /// 인트로 문장 시작 시 호출된다.
-    /// introBeatDemoLineNumber번째 문장에서 비트 소개 노트를 생성한다.
+    /// 공격턴 설명 대사를 재생한다.
+    /// 지정한 문장이 시작될 때 고주파/저주파 비트 소개 노트를 각각 표시한다.
     /// </summary>
-    private void HandleIntroLineStarted(int lineIndex, string lineText)
+    private IEnumerator PlayAttackDialogueWithBeatDemo()
     {
-        if (!playIntroBeatDemo)
-        {
-            return;
-        }
-
-        if (introBeatDemoStarted)
-        {
-            return;
-        }
-
-        int targetIndex = Mathf.Max(1, introBeatDemoLineNumber) - 1;
-
-        if (lineIndex != targetIndex)
-        {
-            return;
-        }
-
-        introBeatDemoStarted = true;
-
-        Debug.Log(
-            $"TutorialManager: Intro beat demo 시작 / " +
-            $"line:{lineIndex + 1}, text:{lineText}"
-        );
-
-        StartCoroutine(PlayIntroBeatDemo());
-    }
-
-    /// <summary>
-    /// 인트로에서 고주파/저주파 노트를 순서대로 하나씩 생성한다.
-    /// 실제 공격 턴을 시작하지 않고, AttackTurnRenderer의 노트 표시만 사용한다.
-    /// </summary>
-    private IEnumerator PlayIntroBeatDemo()
-    {
-        if (attackTurnRenderer == null)
+        if (dialoguePlayer == null)
         {
             yield break;
         }
 
-        gameCamera?.SetAttackView(playerSide);
+        attackHighBeatDemoStarted = false;
+        attackLowBeatDemoStarted = false;
 
-        SpawnIntroDemoNote(
-            NoteType.HIGH,
-            introHighNotePositionRatio
-        );
+        double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
 
-        yield return new WaitForSecondsRealtime(
-            GetTutorialBeatSeconds() * Mathf.Max(0, introSecondNoteDelayBeats)
-        );
-
-        SpawnIntroDemoNote(
-            NoteType.LOW,
-            introLowNotePositionRatio
+        yield return dialoguePlayer.PlayLines(
+            attackGuideLines,
+            guideBeatsPerLine,
+            hideWhenFinished: true,
+            onLineStarted: HandleAttackGuideLineStarted,
+            forcedStartDspTime: startDspTime
         );
     }
 
+
     /// <summary>
-    /// 인트로 소개용 노트를 공격 라인의 지정 비율 위치에 생성한다.
+    /// 비트 소개용 노트를 공격 라인의 지정 비율 위치에 생성한다.
     /// positionRatio 0.5가 중앙이다.
     /// </summary>
-    private void SpawnIntroDemoNote(NoteType noteType, float positionRatio)
+    private void SpawnBeatDemoNote(NoteType noteType, float positionRatio)
     {
-        double safeDuration = System.Math.Max(0.01, introBeatDemoDuration);
+        if (attackTurnRenderer == null)
+        {
+            return;
+        }
+
+        gameCamera?.SetAttackView(playerSide);
+
+        double safeDuration = System.Math.Max(0.01, beatDemoDuration);
         double relativeTime = Mathf.Clamp01(positionRatio) * safeDuration;
 
         NoteData note = new NoteData
         {
-            noteId = nextIntroDemoNoteId++,
+            noteId = nextDemoNoteId++,
             noteType = noteType,
             noteRelativeTime = relativeTime
         };
@@ -952,7 +915,7 @@ public class TutorialManager : MonoBehaviour
         );
 
         Debug.Log(
-            $"TutorialManager: Intro demo note 생성 / " +
+            $"TutorialManager: Beat demo note 생성 / " +
             $"id:{note.noteId}, type:{note.noteType}, ratio:{positionRatio:0.00}"
         );
     }
@@ -1531,7 +1494,7 @@ public class TutorialManager : MonoBehaviour
             )
         );
 
-        yield return PlayDialogue(defenseGuideLines);
+        yield return PlayDialogue(defenseGuideLines, transitionStartDspTime);
 
         if (transferCoroutine != null)
         {
@@ -1565,6 +1528,53 @@ public class TutorialManager : MonoBehaviour
             practiceStartMessageBeats,
             hideWhenFinished: true
         );
+    }
+
+    /// <summary>
+    /// 공격턴 설명 문장 시작 시 호출된다.
+    /// 공격턴 설명 4번째 문장에서 고주파, 5번째 문장에서 저주파 노트를 표시한다.
+    /// </summary>
+    private void HandleAttackGuideLineStarted(int lineIndex, string lineText)
+    {
+        if (!playAttackBeatDemo)
+        {
+            return;
+        }
+
+        int highTargetIndex = Mathf.Max(1, attackHighBeatDemoLineNumber) - 1;
+        int lowTargetIndex = Mathf.Max(1, attackLowBeatDemoLineNumber) - 1;
+
+        if (lineIndex == highTargetIndex && !attackHighBeatDemoStarted)
+        {
+            attackHighBeatDemoStarted = true;
+
+            Debug.Log(
+                $"TutorialManager: Attack high beat demo 시작 / " +
+                $"attackLine:{lineIndex + 1}, text:{lineText}"
+            );
+
+            SpawnBeatDemoNote(
+                NoteType.HIGH,
+                demoHighNotePositionRatio
+            );
+
+            return;
+        }
+
+        if (lineIndex == lowTargetIndex && !attackLowBeatDemoStarted)
+        {
+            attackLowBeatDemoStarted = true;
+
+            Debug.Log(
+                $"TutorialManager: Attack low beat demo 시작 / " +
+                $"attackLine:{lineIndex + 1}, text:{lineText}"
+            );
+
+            SpawnBeatDemoNote(
+                NoteType.LOW,
+                demoLowNotePositionRatio
+            );
+        }
     }
 }
 
