@@ -28,18 +28,11 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [SerializeField] private Color pulseColorMax = Color.white;
     [SerializeField] private float pulseSpeed = 2f;
 
-    [Header("Judgment")]
-    [SerializeField] private Image judgmentImage;
-    [SerializeField] private Sprite perfectSprite;
-    [SerializeField] private Sprite goodSprite;
-    [SerializeField] private Sprite missSprite;
-
     private Coroutine pulseCoroutine;
 
     private void Awake()
     {
         SetPortrait(defaultPortrait);
-        ClearJudgment();
         SetActiveState(false);
     }
 
@@ -56,21 +49,10 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 판정 결과를 이 슬롯의 판정 이미지 및 프로필 이미지에 표시한다.
+    /// 판정 결과에 따라 프로필 이미지를 교체한다.
     /// </summary>
     public void ShowJudgment(Judgment judgment)
     {
-        if (judgmentImage != null)
-        {
-            judgmentImage.sprite = judgment switch
-            {
-                Judgment.PERFECT => perfectSprite,
-                Judgment.GOOD    => goodSprite,
-                _                => missSprite,
-            };
-            judgmentImage.gameObject.SetActive(judgmentImage.sprite != null);
-        }
-
         SetPortrait(judgment switch
         {
             Judgment.PERFECT => perfectPortrait,
@@ -80,13 +62,10 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 판정 이미지를 숨기고 프로필을 기본 상태로 되돌린다.
+    /// 프로필을 기본 상태로 되돌린다.
     /// </summary>
     public void ClearJudgment()
     {
-        if (judgmentImage != null)
-            judgmentImage.gameObject.SetActive(false);
-
         SetPortrait(defaultPortrait);
     }
 

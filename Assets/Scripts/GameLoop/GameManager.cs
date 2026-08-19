@@ -38,6 +38,10 @@ public class GameManager : MonoBehaviour
     [Header("HUD")]
     [SerializeField] private HUD hud;
 
+    [Header("Judgment Labels")]
+    [SerializeField] private JudgmentLabel p1DefenseJudgmentLabel;
+    [SerializeField] private JudgmentLabel p2DefenseJudgmentLabel;
+
     [Header("Camera")]
     [SerializeField] private GameCamera gameCamera;
 
@@ -253,6 +257,8 @@ public class GameManager : MonoBehaviour
         sanitySystem?.ResetSanity();
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
+        p1DefenseJudgmentLabel?.ClearJudgment();
+        p2DefenseJudgmentLabel?.ClearJudgment();
 
         phaseIndex = 0;
         currentRoundIndex = 0;
@@ -411,6 +417,8 @@ public class GameManager : MonoBehaviour
 
         attackTurnRenderer?.ClearAll();
         hud?.ClearJudgments();
+        p1DefenseJudgmentLabel?.ClearJudgment();
+        p2DefenseJudgmentLabel?.ClearJudgment();
         hud?.ClearPanelMessages();
         hud?.SetTurnOwner(attackerPlayerId);
         gameCamera?.SetAttackView(attackerSide);
@@ -588,6 +596,7 @@ public class GameManager : MonoBehaviour
 
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         hud?.ShowJudgment(judgment, attackerSide);
+        GetDefenseLabel(GetDefenderPlayerId())?.ShowJudgment(judgment);
 
         if (judgment != Judgment.MISS)
             hud?.SetStarSuccess(currentJudgmentIndex);
@@ -711,6 +720,7 @@ public class GameManager : MonoBehaviour
         // JUDGMENT는 시각 동기화 전용 — 정신력 처리 없음 (SANITY_CHANGE가 별도 처리)
         attackTurnRenderer?.RemoveNote(packet.noteId);  // 공격자 미러뷰에서 노트 제거
         hud?.ShowJudgment(judgment, attackerSide);
+        GetDefenseLabel(GetDefenderPlayerId())?.ShowJudgment(judgment);
     }
 
     /// <summary>
@@ -799,6 +809,8 @@ public class GameManager : MonoBehaviour
         attackTurnRenderer?.ClearAll();
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
+        p1DefenseJudgmentLabel?.ClearJudgment();
+        p2DefenseJudgmentLabel?.ClearJudgment();
 
         GameResultType resultType = defeatedPlayerId == myLocalPlayerId
             ? GameResultType.Lose
@@ -843,6 +855,8 @@ public class GameManager : MonoBehaviour
         attackTurnRenderer?.ClearAll();
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
+        p1DefenseJudgmentLabel?.ClearJudgment();
+        p2DefenseJudgmentLabel?.ClearJudgment();
 
         resultPanelUI?.Show(GameResultType.CommunicationSuccess);
 
@@ -1238,4 +1252,6 @@ public class GameManager : MonoBehaviour
         isWaitingRemoteDefenseResult = false;
         remoteDefenseMissCount = 0;
     }
+
+    private JudgmentLabel GetDefenseLabel(int playerId) => playerId == 1 ? p1DefenseJudgmentLabel : p2DefenseJudgmentLabel;
 }

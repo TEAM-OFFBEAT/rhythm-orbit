@@ -305,6 +305,14 @@ PrefabInstance:
       propertyPath: randomMessageProvider
       value: 
       objectReference: {fileID: 6902552827044142596}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: p1DefenseJudgmentLabel
+      value: 
+      objectReference: {fileID: 1260247880}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: p2DefenseJudgmentLabel
+      value: 
+      objectReference: {fileID: 911356085}
     - target: {fileID: 9217618931380790755, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -737,6 +745,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &911356085 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2604827737916760537, guid: feb0289c027318244a2c43727103e4bd, type: 3}
+  m_PrefabInstance: {fileID: 6226963498876287247}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc2ac1332cdec014996829a8db874dee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JudgmentLabel
 --- !u!114 &918494131 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5993140157034213584, guid: a215a92e89fbacd4f86e97ce715f44e0, type: 3}
@@ -1372,6 +1391,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1260247880 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6785369236386188834, guid: feb0289c027318244a2c43727103e4bd, type: 3}
+  m_PrefabInstance: {fileID: 6226963498876287247}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc2ac1332cdec014996829a8db874dee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JudgmentLabel
 --- !u!1 &1513002032
 GameObject:
   m_ObjectHideFlags: 0
@@ -2006,42 +2036,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1881727008867390408, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1881727008867390408, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1881727008867390408, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1981412202342206068, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 7436860926580171409, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
-    - target: {fileID: 3552384424864583527, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3552384424864583527, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3552384424864583527, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 15
-      objectReference: {fileID: 0}
     - target: {fileID: 5468208319108040782, guid: feb0289c027318244a2c43727103e4bd, type: 3}
       propertyPath: m_Name
       value: Defense
       objectReference: {fileID: 0}
-    - target: {fileID: 7929650561536009322, guid: feb0289c027318244a2c43727103e4bd, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: -7801491425260804980, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
     - target: {fileID: 9119886832554702949, guid: feb0289c027318244a2c43727103e4bd, type: 3}
       propertyPath: attackTurnRenderer
       value: 
