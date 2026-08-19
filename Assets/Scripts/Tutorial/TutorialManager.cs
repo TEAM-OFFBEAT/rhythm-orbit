@@ -90,6 +90,13 @@ public class TutorialManager : MonoBehaviour
     private int latestDefenseMissCount;
     private AudioClip generatedGuideMetronomeLoopClip;
 
+    [Header("Practice Start Messages")]
+    [SerializeField] private string attackPracticeStartMessage = "공격 연습 시작!";
+    [SerializeField] private string defensePracticeStartMessage = "방어 연습 시작!";
+    [SerializeField] private string rallyPracticeStartMessage = "랠리 연습 시작!";
+
+    [SerializeField, Min(0)] private int practiceStartMessageBeats = 1;
+
     [Header("Intro Beat Demo")]
     [SerializeField] private bool playIntroBeatDemo = true;
 
@@ -367,6 +374,8 @@ public class TutorialManager : MonoBehaviour
             Debug.Log("TutorialManager: AttackPractice 시작");
         }
 
+        ShowPracticeStartMessage(attackPracticeStartMessage);
+
         bool success = false;
         bool feedbackVisible = false;
 
@@ -400,7 +409,7 @@ public class TutorialManager : MonoBehaviour
             {
                 if (!feedbackVisible)
                 {
-                    dialoguePlayer?.Show("비트를 1개 이상 보내야 다음 단계로 넘어갈 수 있어. F나 J를 눌러봐.");
+                    dialoguePlayer?.Show("다음 단계로 넘어가기 위해 F나 J를 눌러보라모.");
                     feedbackVisible = true;
                 }
 
@@ -430,6 +439,8 @@ public class TutorialManager : MonoBehaviour
         {
             Debug.Log("TutorialManager: DefensePractice 시작");
         }
+
+        ShowPracticeStartMessage(defensePracticeStartMessage);
 
         double fourBeatSeconds = GetGuideMetronomeIntervalSeconds();
 
@@ -477,6 +488,8 @@ public class TutorialManager : MonoBehaviour
         {
             Debug.Log("TutorialManager: RallyPractice 시작");
         }
+
+        ShowPracticeStartMessage(rallyPracticeStartMessage);
 
         ResetTutorialSanity();
         SetSanityVisible(true);
@@ -1139,12 +1152,12 @@ public class TutorialManager : MonoBehaviour
     {
         if (!latestDefenseResultAvailable)
         {
-            return "결과를 확인하지 못했지만, 다음 연습으로 넘어가볼게.";
+            return "결과를 확인하지 못했지만, 다음 연습으로 넘어가보겠다모.";
         }
 
         if (latestDefenseTotalCount <= 0)
         {
-            return "아직 받아칠 비트가 없었어. 다음 신호를 다시 확인해보자.";
+            return "아직 받아칠 비트가 없었다모. 다음 신호를 다시 확인해보자모.";
         }
 
         if (latestDefenseMissCount == 0)
@@ -1152,27 +1165,27 @@ public class TutorialManager : MonoBehaviour
             switch (practiceIndex)
             {
                 case 0:
-                    return "좋아! 첫 신호를 정확히 받아쳤어.";
+                    return "첫 신호를 정확히 받아쳤다모!";
                 case 1:
-                    return "잘하고 있어. 비트 종류도 잘 구분했어!";
+                    return "이대로 한 번 더!";
                 default:
-                    return "완벽해! 이제 실전 랠리로 넘어가도 되겠어.";
+                    return "아주 좋다모!";
             }
         }
 
         if (latestDefenseMissCount < latestDefenseTotalCount)
         {
-            return "괜찮아, 몇 개는 받아쳤어. 다음엔 판정선에 닿는 순간을 더 노려보자.";
+            return "괜찮다모. 다음번엔 완벽히 받아칠 수 있을 거다모.";
         }
 
         switch (practiceIndex)
         {
             case 0:
-                return "괜찮아. 지금은 타이밍을 익히는 단계야. 판정선에 닿을 때 눌러보자.";
+                return "괜찮다모. 지금은 타이밍을 익히는 단계다모!";
             case 1:
-                return "이번엔 놓쳤지만 괜찮아. 고주파는 F, 저주파는 J를 기억해.";
+                return "고주파는 F, 저주파는 J를 기억하라모!.";
             default:
-                return "연습이니까 괜찮아. 실전 랠리에서도 정신력은 조금만 줄어들 거야.";
+                return "연습은 실전에서도 이어진다모!";
         }
     }
 
@@ -1529,6 +1542,29 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
         hud?.ClearPanelMessages();
+    }
+
+    /// <summary>
+    /// 연습 단계 시작 안내 문구를 짧게 표시한다.
+    /// 4박자 설명 대사와 별개로, 턴 진행 시간을 추가로 차지하지 않는다.
+    /// </summary>
+    private void ShowPracticeStartMessage(string message)
+    {
+        if (dialoguePlayer == null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        dialoguePlayer.ShowReactionForBeats(
+            message,
+            practiceStartMessageBeats,
+            hideWhenFinished: true
+        );
     }
 }
 
