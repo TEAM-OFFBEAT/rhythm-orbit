@@ -157,6 +157,19 @@ public class AttackTurn : MonoBehaviour
 
     public void StartOpponentAttackDemo(string attackMessage, NoteType[] demoPattern)
     {
+        StartOpponentAttackDemo(attackMessage, demoPattern, AudioSettings.dspTime);
+    }
+
+    /// <summary>
+    /// 튜토리얼용 상대 데모 공격 시작.
+    /// 지정한 노트 패턴을 지정한 DSP 시간에 맞춰 자동 생성한다.
+    /// </summary>
+    public void StartOpponentAttackDemo(
+        string attackMessage,
+        NoteType[] demoPattern,
+        double startDspTime
+    )
+    {
         if (demoPattern == null || demoPattern.Length == 0)
         {
             Debug.LogWarning("AttackTurn: 데모 패턴이 비어 있음.");
@@ -168,7 +181,7 @@ public class AttackTurn : MonoBehaviour
             false,
             demoPattern.Length,
             attackMessage,
-            AudioSettings.dspTime
+            startDspTime
         );
 
         opponentDemoRelativeTimes.Clear();
@@ -182,9 +195,7 @@ public class AttackTurn : MonoBehaviour
 
             if (relativeTime <= attackDuration)
             {
-                opponentDemoRelativeTimes.Add(
-                    (relativeTime, demoPattern[i])
-                );
+                opponentDemoRelativeTimes.Add((relativeTime, demoPattern[i]));
             }
         }
 

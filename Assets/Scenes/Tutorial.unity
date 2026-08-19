@@ -273,6 +273,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72e33dcd4dc8a4e4ebd4e5bb60b1b151, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialManager
+--- !u!82 &314441056 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 4265392361032758618, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+  m_PrefabInstance: {fileID: 2304142749664638018}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &365816198
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1783,9 +1788,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 4572499397756924744}
     - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: guideMetronomeClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 3c450153aa5e63540a711757e87d2b19, type: 3}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
       propertyPath: opponentSanityUiRoot
       value: 
       objectReference: {fileID: 1390550758}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: guideMetronomeLoopSource
+      value: 
+      objectReference: {fileID: 314441056}
     - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
       propertyPath: 'introGuideLines.Array.data[1]'
       value: "\uB9AC\uB4EC\uC624\uBE57\uC758 \uD575\uC2EC \uC694\uC18C\uC778 \"\uBE44\uD2B8\"\uC5D0

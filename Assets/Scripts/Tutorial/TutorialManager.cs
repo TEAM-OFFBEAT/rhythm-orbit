@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
 /// <summary>
 /// 튜토리얼 전체 진행을 담당한다.
@@ -54,7 +55,9 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("공격 시작 예약 지연. 튜토리얼에서는 즉시 입력이 먹도록 0 권장.")]
     [SerializeField] private float attackStartDelay = 0f;
     [SerializeField] private float viewTransitionDelay = 0.15f;
-    [SerializeField] private float betweenTurnDelay = 0.4f;
+    
+    [Tooltip("4박 경계선을 이 시간만큼 살짝 지난 경우에도 같은 경계선으로 인정한다. 공격 연습 시작 전 긴 공백 방지용.")]
+    [SerializeField, Min(0f)] private float guideBoundaryLateGraceSeconds = 0.25f;
 
     [Header("Tutorial Sanity")]
     [SerializeField] private int tutorialMaxSanity = 100;
@@ -71,9 +74,21 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private bool playHitSfx = true;
     [SerializeField] private bool playMissSfx = false;
 
+    [Header("Tutorial Metronome Test")]
+    [SerializeField] private bool playGuideMetronome = true;
+    [SerializeField] private AudioClip guideMetronomeClip;
+    [SerializeField] private AudioSource guideMetronomeLoopSource;
+
+    [SerializeField, Min(1)] private int guideMetronomeIntervalBeats = 4;
+
+    [Tooltip("튜토리얼 시작과 첫 메트로놈을 정확히 맞추기 위한 예약 여유 시간.")]
+    [SerializeField, Min(0f)] private float tutorialStartLeadTime = 1f;
+
+    private double tutorialStartDspTime;
     private bool latestDefenseResultAvailable;
     private int latestDefenseTotalCount;
     private int latestDefenseMissCount;
+    private AudioClip generatedGuideMetronomeLoopClip;
 
     [Header("Intro Beat Demo")]
     [SerializeField] private bool playIntroBeatDemo = true;
@@ -159,6 +174,7 @@ public class TutorialManager : MonoBehaviour
 
     private void OnDisable()
     {
+        StopGuideMetronome();
         UnsubscribeEvents();
     }
 
@@ -214,7 +230,9 @@ public class TutorialManager : MonoBehaviour
     /// </summary>
     private IEnumerator RunTutorial()
     {
-        InitializeTutorial();
+         InitializeTutorial();
+
+        yield return WaitUntilDspTime(tutorialStartDspTime);
 
         currentStep = TutorialStep.IntroDialogue;
         yield return PlayIntroDialogueWithBeatDemo();
@@ -227,7 +245,7 @@ public class TutorialManager : MonoBehaviour
         yield return RunAttackPractice();
 
         currentStep = TutorialStep.DefenseDialogue;
-        yield return PlayDialogue(defenseGuideLines);
+        yield return PlayDefenseDialogueWithAttackTransfer();
 
         yield return RunDefensePractice();
 
@@ -250,10 +268,13 @@ public class TutorialManager : MonoBehaviour
             hud.gameObject.SetActive(true);
             Debug.LogWarning("TutorialManager: HUD 루트가 비활성화되어 있어 강제로 활성화함.");
         }
+        tutorialStartDspTime = AudioSettings.dspTime + Mathf.Max(0f, tutorialStartLeadTime);
+
         RhythmClock.Instance?.SetBpm(tutorialBpm);
-        RhythmClock.Instance?.StartClock(AudioSettings.dspTime);
-        
+        RhythmClock.Instance?.StartClock(tutorialStartDspTime);
+
         TryPlayTutorialBgm();
+        StartGuideMetronome(tutorialStartDspTime);
 
         dialoguePlayer?.SetBpm(tutorialBpm);
         dialoguePlayer?.Hide();
@@ -341,66 +362,110 @@ public class TutorialManager : MonoBehaviour
 
     private IEnumerator RunAttackPractice()
     {
-        if (logTurnFlow) Debug.Log("TutorialManager: AttackPractice 시작");
+        if (logTurnFlow)
+        {
+            Debug.Log("TutorialManager: AttackPractice 시작");
+        }
 
         bool success = false;
+        bool feedbackVisible = false;
+
+        double intervalSeconds = GetGuideMetronomeIntervalSeconds();
+        double nextAttackStartDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
 
         while (!success)
         {
             TutorialPatternData pattern = patternProvider.GetAttackPracticePattern();
 
+            // 예약 시간이 너무 많이 지나갔으면 다음 4박 경계로 보정.
+            while (nextAttackStartDspTime < AudioSettings.dspTime - guideBoundaryLateGraceSeconds)
+            {
+                nextAttackStartDspTime += intervalSeconds;
+            }
+
+            // 첫 공격 연습도 4박 경계선 기준으로 시작.
+            // 단, 경계선을 아주 살짝 지난 경우는 바로 시작해서 긴 공백을 막는다.
+            yield return WaitUntilDspTime(nextAttackStartDspTime);
+
             yield return RunPlayerAttackTurn(
                 pattern.message,
                 pattern.NoteCount,
-                TutorialStep.AttackPractice
+                TutorialStep.AttackPractice,
+                nextAttackStartDspTime
             );
 
             success = lastAttackNotes.Count > 0;
 
             if (!success)
             {
-                dialoguePlayer?.Show("비트를 1개 이상 보내야 다음 단계로 넘어갈 수 있어. F나 J를 눌러봐.");
-                yield return new WaitForSecondsRealtime(1.2f);
-                dialoguePlayer?.Hide();
+                if (!feedbackVisible)
+                {
+                    dialoguePlayer?.Show("비트를 1개 이상 보내야 다음 단계로 넘어갈 수 있어. F나 J를 눌러봐.");
+                    feedbackVisible = true;
+                }
+
+                // 실패해도 피드백을 숨기지 않고, 다음 4박 경계에서 바로 재시도.
+                nextAttackStartDspTime += intervalSeconds;
+                continue;
             }
         }
 
-        yield return RunDefenseTurnForExistingNotes(
-            attackerSide: playerSide,
-            isAiDefense: true,
-            inputStep: TutorialStep.None
-        );
+        if (feedbackVisible)
+        {
+            dialoguePlayer?.Hide();
+        }
 
-        attackTurnRenderer.ClearAll();
-        hud?.ClearAttackProgress();
-        hud?.ClearJudgments();
-        hud?.ClearPanelMessages();
+        if (feedbackVisible)
+        {
+            dialoguePlayer?.Hide();
+        }
 
-        yield return new WaitForSecondsRealtime(betweenTurnDelay);
+        // 여기서 바로 방어 설명 단계로 넘어간다.
+        // lastAttackNotes는 다음 PlayDefenseDialogueWithAttackTransfer에서 사용해야 하므로 지우지 않는다.
     }
 
     private IEnumerator RunDefensePractice()
     {
         if (logTurnFlow)
+        {
             Debug.Log("TutorialManager: DefensePractice 시작");
+        }
+
+        double fourBeatSeconds = GetGuideMetronomeIntervalSeconds();
+
+        // 방어연습 1회 = 상대 공격 4박 + 내 방어 4박 = 8박
+        double practiceSlotSeconds = fourBeatSeconds * 2.0;
+
+        double nextPracticeStartDspTime =
+            GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
 
         for (int i = 0; i < 3; i++)
         {
+            while (nextPracticeStartDspTime < AudioSettings.dspTime - guideBoundaryLateGraceSeconds)
+            {
+                nextPracticeStartDspTime += practiceSlotSeconds;
+            }
+
+            yield return WaitUntilDspTime(nextPracticeStartDspTime);
+
             TutorialDefensePattern pattern = GetDefensePracticePattern(i);
 
             yield return RunOpponentDemoAttackThenDefense(
                 pattern,
-                TutorialStep.DefensePractice
+                TutorialStep.DefensePractice,
+                forcedAttackStartDspTime: nextPracticeStartDspTime,
+                useDefenseViewDelay: false
             );
 
             bool isLastPractice = i == 2;
 
             if (!isLastPractice)
             {
+                // 추가 대기 없이 다음 턴 위에 자연스럽게 겹쳐서 표시
                 ShowDefensePracticeReaction(i);
             }
 
-            yield return new WaitForSecondsRealtime(betweenTurnDelay);
+            nextPracticeStartDspTime += practiceSlotSeconds;
         }
 
         currentStep = TutorialStep.None;
@@ -408,15 +473,26 @@ public class TutorialManager : MonoBehaviour
 
     private IEnumerator RunRallyPractice()
     {
-        if (logTurnFlow) Debug.Log("TutorialManager: RallyPractice 시작");
+        if (logTurnFlow)
+        {
+            Debug.Log("TutorialManager: RallyPractice 시작");
+        }
 
         ResetTutorialSanity();
         SetSanityVisible(true);
         UpdateTutorialSanityHud();
 
-        //dialoguePlayer?.Show("랠리 시작! 이제 정신력 게이지를 보면서 공격과 방어를 번갈아 해보자.");
-        yield return new WaitForSecondsRealtime(1.2f);
-        dialoguePlayer?.Hide();
+        double fourBeatSeconds = GetGuideMetronomeIntervalSeconds();
+        double nextTurnStartDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
+
+        // 랠리 설명이 방금 끝난 직후라면 바로 현재 4박 경계로 붙이고,
+        // 너무 늦었으면 다음 4박 경계로 보정.
+        while (nextTurnStartDspTime < AudioSettings.dspTime - guideBoundaryLateGraceSeconds)
+        {
+            nextTurnStartDspTime += fourBeatSeconds;
+        }
+
+        yield return WaitUntilDspTime(nextTurnStartDspTime);
 
         for (int turn = 0; turn < rallyTurnCount; turn++)
         {
@@ -426,16 +502,24 @@ public class TutorialManager : MonoBehaviour
             {
                 TutorialPatternData pattern = patternProvider.GetRallyPlayerPattern(turn);
 
+                if (pattern == null || pattern.NoteCount <= 0)
+                {
+                    Debug.LogError($"TutorialManager: RallyPlayerPattern이 비어 있음. turn:{turn}");
+                    yield break;
+                }
+
                 yield return RunPlayerAttackTurn(
                     pattern.message,
                     pattern.NoteCount,
-                    TutorialStep.RallyAttack
+                    TutorialStep.RallyAttack,
+                    nextTurnStartDspTime
                 );
 
                 yield return RunDefenseTurnForExistingNotes(
                     attackerSide: playerSide,
                     isAiDefense: true,
-                    inputStep: TutorialStep.None
+                    inputStep: TutorialStep.None,
+                    useViewTransitionDelay: false
                 );
 
                 ApplyTutorialRallySanityLoss(GetOpponentSide(playerSide));
@@ -444,9 +528,17 @@ public class TutorialManager : MonoBehaviour
             {
                 TutorialPatternData pattern = patternProvider.GetRallyOpponentPattern(turn);
 
+                if (pattern == null || pattern.NoteCount <= 0)
+                {
+                    Debug.LogError($"TutorialManager: RallyOpponentPattern이 비어 있음. turn:{turn}");
+                    yield break;
+                }
+
                 yield return RunOpponentDemoAttackThenDefense(
                     pattern,
-                    TutorialStep.RallyDefense
+                    TutorialStep.RallyDefense,
+                    forcedAttackStartDspTime: nextTurnStartDspTime,
+                    useDefenseViewDelay: false
                 );
 
                 ApplyTutorialRallySanityLoss(playerSide);
@@ -457,7 +549,17 @@ public class TutorialManager : MonoBehaviour
             hud?.ClearJudgments();
             hud?.ClearPanelMessages();
 
-            yield return new WaitForSecondsRealtime(betweenTurnDelay);
+            // 랠리 1턴 = 공격 4박 + 방어 4박 = 8박
+            nextTurnStartDspTime += fourBeatSeconds * 2.0;
+
+            // 기존 betweenTurnDelay는 쓰지 않음.
+            // 다음 턴 시작 시점이 이미 8박 단위로 정해져 있기 때문.
+            while (nextTurnStartDspTime < AudioSettings.dspTime - guideBoundaryLateGraceSeconds)
+            {
+                nextTurnStartDspTime += fourBeatSeconds * 2.0;
+            }
+
+            yield return WaitUntilDspTime(nextTurnStartDspTime);
         }
     }
 
@@ -465,7 +567,12 @@ public class TutorialManager : MonoBehaviour
     /// 기존 AttackTurn.StartLocalPlayerAttack을 사용해 플레이어 공격 턴을 재생한다.
     /// AttackTurn 내부에서 AttackTurnRenderer.BeginAttackVisual과 SpawnAttackNote가 호출된다.
     /// </summary>
-    private IEnumerator RunPlayerAttackTurn(string message, int targetTapCount, TutorialStep inputStep)
+    private IEnumerator RunPlayerAttackTurn(
+    string message,
+    int targetTapCount,
+    TutorialStep inputStep,
+    double? forcedStartDspTime = null
+    )
     {
         currentStep = inputStep;
         currentHudAttackerSide = playerSide;
@@ -477,8 +584,8 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearPanelMessages();
         gameCamera?.SetAttackView(playerSide);
 
-        double startDspTime = AudioSettings.dspTime + Mathf.Max(0f, attackStartDelay);
-
+        double startDspTime = forcedStartDspTime
+        ?? AudioSettings.dspTime + Mathf.Max(0f, attackStartDelay);
         if (logTurnFlow)
         {
             Debug.Log($"TutorialManager: StartLocalPlayerAttack / side:{playerSide}, target:{targetTapCount}, start:{startDspTime:0.000}");
@@ -492,11 +599,14 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 기존 AttackTurn.StartOpponentAttackDemo를 사용해 상대 데모 공격을 재생하고, 이어서 방어 턴을 시작한다.
+    /// 기존 AttackTurn.StartOpponentAttackDemo를 사용해 상대 데모 공격을 재생하고,
+    /// 이어서 방어 턴을 시작한다.
     /// </summary>
     private IEnumerator RunOpponentDemoAttackThenDefense(
-    TutorialDefensePattern pattern,
-    TutorialStep defenseInputStep
+        TutorialDefensePattern pattern,
+        TutorialStep defenseInputStep,
+        double? forcedAttackStartDspTime = null,
+        bool useDefenseViewDelay = true
     )
     {
         AttackSide attackerSide = GetOpponentSide(playerSide);
@@ -513,15 +623,18 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearPanelMessages();
         gameCamera?.SetAttackView(attackerSide);
 
+        double attackStartDspTime = forcedAttackStartDspTime
+            ?? AudioSettings.dspTime;
+
         attackTurn.StartOpponentAttackDemo(
             pattern.message,
-            pattern.notes
+            pattern.notes,
+            attackStartDspTime
         );
 
         yield return WaitAttackEnd();
 
         showCurrentDefenseKeyHints = false;
-
 
         if (lastAttackNotes.Count == 0)
         {
@@ -532,7 +645,8 @@ public class TutorialManager : MonoBehaviour
         yield return RunDefenseTurnForExistingNotes(
             attackerSide,
             isAiDefense: false,
-            inputStep: defenseInputStep
+            inputStep: defenseInputStep,
+            useViewTransitionDelay: useDefenseViewDelay
         );
     }
 
@@ -540,7 +654,12 @@ public class TutorialManager : MonoBehaviour
     /// 이미 AttackTurn이 생성한 노트를 기존 DefenseTurn.Begin으로 넘겨 방어 턴을 재생한다.
     /// TutorialManager가 직접 노트 이동/스폰을 하지 않는다.
     /// </summary>
-    private IEnumerator RunDefenseTurnForExistingNotes(AttackSide attackerSide, bool isAiDefense, TutorialStep inputStep)
+    private IEnumerator RunDefenseTurnForExistingNotes(
+    AttackSide attackerSide,
+    bool isAiDefense,
+    TutorialStep inputStep,
+    bool useViewTransitionDelay = true
+    )
     {
         if (lastAttackNotes.Count == 0)
         {
@@ -561,7 +680,11 @@ public class TutorialManager : MonoBehaviour
             latestDefenseMissCount = 0;
         }
         gameCamera?.SetDefenseView(attackerSide);
-        yield return new WaitForSecondsRealtime(viewTransitionDelay);
+
+        if (useViewTransitionDelay && viewTransitionDelay > 0f)
+        {
+            yield return new WaitForSecondsRealtime(viewTransitionDelay);
+        }
 
         float judgeLineX = attackTurnRenderer.GetJudgeLineX(attackerSide);
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
@@ -699,7 +822,15 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
-        yield return dialoguePlayer.PlayLines(lines, guideBeatsPerLine);
+        double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
+
+        yield return dialoguePlayer.PlayLines(
+            lines,
+            guideBeatsPerLine,
+            hideWhenFinished: true,
+            onLineStarted: null,
+            forcedStartDspTime: startDspTime
+        );
     }
 
     /// <summary>
@@ -719,7 +850,8 @@ public class TutorialManager : MonoBehaviour
             introGuideLines,
             guideBeatsPerLine,
             hideWhenFinished: true,
-            onLineStarted: HandleIntroLineStarted
+            onLineStarted: HandleIntroLineStarted,
+            forcedStartDspTime: tutorialStartDspTime
         );
     }
 
@@ -874,6 +1006,8 @@ public class TutorialManager : MonoBehaviour
 
     private void CompleteTutorial()
     {
+        StopGuideMetronome();
+
         dialoguePlayer?.Show("튜토리얼 완료! 이제 본 교신을 시작할 수 있어.");
 
         PlayerPrefs.SetInt(TutorialCompletedKey, 1);
@@ -1068,10 +1202,12 @@ public class TutorialManager : MonoBehaviour
     /// 랠리 단계에서는 키 힌트를 표시하지 않는다.
     /// </summary>
     private IEnumerator RunOpponentDemoAttackThenDefense(
-        TutorialPatternData pattern,
-        TutorialStep defenseInputStep
+    TutorialPatternData pattern,
+    TutorialStep defenseInputStep,
+    double? forcedAttackStartDspTime = null,
+    bool useDefenseViewDelay = false
     )
-    {   
+    {
         if (pattern == null || pattern.NoteCount <= 0)
         {
             Debug.LogWarning("TutorialManager: 비어 있는 상대 데모 패턴.");
@@ -1086,9 +1222,12 @@ public class TutorialManager : MonoBehaviour
 
         yield return RunOpponentDemoAttackThenDefense(
             defensePattern,
-            defenseInputStep
+            defenseInputStep,
+            forcedAttackStartDspTime,
+            useDefenseViewDelay
         );
     }
+
     /// <summary>
     /// 튜토리얼 BGM 재생 자리.
     /// 아직 BGM이 없으면 playTutorialBgmOnStart를 꺼두면 된다.
@@ -1175,6 +1314,222 @@ public class TutorialManager : MonoBehaviour
         SceneManager.LoadScene(lobbySceneName);
     }
 
+    /// <summary>
+    /// 튜토리얼 검수용 4박 메트로놈 루프를 시작한다.
+    /// 원본 메트로놈 클립 뒤에 무음을 붙인 임시 루프 클립을 만들어 재생한다.
+    /// </summary>
+    private void StartGuideMetronome(double startDspTime)
+    {
+        StopGuideMetronome();
+
+        if (!playGuideMetronome)
+        {
+            return;
+        }
+
+        if (guideMetronomeClip == null)
+        {
+            Debug.LogWarning("TutorialManager: guideMetronomeClip이 없어 검수용 메트로놈을 재생하지 않음.");
+            return;
+        }
+
+        if (guideMetronomeLoopSource == null)
+        {
+            guideMetronomeLoopSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        guideMetronomeLoopSource.playOnAwake = false;
+        guideMetronomeLoopSource.loop = true;
+        guideMetronomeLoopSource.spatialBlend = 0f;
+
+        generatedGuideMetronomeLoopClip = CreateGuideMetronomeLoopClip();
+
+        if (generatedGuideMetronomeLoopClip == null)
+        {
+            StopGuideMetronome();
+            return;
+        }
+
+        guideMetronomeLoopSource.clip = generatedGuideMetronomeLoopClip;
+        guideMetronomeLoopSource.PlayScheduled(startDspTime);
+
+        Debug.Log(
+            $"TutorialManager: 4박 메트로놈 루프 시작 / " +
+            $"bpm:{tutorialBpm}, intervalBeats:{guideMetronomeIntervalBeats}, " +
+            $"loopLength:{generatedGuideMetronomeLoopClip.length:0.000}"
+        );
+    }
+
+    /// <summary>
+    /// 튜토리얼 검수용 메트로놈 루프를 중지한다.
+    /// </summary>
+    private void StopGuideMetronome()
+    {
+        if (guideMetronomeLoopSource != null)
+        {
+            guideMetronomeLoopSource.Stop();
+            guideMetronomeLoopSource.loop = false;
+            guideMetronomeLoopSource.clip = null;
+        }
+
+        if (generatedGuideMetronomeLoopClip != null)
+        {
+            Destroy(generatedGuideMetronomeLoopClip);
+            generatedGuideMetronomeLoopClip = null;
+        }
+    }
+
+    /// <summary>
+    /// 지정한 DSP 시간이 될 때까지 기다린다.
+    /// 튜토리얼 첫 대사와 첫 메트로놈을 맞추는 데 사용한다.
+    /// </summary>
+    private IEnumerator WaitUntilDspTime(double targetDspTime)
+    {
+        while (AudioSettings.dspTime < targetDspTime)
+        {
+            yield return null;
+        }
+    }
+
+    /// <summary>
+    /// 원본 메트로놈 효과음 뒤에 무음을 붙여,
+    /// guideMetronomeIntervalBeats 박자 길이의 루프 클립을 만든다.
+    /// </summary>
+    private AudioClip CreateGuideMetronomeLoopClip()
+    {
+        double beatSeconds = 60.0 / Mathf.Max(1f, tutorialBpm);
+        double intervalSeconds = beatSeconds * Mathf.Max(1, guideMetronomeIntervalBeats);
+
+        int channels = guideMetronomeClip.channels;
+        int frequency = guideMetronomeClip.frequency;
+        int intervalSamples = Mathf.CeilToInt((float)(intervalSeconds * frequency));
+
+        if (intervalSamples <= 0)
+        {
+            Debug.LogError("TutorialManager: 메트로놈 루프 길이가 올바르지 않음.");
+            return null;
+        }
+
+        int sourceSamples = guideMetronomeClip.samples;
+        int copySamples = Mathf.Min(sourceSamples, intervalSamples);
+
+        float[] sourceData = new float[sourceSamples * channels];
+        float[] loopData = new float[intervalSamples * channels];
+
+        bool canRead = guideMetronomeClip.GetData(sourceData, 0);
+
+        if (!canRead)
+        {
+            Debug.LogError(
+                "TutorialManager: guideMetronomeClip 데이터를 읽을 수 없음. " +
+                "메트로놈 클립 Import Settings에서 Load Type을 Decompress On Load로 바꿔야 함."
+            );
+            return null;
+        }
+
+        Array.Copy(
+            sourceData,
+            0,
+            loopData,
+            0,
+            copySamples * channels
+        );
+
+        AudioClip loopClip = AudioClip.Create(
+            "Tutorial_GuideMetronome_4BeatLoop",
+            intervalSamples,
+            channels,
+            frequency,
+            false
+        );
+
+        loopClip.SetData(loopData, 0);
+
+        return loopClip;
+    }
+
+    /// <summary>
+    /// 튜토리얼 검수용 메트로놈 간격을 초 단위로 반환한다.
+    /// 기본값은 90BPM 기준 4박 = 약 2.667초.
+    /// </summary>
+    private double GetGuideMetronomeIntervalSeconds()
+    {
+        double beatSeconds = 60.0 / Mathf.Max(1f, tutorialBpm);
+        return beatSeconds * Mathf.Max(1, guideMetronomeIntervalBeats);
+    }
+
+    /// <summary>
+    /// 현재 시각 기준 사용할 4박 경계선을 반환한다.
+    /// 방금 경계선을 살짝 지난 경우에는 다음 경계선까지 기다리지 않고,
+    /// 방금 지난 경계선을 그대로 사용해 긴 공백을 방지한다.
+    /// </summary>
+    private double GetCurrentOrNextGuideBoundaryDspTime(double fromDspTime)
+    {
+        double intervalSeconds = GetGuideMetronomeIntervalSeconds();
+
+        if (intervalSeconds <= 0.0)
+        {
+            return fromDspTime;
+        }
+
+        double elapsed = fromDspTime - tutorialStartDspTime;
+
+        if (elapsed <= 0.0)
+        {
+            return tutorialStartDspTime;
+        }
+
+        double currentIndex = Math.Floor(elapsed / intervalSeconds);
+        double currentBoundary = tutorialStartDspTime + currentIndex * intervalSeconds;
+        double nextBoundary = currentBoundary + intervalSeconds;
+
+        // 코루틴 프레임 지연 때문에 경계선을 살짝 지난 경우는 같은 박자로 인정.
+        if (fromDspTime - currentBoundary <= guideBoundaryLateGraceSeconds)
+        {
+            return currentBoundary;
+        }
+
+        return nextBoundary;
+    }
+    
+    /// <summary>
+    /// 공격 연습에서 만든 비트를 상대에게 넘기는 연출과
+    /// 방어턴 설명 대사를 동시에 진행한다.
+    /// </summary>
+    private IEnumerator PlayDefenseDialogueWithAttackTransfer()
+    {
+        if (lastAttackNotes.Count == 0)
+        {
+            yield return PlayDialogue(defenseGuideLines);
+            yield break;
+        }
+
+        double transitionStartDspTime =
+            GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
+
+        yield return WaitUntilDspTime(transitionStartDspTime);
+
+        Coroutine transferCoroutine = StartCoroutine(
+            RunDefenseTurnForExistingNotes(
+                attackerSide: playerSide,
+                isAiDefense: true,
+                inputStep: TutorialStep.None,
+                useViewTransitionDelay: false
+            )
+        );
+
+        yield return PlayDialogue(defenseGuideLines);
+
+        if (transferCoroutine != null)
+        {
+            yield return transferCoroutine;
+        }
+
+        attackTurnRenderer.ClearAll();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+        hud?.ClearPanelMessages();
+    }
 }
 
 

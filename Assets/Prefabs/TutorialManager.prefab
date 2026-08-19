@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6427101917554206500}
   - component: {fileID: 2639346494071569757}
+  - component: {fileID: 4265392361032758618}
   m_Layer: 0
   m_Name: TutorialManager
   m_TagString: Untagged
@@ -48,6 +49,8 @@ MonoBehaviour:
   defenseTurn: {fileID: 0}
   attackTurnRenderer: {fileID: 0}
   gameCamera: {fileID: 0}
+  lobbyButtonRoot: {fileID: 0}
+  lobbySceneName: Lobby
   hud: {fileID: 0}
   dialoguePlayer: {fileID: 0}
   mySanityUiRoot: {fileID: 0}
@@ -56,13 +59,23 @@ MonoBehaviour:
   playerSide: 0
   rallyTurnCount: 8
   guideBeatsPerLine: 4
+  patternProvider: {fileID: 0}
   attackStartDelay: 0.5
   viewTransitionDelay: 0.3
-  betweenTurnDelay: 0.4
+  guideBoundaryLateGraceSeconds: 0.25
   tutorialMaxSanity: 100
   rallySanityLossPerTurn: 1
   tutorialMinimumSanity: 90
   defenseReactionBeats: 4
+  playTutorialBgmOnStart: 0
+  tutorialBgmId: 1
+  playHitSfx: 1
+  playMissSfx: 0
+  playGuideMetronome: 1
+  guideMetronomeClip: {fileID: 0}
+  guideMetronomeLoopSource: {fileID: 0}
+  guideMetronomeIntervalBeats: 4
+  tutorialStartLeadTime: 1
   playIntroBeatDemo: 1
   introBeatDemoLineNumber: 6
   introHighNotePositionRatio: 0.63
@@ -115,21 +128,102 @@ MonoBehaviour:
     \uC8FC\uACE0 \uBC1B\uB294 \uC5F0\uC2B5\uC774\uC57C."
   - "\uC0C1\uB300\uC758 \uB9AC\uB4EC\uC5D0 \uADC0 \uAE30\uC6B8\uC774\uACE0, \uC6B0\uB9AC\uC758
     \uB9AC\uB4EC\uC73C\uB85C \uD574\uC11D\uD574\uBCF4\uC790!"
-  attackPracticeMessage: "\uC548\uB155"
-  attackPracticeTargetTapCount: 2
-  defensePracticeMessages:
-  - "\uBC18\uAC00\uC6CC"
-  - "\uACE0\uB9C8\uC6CC"
-  - "\uCE5C\uAD6C\uC57C"
-  rallyPlayerMessages:
-  - "\uC548\uB155"
-  - "\uB204\uAD6C"
-  - "\uCE5C\uAD6C"
-  - "\uAD50\uC2E0"
-  rallyOpponentMessages:
-  - "\uB4E4\uB9AC\uB2C8"
-  - "\uC2E0\uD638\uC57C"
-  - "\uC88B\uC558\uC5B4"
-  - "\uB2E4\uC2DC\uD574"
   logInputRouting: 1
   logTurnFlow: 1
+--- !u!82 &4265392361032758618
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8508207998096961152}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

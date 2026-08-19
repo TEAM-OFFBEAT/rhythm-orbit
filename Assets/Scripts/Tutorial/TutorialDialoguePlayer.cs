@@ -26,6 +26,9 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [Tooltip("깜빡임 동안 패널 전체를 숨길지 여부. 꺼두면 글자만 사라진다.")]
     [SerializeField] private bool hidePanelDuringBlink = false;
 
+    [Header("Dialogue Timing")]
+    [SerializeField, Min(0f)] private float dialogueVisualLeadSeconds = 0.04f;
+
     private float currentBpm;
     private Coroutine temporaryMessageCoroutine;
 
@@ -101,7 +104,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
     string[] lines,
     int beatsPerLine,
     bool hideWhenFinished = true,
-    Action<int, string> onLineStarted = null
+    Action<int, string> onLineStarted = null,
+    double? forcedStartDspTime = null
     )
     {
         if (lines == null || lines.Length == 0)
@@ -112,7 +116,10 @@ public class TutorialDialoguePlayer : MonoBehaviour
         StopTemporaryMessage();
 
         int safeBeats = Mathf.Max(1, beatsPerLine);
-        float lineSeconds = GetBeatSeconds() * safeBeats;
+        float beatSeconds = GetBeatSeconds();
+        float lineSeconds = beatSeconds * safeBeats;
+
+        double dialogueStartDspTime = forcedStartDspTime ?? AudioSettings.dspTime;
 
         for (int i = 0; i < lines.Length; i++)
         {
@@ -121,24 +128,32 @@ public class TutorialDialoguePlayer : MonoBehaviour
                 continue;
             }
 
+            double lineStartDspTime = dialogueStartDspTime + i * lineSeconds;
+            double nextLineStartDspTime = dialogueStartDspTime + (i + 1) * lineSeconds;
+
+            double visualShowDspTime = lineStartDspTime - dialogueVisualLeadSeconds;
+
+            yield return WaitUntilDspTime(visualShowDspTime);
+
+            Show(lines[i]);
+            onLineStarted?.Invoke(i, lines[i]);
+
             bool hasNextLine = i < lines.Length - 1;
 
             float blinkSeconds = useBlinkBetweenLines && hasNextLine
                 ? Mathf.Clamp(blinkSecondsBetweenLines, 0f, lineSeconds * 0.5f)
                 : 0f;
 
-            float showSeconds = lineSeconds - blinkSeconds;
+            double blinkStartDspTime = nextLineStartDspTime - blinkSeconds;
 
-            Show(lines[i]);
-            onLineStarted?.Invoke(i, lines[i]);
-
-            yield return new WaitForSecondsRealtime(showSeconds);
+            yield return WaitUntilDspTime(blinkStartDspTime);
 
             if (blinkSeconds > 0f)
             {
                 ShowBlinkBlank();
-                yield return new WaitForSecondsRealtime(blinkSeconds);
             }
+
+            yield return WaitUntilDspTime(nextLineStartDspTime);
         }
 
         if (hideWhenFinished)
@@ -146,7 +161,6 @@ public class TutorialDialoguePlayer : MonoBehaviour
             Hide();
         }
     }
-
     /// <summary>
     /// 튜토리얼 반응 문장을 지정한 박자 동안 표시한다.
     /// 턴 진행을 막지 않기 위해 코루틴을 내부에서 실행하고 바로 반환한다.
@@ -242,4 +256,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
     }
     
+    private IEnumerator WaitUntilDspTime(double targetDspTime)
+    {
+        while (AudioSettings.dspTime < targetDspTime)
+        {
+            yield return null;
+        }
+    }
 }
