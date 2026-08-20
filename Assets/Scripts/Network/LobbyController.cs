@@ -24,6 +24,7 @@ public class LobbyController : MonoBehaviour
     [Header("Main Menu")]
     [SerializeField] private Button createRoomButton;
     [SerializeField] private Button joinRoomButton;
+    [SerializeField] private Button goTutorialButton;
 
     [Header("Host — 대기 화면")]
     [SerializeField] private TMP_Text roomCodeText;
@@ -49,6 +50,7 @@ public class LobbyController : MonoBehaviour
 
         createRoomButton.onClick.AddListener(OnCreateRoom);
         joinRoomButton.onClick.AddListener(OnJoinRoom);
+        goTutorialButton.onClick.AddListener(GoToTutorial);
         cancelHostButton.onClick.AddListener(OnCancel);
         connectButton.onClick.AddListener(OnConnect);
         cancelJoinButton.onClick.AddListener(OnCancel);
@@ -117,6 +119,8 @@ public class LobbyController : MonoBehaviour
         networkManager?.Disconnect();
         ShowMainMenu();
     }
+
+    
 
     // ── 네트워크 이벤트 ──────────────────────────────────────────────────────
 
@@ -191,6 +195,14 @@ public class LobbyController : MonoBehaviour
         joinPanel.SetActive(false);
 
         connectButton.interactable = true;
+    }
+
+    public void GoToTutorial()
+    {
+        NetworkManager.Instance?.Disconnect();
+
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Tutorial");
     }
 
     // ── 유틸 ─────────────────────────────────────────────────────────────────

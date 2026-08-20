@@ -124,6 +124,7 @@ MonoBehaviour:
   joinPanel: {fileID: 3659558241181190724}
   createRoomButton: {fileID: 4261969321139006133}
   joinRoomButton: {fileID: 8193390957821974497}
+  goTutorialButton: {fileID: 2956076464602378932}
   roomCodeText: {fileID: 4266033788141260108}
   waitingStatusText: {fileID: 8090405030331857345}
   cancelHostButton: {fileID: 1576511485964904663}
@@ -519,9 +520,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6003199417835820858, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -66
+      objectReference: {fileID: 0}
     - target: {fileID: 7468992707175413005, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
       propertyPath: m_Name
       value: MainMenuPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 8442371437440968120, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
+      propertyPath: m_text
+      value: "\uD29C\uD1A0\uB9AC\uC5BC \uC2DC\uC791"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -533,6 +542,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7468992707175413005, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
   m_PrefabInstance: {fileID: 8647114666271464897}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2956076464602378932 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5838546486940020597, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
+  m_PrefabInstance: {fileID: 8647114666271464897}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!114 &4261969321139006133 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4838333286138001268, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
