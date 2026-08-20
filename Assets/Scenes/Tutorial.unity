@@ -325,6 +325,14 @@ PrefabInstance:
       propertyPath: randomMessageProvider
       value: 
       objectReference: {fileID: 6902552827044142596}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: p1DefenseJudgmentLabel
+      value: 
+      objectReference: {fileID: 889573661}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: p2DefenseJudgmentLabel
+      value: 
+      objectReference: {fileID: 1836838970}
     - target: {fileID: 9217618931380790755, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -685,6 +693,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &889573661 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6785369236386188834, guid: feb0289c027318244a2c43727103e4bd, type: 3}
+  m_PrefabInstance: {fileID: 6226963498876287247}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc2ac1332cdec014996829a8db874dee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JudgmentLabel
 --- !u!114 &918494131 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5993140157034213584, guid: a215a92e89fbacd4f86e97ce715f44e0, type: 3}
@@ -1587,6 +1606,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialInputRouter
   tutorialManager: {fileID: 314441054}
   logInput: 1
+--- !u!114 &1836838970 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2604827737916760537, guid: feb0289c027318244a2c43727103e4bd, type: 3}
+  m_PrefabInstance: {fileID: 6226963498876287247}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc2ac1332cdec014996829a8db874dee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JudgmentLabel
 --- !u!114 &1859392733 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9119886832554702949, guid: feb0289c027318244a2c43727103e4bd, type: 3}
@@ -1786,6 +1816,14 @@ PrefabInstance:
       propertyPath: opponentSanityUiRoot
       value: 
       objectReference: {fileID: 1390550758}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: p1DefenseJudgmentLabel
+      value: 
+      objectReference: {fileID: 889573661}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: p2DefenseJudgmentLabel
+      value: 
+      objectReference: {fileID: 1836838970}
     - target: {fileID: 6427101917554206500, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
       propertyPath: m_LocalPosition.x
       value: 960

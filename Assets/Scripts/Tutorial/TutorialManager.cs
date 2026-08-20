@@ -37,6 +37,8 @@ public class TutorialManager : MonoBehaviour
     
     [Header("UI")]
     [SerializeField] private HUD hud;
+    [SerializeField] private JudgmentLabel p1DefenseJudgmentLabel;
+    [SerializeField] private JudgmentLabel p2DefenseJudgmentLabel;
     [SerializeField] private TutorialDialoguePlayer dialoguePlayer;
     [Tooltip("랠리 단계에서 처음 표시할 정신력 UI 루트. 비워두면 활성/비활성은 건드리지 않고 HUD 값만 갱신한다.")]
     [SerializeField] private GameObject mySanityUiRoot;
@@ -156,6 +158,7 @@ public class TutorialManager : MonoBehaviour
 
     private bool attackEnded;
     private bool defenseEnded;
+    private string currentAttackMessage = "";
     private bool showDefenseJudgmentUi;
     private bool currentDefenseIsAiDefense;
     private bool showCurrentDefenseKeyHints;
@@ -557,7 +560,8 @@ public class TutorialManager : MonoBehaviour
             attackTurnRenderer.ClearAll();
             hud?.ClearAttackProgress();
             hud?.ClearJudgments();
-            hud?.ClearPanelMessages();
+            // 패널 메시지는 방어 종료 직후 표시되므로 여기서 지우지 않는다.
+            // 각 턴 시작 시 RunPlayerAttackTurn / RunOpponentDemoAttackThenDefense 안에서 ClearPanelMessages()를 호출한다.
 
             // 랠리 1턴 = 공격 4박 + 방어 4박 = 8박
             nextTurnStartDspTime += fourBeatSeconds * 2.0;
@@ -591,8 +595,8 @@ public class TutorialManager : MonoBehaviour
         attackTurnRenderer.ClearAll();
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
-        hud?.ClearPanelMessages();
         gameCamera?.SetAttackView(playerSide);
+        hud?.SetTurnOwner(GetPlayerId(playerSide));
 
         double startDspTime = forcedStartDspTime
         ?? AudioSettings.dspTime + Mathf.Max(0f, attackStartDelay);
@@ -630,8 +634,8 @@ public class TutorialManager : MonoBehaviour
         attackTurnRenderer.ClearAll();
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
-        hud?.ClearPanelMessages();
         gameCamera?.SetAttackView(attackerSide);
+        hud?.SetTurnOwner(GetPlayerId(attackerSide));
 
         double attackStartDspTime = forcedAttackStartDspTime
             ?? AudioSettings.dspTime;
@@ -679,7 +683,7 @@ public class TutorialManager : MonoBehaviour
         currentStep = inputStep;
         currentDefenseAttackerSide = attackerSide;
         currentDefenseJudgmentIndex = 0;
-        showDefenseJudgmentUi = !isAiDefense;
+        showDefenseJudgmentUi = true;
         currentDefenseIsAiDefense = isAiDefense;
         defenseEnded = false;
         
@@ -690,6 +694,7 @@ public class TutorialManager : MonoBehaviour
             latestDefenseMissCount = 0;
         }
         gameCamera?.SetDefenseView(attackerSide);
+        hud?.SetTurnOwner(GetPlayerId(GetOpponentSide(attackerSide)));
 
         if (useViewTransitionDelay && viewTransitionDelay > 0f)
         {
@@ -699,6 +704,7 @@ public class TutorialManager : MonoBehaviour
         float judgeLineX = attackTurnRenderer.GetJudgeLineX(attackerSide);
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
         float attackEndX = attackTurnRenderer.GetEndX(attackerSide);
+        GetDefenseLabel(attackerSide)?.SetWorldX(judgeLineX);
 
         if (logTurnFlow)
         {
@@ -782,6 +788,17 @@ public class TutorialManager : MonoBehaviour
     {
         defenseEnded = true;
 
+        if (!string.IsNullOrEmpty(currentAttackMessage))
+        {
+            string decoded = BuildDecodedMessage(currentAttackMessage, result.Judgments);
+            // 튜토리얼은 방어자 패널에 표시 (ShowInDefenderPanel은 공격자 패널 기준이므로 직접 분기)
+            bool defenderIsLocalPlayer = currentDefenseAttackerSide != playerSide;
+            if (defenderIsLocalPlayer)
+                hud?.ShowMyPanelMessage(decoded);
+            else
+                hud?.ShowOpponentPanelMessage(decoded);
+        }
+
         if (!currentDefenseIsAiDefense)
         {
             latestDefenseResultAvailable = true;
@@ -799,7 +816,7 @@ public class TutorialManager : MonoBehaviour
 
     private void HandleAttackMessageSelected(string message, int targetCount)
     {
-        hud?.ShowInAttackerPanel(message, currentHudAttackerSide);
+        currentAttackMessage = message;
         hud?.UpdateAttackProgress(0, targetCount);
     }
 
@@ -816,6 +833,11 @@ public class TutorialManager : MonoBehaviour
         }
 
         hud?.ShowJudgment(judgment, currentDefenseAttackerSide);
+        GetDefenseLabel(currentDefenseAttackerSide)?.ShowJudgment(judgment);
+
+        // AI 방어는 DefenseTurn이 OnDefenseInputResolved를 발행하지 않으므로 SFX를 직접 재생한다.
+        if (currentDefenseIsAiDefense)
+            PlayAiDefenseSfx(judgment, currentDefenseJudgmentIndex);
 
         if (judgment != Judgment.MISS)
         {
@@ -824,6 +846,41 @@ public class TutorialManager : MonoBehaviour
 
         currentDefenseJudgmentIndex++;
     }
+
+    private void PlayAiDefenseSfx(Judgment judgment, int noteIndex)
+    {
+        if (SoundManager.Instance == null) return;
+
+        if (judgment == Judgment.MISS)
+        {
+            if (playMissSfx) SoundManager.Instance.PlaySfx(SfxId.Miss);
+            return;
+        }
+
+        if (!playHitSfx) return;
+
+        NoteType noteType = noteIndex < lastAttackNotes.Count
+            ? lastAttackNotes[noteIndex].noteType
+            : NoteType.HIGH;
+        SoundManager.Instance.PlaySfx(noteType == NoteType.HIGH ? SfxId.HitHigh : SfxId.HitLow);
+    }
+
+    private string BuildDecodedMessage(string attackMsg, Judgment[] judgments)
+    {
+        char[] chars = attackMsg.ToCharArray();
+        bool allSuccess = true;
+        int limit = Mathf.Min(chars.Length, judgments?.Length ?? 0);
+        for (int i = 0; i < limit; i++)
+        {
+            if (judgments[i] == Judgment.MISS) { chars[i] = '▨'; allSuccess = false; }
+        }
+        for (int i = limit; i < chars.Length; i++)
+            chars[i] = '▨';
+        return new string(chars) + (allSuccess ? "!" : "?");
+    }
+
+    private JudgmentLabel GetDefenseLabel(AttackSide attackerSide)
+        => attackerSide == AttackSide.P1 ? p2DefenseJudgmentLabel : p1DefenseJudgmentLabel;
 
     private IEnumerator PlayDialogue(string[] lines)
     {

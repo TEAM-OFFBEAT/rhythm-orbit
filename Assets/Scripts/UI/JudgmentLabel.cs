@@ -15,6 +15,12 @@ public class JudgmentLabel : MonoBehaviour
 
     private Coroutine hideCoroutine;
 
+    private void Awake()
+    {
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = false;
+    }
+
     /// <summary>
     /// 판정 결과에 맞는 스프라이트를 표시하고 displayDuration 후 자동으로 숨긴다.
     /// </summary>
