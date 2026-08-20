@@ -2137,10 +2137,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: ResultPanelUI
       objectReference: {fileID: 0}
-    - target: {fileID: 3110310685775548142, guid: adfa215dfa2b9bc4a82799c3b19f8b39, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

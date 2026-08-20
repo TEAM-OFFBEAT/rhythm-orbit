@@ -22,7 +22,7 @@ public class ResultPanelUI : MonoBehaviour
     private void Awake()
     {
         RegisterLobbyButtons();
-        HideAll();
+        HideChildPanels();
     }
 
     private void OnDestroy()
