@@ -160,4 +160,18 @@ public static class PacketSerializer
 
         return (byte)playerId;
     }    
+
+    public static void WriteReplayRequest(BinaryWriter writer, byte requesterPlayerId)
+    {
+        writer.Write((byte)PacketType.REPLAY_REQUEST);
+        writer.Write(requesterPlayerId);
+    }
+
+    public static ReplayRequestPacket ReadReplayRequest(BinaryReader reader)
+    {
+        return new ReplayRequestPacket
+        {
+            requesterPlayerId = reader.ReadByte()
+        };
+    }
 }

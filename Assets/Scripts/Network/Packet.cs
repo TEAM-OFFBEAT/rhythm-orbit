@@ -55,3 +55,8 @@ public struct GameEndPacket
     // CommunicationSuccess일 때는 0으로 둔다.
     public byte defeatedPlayerId;
 }
+
+public struct ReplayRequestPacket
+{
+    public byte requesterPlayerId;
+}

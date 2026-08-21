@@ -49,6 +49,7 @@ public class NetworkManager : Singleton<NetworkManager>
     public event Action<NoteCreatedPacket> OnNoteCreated;
     public event Action<JudgmentPacket> OnJudgmentReceived;
     public event Action<SanityChangePacket> OnSanityChange;
+    public event Action<ReplayRequestPacket> OnReplayRequest;
 
     private readonly ConcurrentQueue<Action> mainThreadQueue = new();
     private TcpListener listener;
@@ -256,7 +257,12 @@ public class NetworkManager : Singleton<NetworkManager>
                         var sc = PacketSerializer.ReadSanityChange(reader);
                         mainThreadQueue.Enqueue(() => OnSanityChange?.Invoke(sc));
                         break;
-
+                    case PacketType.REPLAY_REQUEST:
+                        {
+                            ReplayRequestPacket packet = PacketSerializer.ReadReplayRequest(reader);
+                            mainThreadQueue.Enqueue(() => OnReplayRequest?.Invoke(packet));
+                            break;
+                        }
                     default:
                         Debug.LogWarning($"NetworkManager: 알 수 없는 패킷 타입 {type}");
                         break;
