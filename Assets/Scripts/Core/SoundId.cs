@@ -1,6 +1,7 @@
 public enum BgmId
 {
     MainMenu,
+    Lobby,
     Tutorial,
     CoreLoop106,
     CoreLoop120,

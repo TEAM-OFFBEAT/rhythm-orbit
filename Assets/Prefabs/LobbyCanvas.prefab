@@ -520,17 +520,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6003199417835820858, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -66
-      objectReference: {fileID: 0}
     - target: {fileID: 7468992707175413005, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
       propertyPath: m_Name
       value: MainMenuPanel
-      objectReference: {fileID: 0}
-    - target: {fileID: 8442371437440968120, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
-      propertyPath: m_text
-      value: "\uD29C\uD1A0\uB9AC\uC5BC \uC2DC\uC791"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

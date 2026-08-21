@@ -80,6 +80,7 @@ public class LobbyController : MonoBehaviour
     private void StopGameplayBgmOnLobbyEnter()
     {
         SoundManager.Instance?.StopBgm();
+        SoundManager.Instance?.PlayBgm(BgmId.Lobby);
 
         Debug.Log("LobbyController: 게임 플레이 BGM 정리 완료.");
     }
