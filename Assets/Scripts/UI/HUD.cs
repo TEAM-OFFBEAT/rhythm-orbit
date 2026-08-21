@@ -13,6 +13,7 @@ public class HUD : MonoBehaviour
 
     [Header("Game Status UI")]
     [SerializeField] private TMP_Text bpmText;
+    [SerializeField] private BpmGaugeUI bpmGauge;
     [SerializeField] private StarsRenderer starsRenderer;
 
     [Header("Panel Messages")]
@@ -118,15 +119,14 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 BPM 수치를 HUD에 표시한다.
+    /// 현재 BPM 수치를 텍스트와 게이지 바에 동시에 표시한다.
     /// BPM 단계 변경 시 GameManager가 호출한다.
     /// </summary>
     public void UpdateBpm(float bpm)
     {
         if (bpmText != null)
-        {
             bpmText.text = $"BPM {bpm:0}";
-        }
+        bpmGauge?.SetBpm(bpm);
     }
 
     /// <summary>
