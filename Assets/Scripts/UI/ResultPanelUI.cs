@@ -3,31 +3,34 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// 게임 종료 시 표시되는 결과 패널 전체를 관리하는 UI 컴포넌트.
-/// 승리, 패배, 교신 성공 패널 중 하나만 활성화하고 로비 복귀 버튼을 처리한다.
+/// 게임 종료 시 표시되는 결과 패널 전체를 관리한다.
+/// Win / Lose / CommunicationSuccess 중 하나의 패널만 활성화하고,
+/// 로비 이동 및 다시하기 버튼을 처리한다.
 /// </summary>
 public class ResultPanelUI : MonoBehaviour
 {
     [Header("Result Panels")]
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
-    [SerializeField] private GameObject communicationSuccessPanel;
+    [SerializeField] private GameObject successPanel;
 
     [Header("Buttons")]
     [SerializeField] private Button[] lobbyButtons;
+    [SerializeField] private Button[] replayButtons;
 
     [Header("Scene")]
     [SerializeField] private string lobbySceneName = "Lobby";
+    [SerializeField] private string mainLoopSceneName = "MainLoop";
 
     private void Awake()
     {
-        RegisterLobbyButtons();
+        RegisterButtons();
         HideChildPanels();
     }
 
     private void OnDestroy()
     {
-        UnregisterLobbyButtons();
+        UnregisterButtons();
     }
 
     /// <summary>
@@ -50,7 +53,7 @@ public class ResultPanelUI : MonoBehaviour
                 break;
 
             case GameResultType.CommunicationSuccess:
-                SetActivePanel(communicationSuccessPanel);
+                SetActivePanel(successPanel);
                 break;
         }
     }
@@ -67,33 +70,88 @@ public class ResultPanelUI : MonoBehaviour
 
     private void HideChildPanels()
     {
-        if (winPanel != null) winPanel.SetActive(false);
-        if (losePanel != null) losePanel.SetActive(false);
-        if (communicationSuccessPanel != null) communicationSuccessPanel.SetActive(false);
+        if (winPanel != null)
+        {
+            winPanel.SetActive(false);
+        }
+
+        if (losePanel != null)
+        {
+            losePanel.SetActive(false);
+        }
+
+        if (successPanel != null)
+        {
+            successPanel.SetActive(false);
+        }
     }
 
     private void SetActivePanel(GameObject panel)
     {
-        if (panel == null) return;
+        if (panel == null)
+        {
+            Debug.LogWarning("ResultPanelUI: 표시할 결과 패널이 연결되지 않음.");
+            return;
+        }
 
         panel.SetActive(true);
     }
 
-    private void RegisterLobbyButtons()
+    private void RegisterButtons()
     {
-        foreach (Button button in lobbyButtons)
+        if (lobbyButtons != null)
         {
-            if (button == null) continue;
-            button.onClick.AddListener(ReturnToLobby);
+            foreach (Button button in lobbyButtons)
+            {
+                if (button == null)
+                {
+                    continue;
+                }
+
+                button.onClick.AddListener(ReturnToLobby);
+            }
+        }
+
+        if (replayButtons != null)
+        {
+            foreach (Button button in replayButtons)
+            {
+                if (button == null)
+                {
+                    continue;
+                }
+
+                button.onClick.AddListener(RestartGame);
+            }
         }
     }
 
-    private void UnregisterLobbyButtons()
+    private void UnregisterButtons()
     {
-        foreach (Button button in lobbyButtons)
+        if (lobbyButtons != null)
         {
-            if (button == null) continue;
-            button.onClick.RemoveListener(ReturnToLobby);
+            foreach (Button button in lobbyButtons)
+            {
+                if (button == null)
+                {
+                    continue;
+                }
+
+                button.onClick.RemoveListener(ReturnToLobby);
+            }
+        }
+
+        if (replayButtons != null)
+        {
+            foreach (Button button in replayButtons)
+            {
+                if (button == null)
+                {
+                    continue;
+                }
+
+                button.onClick.RemoveListener(RestartGame);
+            }
         }
     }
 
@@ -104,6 +162,20 @@ public class ResultPanelUI : MonoBehaviour
     private void ReturnToLobby()
     {
         NetworkManager.Instance?.Disconnect();
+
+        Time.timeScale = 1f;
         SceneManager.LoadScene(lobbySceneName);
+    }
+
+    /// <summary>
+    /// 메인 루프 씬을 다시 로드한다.
+    /// 결과 패널의 다시하기 버튼에서 호출된다.
+    /// </summary>
+    private void RestartGame()
+    {
+        NetworkManager.Instance?.Disconnect();
+
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(mainLoopSceneName);
     }
 }
