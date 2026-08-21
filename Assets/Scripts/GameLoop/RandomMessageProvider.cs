@@ -15,10 +15,7 @@ public class RandomMessageProvider : MonoBehaviour
     [Header("Random Messages")]
     [SerializeField] private List<RandomMessageGroup> messageGroups = new();
 
-    [Header("Message Panel Display")]
-    [SerializeField] private string noiseSymbol = "▨";
-
-    /// <summary>
+/// <summary>
     /// 글자수에 맞는 메시지 목록 중 하나를 랜덤으로 반환.
     /// </summary>
     public string GetRandomMessage(int characterCount)
@@ -62,7 +59,6 @@ public class RandomMessageProvider : MonoBehaviour
             return "";
 
         char[] chars = attackMessage.ToCharArray();
-        char noiseChar = noiseSymbol.Length > 0 ? noiseSymbol[0] : '▨';
         bool defenseSuccess = true;
 
         int judgeLimit = Mathf.Min(chars.Length, judgments?.Length ?? 0);
@@ -71,25 +67,28 @@ public class RandomMessageProvider : MonoBehaviour
         {
             if (judgments[i] == Judgment.MISS)
             {
-                chars[i] = noiseChar;
+                chars[i] = RandomNoteChar();
                 defenseSuccess = false;
             }
         }
 
         // 공격 노트가 모자라 판정을 받지 못한 위치는 깨진 글자로 표시
         for (int i = judgeLimit; i < chars.Length; i++)
-            chars[i] = noiseChar;
+            chars[i] = RandomNoteChar();
+
+        if (!attackSuccess && !defenseSuccess)
+            return "???";
 
         string suffix = (attackSuccess, defenseSuccess) switch
         {
             (true,  true)  => "!",
-            (true,  false) => "?",
-            (false, true)  => "?",
-            (false, false) => "???",
+            _              => "?",
         };
 
         return new string(chars) + suffix;
     }
+
+    private static char RandomNoteChar() => (char)Random.Range(0x2669, 0x266D);
 
     private string CreateFallbackMessage(int characterCount)
     {
