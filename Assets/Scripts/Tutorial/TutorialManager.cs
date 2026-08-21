@@ -314,9 +314,9 @@ public class TutorialManager : MonoBehaviour
 
         gameCamera?.SetAttackView(playerSide);
 
-        if (NetworkManager.Instance != null)
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsConnected)
         {
-            Debug.LogWarning("TutorialManager: TutorialScene에 NetworkManager.Instance가 있음. 튜토리얼에서는 비활성화 권장.");
+            Debug.LogWarning("TutorialManager: TutorialScene에 연결된 NetworkManager.Instance가 있음. 튜토리얼에서는 비활성화 권장.");
         }
 
         Debug.Log("TutorialManager: Initialized");

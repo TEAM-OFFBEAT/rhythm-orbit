@@ -200,7 +200,11 @@ public class LobbyController : MonoBehaviour
 
     public void GoToTutorial()
     {
-        NetworkManager.Instance?.Disconnect();
+        if (NetworkManager.Instance != null)
+        {
+            NetworkManager.Instance.Disconnect();
+            Destroy(NetworkManager.Instance.gameObject);
+        }
 
         Time.timeScale = 1f;
         SceneManager.LoadScene("Tutorial");

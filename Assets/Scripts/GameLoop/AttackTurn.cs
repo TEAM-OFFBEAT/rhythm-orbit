@@ -72,8 +72,17 @@ public class AttackTurn : MonoBehaviour
 
     private void Awake()
     {
-        if (networkManager == null)
+        if (rhythmClock == null)
+        {
+            rhythmClock = RhythmClock.Instance;
+        }
+
+        if (networkManager == null &&
+            NetworkManager.Instance != null &&
+            NetworkManager.Instance.IsConnected)
+        {
             networkManager = NetworkManager.Instance;
+        }
     }
 
     /// <summary>
@@ -111,17 +120,23 @@ public class AttackTurn : MonoBehaviour
     /// <summary>
     /// 현재 BPM 기준 1스텝(1/subdivisions 박) 길이를 반환.
     /// RhythmClock이 연결되지 않았을 경우 기본 BPM 120 기준으로 계산한다.
+    /// 인스펙터 연결이 빠져도 RhythmClock.Instance를 찾아서 계산한다.
     /// </summary>
     private double NoteDuration
     {
         get
         {
-            if (rhythmClock == null)
+            RhythmClock clock = rhythmClock != null
+                ? rhythmClock
+                : RhythmClock.Instance;
+
+            if (clock == null)
             {
-                Debug.LogWarning("RhythmClock이 연결되지 않았습니다. 기본 BPM 120 기준으로 계산합니다.");
+                Debug.LogWarning("RhythmClock을 찾을 수 없습니다. 기본 BPM 120 기준으로 계산합니다.");
                 return 60.0 / 120.0 / System.Math.Max(1, subdivisions);
             }
-            return rhythmClock.GetNoteDuration(subdivisions);
+
+            return clock.GetNoteDuration(subdivisions);
         }
     }
 
@@ -332,7 +347,7 @@ public class AttackTurn : MonoBehaviour
         };
 
         createdNotes.Add(note);
-        if (isLocalPlayerAttack && networkManager != null)
+        if (isLocalPlayerAttack && networkManager != null && networkManager.IsConnected)
         {
             int id = note.noteId;
             double rel = note.noteRelativeTime;

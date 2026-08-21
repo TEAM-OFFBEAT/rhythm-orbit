@@ -141,7 +141,7 @@ public class TutorialPatternProvider : MonoBehaviour
 
             default:
                 return new TutorialPatternData(
-                    "",
+                    "반가워",
                     new[]
                     {
                         NoteType.LOW,
