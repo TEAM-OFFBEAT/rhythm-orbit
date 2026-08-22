@@ -52,6 +52,8 @@ MonoBehaviour:
   lobbyButtonRoot: {fileID: 0}
   lobbySceneName: Lobby
   hud: {fileID: 0}
+  p1DefenseJudgmentLabel: {fileID: 0}
+  p2DefenseJudgmentLabel: {fileID: 0}
   dialoguePlayer: {fileID: 0}
   mySanityUiRoot: {fileID: 0}
   opponentSanityUiRoot: {fileID: 0}
@@ -76,6 +78,11 @@ MonoBehaviour:
   guideMetronomeLoopSource: {fileID: 4265392361032758618}
   guideMetronomeIntervalBeats: 4
   tutorialStartLeadTime: 1
+  useDirectTutorialHitSfx: 1
+  directHitHighClip: {fileID: 8300000, guid: 58cd19c2885857141a4109b8cc38acec, type: 3}
+  directHitLowClip: {fileID: 8300000, guid: 4370489aa5b4b9e43966e1a7b3c47d74, type: 3}
+  directHitVolume: 1
+  directHitSourceCount: 4
   attackPracticeStartMessage: "\uBC14\uB85C \uACF5\uACA9 \uD134\uC744 \uC5F0\uC2B5\uD574\uBCF4\uC790\uBAA8!"
   defensePracticeStartMessage: "\uBC29\uC5B4 \uD134\uC744  \uC5F0\uC2B5\uD574\uBCF4\uC790\uBAA8!"
   rallyPracticeStartMessage: "\uB7A0\uB9AC\uB97C \uC5F0\uC2B5\uD574\uBCF4\uC790\uBAA8!"

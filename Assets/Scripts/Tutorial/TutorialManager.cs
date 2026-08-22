@@ -86,6 +86,15 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("튜토리얼 시작과 첫 메트로놈을 정확히 맞추기 위한 예약 여유 시간.")]
     [SerializeField, Min(0f)] private float tutorialStartLeadTime = 1f;
 
+    [Header("Tutorial Direct Hit SFX")]
+    [SerializeField] private bool useDirectTutorialHitSfx = true;
+    [SerializeField] private AudioClip directHitHighClip;
+    [SerializeField] private AudioClip directHitLowClip;
+    [SerializeField, Range(0f, 1f)] private float directHitVolume = 1f;
+    [SerializeField, Min(1)] private int directHitSourceCount = 4;
+
+    private AudioSource[] directHitSources;
+    private int nextDirectHitSourceIndex;
     private double tutorialStartDspTime;
     private bool latestDefenseResultAvailable;
     private int latestDefenseTotalCount;
@@ -286,6 +295,7 @@ public class TutorialManager : MonoBehaviour
 
         TryPlayTutorialBgm();
         StartGuideMetronome(tutorialStartDspTime);
+        PrepareDirectHitSources();
 
         dialoguePlayer?.SetBpm(tutorialBpm);
         dialoguePlayer?.Hide();
@@ -849,20 +859,26 @@ public class TutorialManager : MonoBehaviour
 
     private void PlayAiDefenseSfx(Judgment judgment, int noteIndex)
     {
-        if (SoundManager.Instance == null) return;
-
         if (judgment == Judgment.MISS)
         {
-            if (playMissSfx) SoundManager.Instance.PlaySfx(SfxId.Miss);
+            if (playMissSfx && SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySfx(SfxId.Miss);
+            }
+
             return;
         }
 
-        if (!playHitSfx) return;
+        if (!playHitSfx)
+        {
+            return;
+        }
 
         NoteType noteType = noteIndex < lastAttackNotes.Count
             ? lastAttackNotes[noteIndex].noteType
             : NoteType.HIGH;
-        SoundManager.Instance.PlaySfx(noteType == NoteType.HIGH ? SfxId.HitHigh : SfxId.HitLow);
+
+        PlayTutorialHitSfx(noteType);
     }
 
     private string BuildDecodedMessage(string attackMsg, Judgment[] judgments)
@@ -1211,7 +1227,7 @@ public class TutorialManager : MonoBehaviour
 
     private void HandleTutorialAttackNoteCreated(NoteData note)
     {
-        PlayNoteHitSfx(note.noteType);
+        PlayTutorialHitSfx(note.noteType);
 
         if (NoteRenderer.Instance == null)
             return;
@@ -1313,10 +1329,15 @@ public class TutorialManager : MonoBehaviour
             ? SfxId.HitHigh
             : SfxId.HitLow;
 
-        SoundManager.Instance.PlaySfx(sfxId);
+        Debug.Log(
+            $"[Tutorial SFX] Defense Hit / sfx:{sfxId}, note:{noteType}, " +
+            $"frame:{Time.frameCount}, dsp:{AudioSettings.dspTime:0.000}"
+        );
+
+        PlayDirectTutorialHitSfx(noteType);
     }
 
-    private void PlayNoteHitSfx(NoteType noteType)
+    private void PlayNoteHitSfxThroughSoundManager(NoteType noteType)
     {
         if (!playHitSfx)
             return;
@@ -1327,6 +1348,7 @@ public class TutorialManager : MonoBehaviour
         SfxId sfxId = noteType == NoteType.HIGH
             ? SfxId.HitHigh
             : SfxId.HitLow;
+
 
         SoundManager.Instance.PlaySfx(sfxId);
     }
@@ -1374,6 +1396,11 @@ public class TutorialManager : MonoBehaviour
         guideMetronomeLoopSource.playOnAwake = false;
         guideMetronomeLoopSource.loop = true;
         guideMetronomeLoopSource.spatialBlend = 0f;
+        guideMetronomeLoopSource.volume = 1f;
+        guideMetronomeLoopSource.pitch = 1f;
+        guideMetronomeLoopSource.panStereo = 0f;
+        guideMetronomeLoopSource.spatialBlend = 0f;
+        guideMetronomeLoopSource.outputAudioMixerGroup = null;
 
         generatedGuideMetronomeLoopClip = CreateGuideMetronomeLoopClip();
 
@@ -1391,6 +1418,48 @@ public class TutorialManager : MonoBehaviour
             $"bpm:{tutorialBpm}, intervalBeats:{guideMetronomeIntervalBeats}, " +
             $"loopLength:{generatedGuideMetronomeLoopClip.length:0.000}"
         );
+    }
+
+    /// <summary>
+    /// 튜토리얼 검수용 메트로놈이 중복 재생되지 않도록,
+    /// 현재 씬에 남아 있는 메트로놈 AudioSource를 강제로 정리한다.
+    /// </summary>
+    private void StopAllMetronomeSourcesInScene()
+    {
+        AudioSource[] sources = FindObjectsByType<AudioSource>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        foreach (AudioSource source in sources)
+        {
+            if (source == null || source.clip == null)
+            {
+                continue;
+            }
+
+            bool isGuideLoopClip =
+                source.clip.name.Contains("Tutorial_GuideMetronome");
+
+            bool isOriginalMetronomeClip =
+                guideMetronomeClip != null &&
+                source.clip == guideMetronomeClip;
+
+            if (!isGuideLoopClip && !isOriginalMetronomeClip)
+            {
+                continue;
+            }
+
+            if (source == guideMetronomeLoopSource)
+            {
+                continue;
+            }
+
+            source.Stop();
+            source.loop = false;
+
+            Debug.Log($"TutorialManager: 중복 메트로놈 AudioSource 정리 / {source.name}");
+        }
     }
 
     /// <summary>
@@ -1632,6 +1701,110 @@ public class TutorialManager : MonoBehaviour
                 demoLowNotePositionRatio
             );
         }
+    }
+
+    /// <summary>
+    /// 튜토리얼 타격음 전용 AudioSource를 준비한다.
+    /// SoundManager 풀/믹서/동시재생 제한 문제를 우회하기 위한 테스트용 구조다.
+    /// </summary>
+    private void PrepareDirectHitSources()
+    {
+        if (!useDirectTutorialHitSfx)
+        {
+            return;
+        }
+
+        int count = Mathf.Max(1, directHitSourceCount);
+
+        if (directHitSources != null && directHitSources.Length == count)
+        {
+            return;
+        }
+
+        directHitSources = new AudioSource[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject sourceObject = new GameObject($"TutorialDirectHitSource_{i}");
+            sourceObject.transform.SetParent(transform);
+
+            AudioSource source = sourceObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.loop = false;
+            source.volume = 1f;
+            source.pitch = 1f;
+            source.panStereo = 0f;
+            source.spatialBlend = 0f;
+            source.priority = 0;
+            source.bypassEffects = true;
+            source.bypassListenerEffects = true;
+            source.bypassReverbZones = true;
+            source.outputAudioMixerGroup = null;
+
+            directHitSources[i] = source;
+        }
+
+        nextDirectHitSourceIndex = 0;
+    }
+
+    /// <summary>
+    /// 튜토리얼 타격음을 SoundManager를 거치지 않고 직접 재생한다.
+    /// </summary>
+    private void PlayDirectTutorialHitSfx(NoteType noteType)
+    {
+        if (!useDirectTutorialHitSfx)
+        {
+            PlayNoteHitSfxThroughSoundManager(noteType);
+            return;
+        }
+
+        PrepareDirectHitSources();
+
+        AudioClip clip = noteType == NoteType.HIGH
+            ? directHitHighClip
+            : directHitLowClip;
+
+        if (clip == null)
+        {
+            Debug.LogWarning($"TutorialManager: 직접 재생용 타격음 클립이 비어 있음. note:{noteType}");
+            return;
+        }
+
+        if (directHitSources == null || directHitSources.Length == 0)
+        {
+            Debug.LogWarning("TutorialManager: 직접 재생용 AudioSource가 없음.");
+            return;
+        }
+
+        AudioSource source = directHitSources[nextDirectHitSourceIndex];
+        nextDirectHitSourceIndex = (nextDirectHitSourceIndex + 1) % directHitSources.Length;
+
+        source.Stop();
+        source.volume = 1f;
+        source.pitch = 1f;
+        source.panStereo = 0f;
+        source.spatialBlend = 0f;
+        source.priority = 0;
+        source.outputAudioMixerGroup = null;
+
+        source.PlayOneShot(clip, directHitVolume);
+
+    }
+
+    private void PlayTutorialHitSfx(NoteType noteType)
+    {
+        if (!playHitSfx)
+        {
+            return;
+        }
+
+        if (useDirectTutorialHitSfx)
+        {
+            PlayDirectTutorialHitSfx(noteType);
+            return;
+        }
+
+        PlayNoteHitSfxThroughSoundManager(noteType);
     }
 }
 
