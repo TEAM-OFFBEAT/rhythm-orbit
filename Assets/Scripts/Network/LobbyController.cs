@@ -47,6 +47,7 @@ public class LobbyController : MonoBehaviour
     
     private void Awake()
     {
+        GameCamera.EnforceAspectRatio(Camera.main);
         //StopGameplayBgmOnLobbyEnter();
 
         // 씬 재로드 시 Singleton이 씬의 NetworkManager를 즉시 Destroy한다.

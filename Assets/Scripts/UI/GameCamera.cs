@@ -16,6 +16,24 @@ public class GameCamera : MonoBehaviour
     private void Awake()
     {
         targetX = transform.position.x;
+        EnforceAspectRatio(GetComponent<Camera>());
+    }
+
+    /// <summary>
+    /// 16:9 비율을 강제한다. 비율이 다른 화면에서는 letterbox/pillarbox를 적용한다.
+    /// </summary>
+    public static void EnforceAspectRatio(Camera cam, float target = 16f / 9f)
+    {
+        float current = (float)Screen.width / Screen.height;
+        float scale = current / target;
+
+        if (scale < 1f)
+            cam.rect = new Rect((1f - scale) / 2f, 0f, scale, 1f);
+        else
+        {
+            float h = 1f / scale;
+            cam.rect = new Rect(0f, (1f - h) / 2f, 1f, h);
+        }
     }
 
     /// <summary>
