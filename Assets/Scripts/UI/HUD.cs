@@ -112,13 +112,15 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// My/Opponent 슬롯의 판정 라벨을 초기화한다.
-    /// 턴 전환 시 GameManager가 호출한다.
+    /// My/Opponent 슬롯의 판정 라벨과 패널 상태(스프라이트, 글로우)를 기본 상태로 초기화한다.
+    /// 턴 전환 및 라운드 인트로 진입 시 GameManager가 호출한다.
     /// </summary>
     public void ClearJudgments()
     {
         mySlot?.ClearJudgment();
         opponentSlot?.ClearJudgment();
+        mySlot?.SetActiveState(false);
+        opponentSlot?.SetActiveState(false);
     }
 
     /// <summary>

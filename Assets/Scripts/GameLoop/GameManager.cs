@@ -358,6 +358,7 @@ public class GameManager : MonoBehaviour
                     gameCamera?.SetCenterView();
                     pendingRoundStartSfx = true;
                     nextPhaseDspTime = thisPhaseStart + introDuration;
+                    hud?.ClearJudgments();
                     // phaseIndex를 증가시키지 않고 리턴 — 인트로 후 동일 phaseIndex로 재진입해 attack phase 시작
                     return;
                 }
