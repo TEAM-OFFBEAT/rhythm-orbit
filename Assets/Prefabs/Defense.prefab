@@ -342,7 +342,7 @@ MonoBehaviour:
   attackTurnRenderer: {fileID: 0}
   fallbackMissTimeoutMs: 100
   fallbackTransferSpeed: 5
-  noteActivationLeadTimeS: 1
+  noteActivationLeadTimeMs: 300
   subdivisions: 2
   defenseTimingWindowRatio: 0.25
 --- !u!1 &8003745205623763523

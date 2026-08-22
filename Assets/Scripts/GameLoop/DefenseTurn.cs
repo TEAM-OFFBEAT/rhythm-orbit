@@ -28,8 +28,8 @@ public class DefenseTurn : MonoBehaviour
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private double fallbackMissTimeoutMs = 100.0;
     [SerializeField] private float fallbackTransferSpeed = 5f;
-    // 판정선 도달 예정 시각보다 이 시간(초) 이전의 노트는 MISS 판정 및 키 입력을 무시한다.
-    [SerializeField] private double noteActivationLeadTimeS = 1.0;
+    // 판정선 도달 예정 시각보다 이 시간(ms) 이전의 노트는 MISS 판정 및 키 입력을 무시한다.
+    [SerializeField] private double noteActivationLeadTimeMs = 300.0;
     [SerializeField] private int subdivisions = 2;
     [SerializeField, Range(0f, 0.5f)] private float defenseTimingWindowRatio = 0.25f;
 
@@ -68,7 +68,7 @@ public class DefenseTurn : MonoBehaviour
 
                 for (int i = pendingNotes.Count - 1; i >= 0; i--)
                 {
-                    if (now < pendingNotes[i].judgeTime - noteActivationLeadTimeS) continue;
+                    if (now < pendingNotes[i].judgeTime - noteActivationLeadTimeMs / 1000.0) continue;
                     if (now <= pendingNotes[i].judgeTime + missTimeout) continue;
 
                     ResolveDefenseNote(pendingNotes[i], Judgment.MISS);
@@ -326,7 +326,7 @@ public class DefenseTurn : MonoBehaviour
 
         foreach (var note in pendingNotes)
         {
-            if (inputTime < note.judgeTime - noteActivationLeadTimeS) continue;
+            if (inputTime < note.judgeTime - noteActivationLeadTimeMs / 1000.0) continue;
 
             double dist = System.Math.Abs(note.judgeTime - inputTime);
 
@@ -352,4 +352,5 @@ public class DefenseTurn : MonoBehaviour
 
         return RhythmClock.Instance.GetNoteDuration(subdivisions) * defenseTimingWindowRatio;
     }
+
 }

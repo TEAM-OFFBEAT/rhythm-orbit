@@ -267,7 +267,7 @@ public class AttackTurn : MonoBehaviour
             extraNoteCount++;
         }
 
-        CreateAttackNote(snappedRelativeTime, noteType, isTimingSuccess);
+        CreateAttackNote(snappedRelativeTime, noteType, isInputSuccessForSfx: true);
     }
 
     private void Update()
