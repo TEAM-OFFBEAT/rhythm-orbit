@@ -38,10 +38,16 @@ public class LobbyController : MonoBehaviour
     [SerializeField] private TMP_Text joinStatusText;
 
     [SerializeField] private string mainLoopSceneName = "MainLoop";
+    [SerializeField] private string tutorialSceneName = "Tutorial";
 
+    private void Start()
+    {
+        PlayLobbyBgmOnEnter();
+    }
+    
     private void Awake()
     {
-        StopGameplayBgmOnLobbyEnter();
+        //StopGameplayBgmOnLobbyEnter();
 
         // 씬 재로드 시 Singleton이 씬의 NetworkManager를 즉시 Destroy한다.
         // 실제 지속 인스턴스(DontDestroyOnLoad)를 참조해야 한다.
@@ -77,7 +83,7 @@ public class LobbyController : MonoBehaviour
     /// 로비 전용 BGM은 추후 이 처리 이후에 따로 재생하면 된다.
     /// 효과음은 별개로 두기 위해 StopAllSfx는 호출하지 않는다.
     /// </summary>
-    private void StopGameplayBgmOnLobbyEnter()
+    private void PlayLobbyBgmOnEnter()
     {
         SoundManager.Instance?.StopBgm();
         SoundManager.Instance?.PlayBgm(BgmId.Lobby);
@@ -200,6 +206,12 @@ public class LobbyController : MonoBehaviour
 
     public void GoToTutorial()
     {
+        // 로비 BGM 정지
+        SoundManager.Instance?.StopBgm();
+
+        // 필요하면 버튼 클릭음 같은 잔여 SFX도 정리
+        // SoundManager.Instance?.StopAllSfx();
+
         if (NetworkManager.Instance != null)
         {
             NetworkManager.Instance.Disconnect();
@@ -207,7 +219,7 @@ public class LobbyController : MonoBehaviour
         }
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Tutorial");
+        SceneManager.LoadScene(tutorialSceneName);
     }
 
     // ── 유틸 ─────────────────────────────────────────────────────────────────

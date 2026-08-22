@@ -1421,48 +1421,6 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 튜토리얼 검수용 메트로놈이 중복 재생되지 않도록,
-    /// 현재 씬에 남아 있는 메트로놈 AudioSource를 강제로 정리한다.
-    /// </summary>
-    private void StopAllMetronomeSourcesInScene()
-    {
-        AudioSource[] sources = FindObjectsByType<AudioSource>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
-        );
-
-        foreach (AudioSource source in sources)
-        {
-            if (source == null || source.clip == null)
-            {
-                continue;
-            }
-
-            bool isGuideLoopClip =
-                source.clip.name.Contains("Tutorial_GuideMetronome");
-
-            bool isOriginalMetronomeClip =
-                guideMetronomeClip != null &&
-                source.clip == guideMetronomeClip;
-
-            if (!isGuideLoopClip && !isOriginalMetronomeClip)
-            {
-                continue;
-            }
-
-            if (source == guideMetronomeLoopSource)
-            {
-                continue;
-            }
-
-            source.Stop();
-            source.loop = false;
-
-            Debug.Log($"TutorialManager: 중복 메트로놈 AudioSource 정리 / {source.name}");
-        }
-    }
-
-    /// <summary>
     /// 튜토리얼 검수용 메트로놈 루프를 중지한다.
     /// </summary>
     private void StopGuideMetronome()
