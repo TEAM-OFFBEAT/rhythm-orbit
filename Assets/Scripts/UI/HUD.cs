@@ -35,6 +35,9 @@ public class HUD : MonoBehaviour
     private Coroutine myPanelHideCoroutine;
     private Coroutine opponentPanelHideCoroutine;
 
+    private float currentBpm;
+    private Coroutine bpmTextCoroutine;
+
     private void Awake()
     {
         if (myPanelBubble != null) myPanelBubble.SetActive(true);
@@ -120,13 +123,26 @@ public class HUD : MonoBehaviour
 
     /// <summary>
     /// 현재 BPM 수치를 텍스트와 게이지 바에 동시에 표시한다.
+    /// 첫 호출 시 텍스트를 즉시 설정하고, 이후 BPM 상승 시 애니메이션을 적용한다.
     /// BPM 단계 변경 시 GameManager가 호출한다.
     /// </summary>
     public void UpdateBpm(float bpm)
     {
-        if (bpmText != null)
-            bpmText.text = $"BPM {bpm:0}";
         bpmGauge?.SetBpm(bpm);
+
+        if (bpmText == null) { currentBpm = bpm; return; }
+
+        if (currentBpm <= 0f)
+        {
+            bpmText.text = $"BPM {bpm:0}";
+            currentBpm = bpm;
+            return;
+        }
+
+        if (bpmTextCoroutine != null) StopCoroutine(bpmTextCoroutine);
+        float from = currentBpm;
+        currentBpm = bpm;
+        bpmTextCoroutine = StartCoroutine(AnimateBpmText(from, bpm));
     }
 
     /// <summary>
@@ -269,6 +285,24 @@ public class HUD : MonoBehaviour
         yield return new WaitForSeconds(GetTwoBeatSeconds());
         if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
         opponentPanelHideCoroutine = null;
+    }
+
+    private IEnumerator AnimateBpmText(float from, float to)
+    {
+        float duration = 8f * 60f / to;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float tEased = 1f - Mathf.Pow(1f - t, 3f);
+            bpmText.text = $"BPM {Mathf.Round(Mathf.Lerp(from, to, tEased)):0}";
+            yield return null;
+        }
+
+        bpmText.text = $"BPM {to:0}";
+        bpmTextCoroutine = null;
     }
 
     // 2박자 = 4반박 = RhythmClock.GetNoteDuration() * 4

@@ -4,7 +4,8 @@ using UnityEngine.UI;
 
 /// <summary>
 /// BPM 값을 fill 게이지로 시각화한다.
-/// 라운드 전환 시 fill 애니메이션, 진행 중 끝단 맥동 효과를 제공한다.
+/// 라운드 전환 시 8박 ease-out fill 애니메이션을 제공한다.
+/// SetBpm 호출 이후에만 pulse 효과가 활성화된다.
 /// </summary>
 public class BpmGaugeUI : MonoBehaviour
 {
@@ -16,13 +17,15 @@ public class BpmGaugeUI : MonoBehaviour
     [SerializeField] private float maxBpm = 144f;
 
     [Header("Fill Animation")]
-    [SerializeField] private float animDuration = 0.6f;
+    [SerializeField] private float animBeats = 8f;
 
     [Header("Pulse Effect")]
-    [SerializeField] private float pulseAmplitude = 6f;
+    [SerializeField] private float pulseAmplitude = 2f;
     [SerializeField] private float pulseFrequency = 5f;
 
     private float currentFill;
+    private float currentBpm;
+    private bool pulseActive;
     private Coroutine animCoroutine;
 
     private void Awake()
@@ -36,6 +39,12 @@ public class BpmGaugeUI : MonoBehaviour
     {
         if (fillImage == null) return;
 
+        if (!pulseActive)
+        {
+            fillImage.fillAmount = currentFill;
+            return;
+        }
+
         float barWidth = fillImage.rectTransform.rect.width;
         if (barWidth <= 0f) return;
 
@@ -44,27 +53,32 @@ public class BpmGaugeUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 지정한 BPM에 맞는 fill 값으로 애니메이션을 시작한다.
+    /// 지정한 BPM에 맞는 fill 값으로 8박 ease-out 애니메이션을 시작한다.
+    /// 처음 호출 시 pulse가 활성화된다.
     /// minBpm 이하면 0, maxBpm 이상이면 1로 클램프된다.
     /// </summary>
     public void SetBpm(float bpm)
     {
-        float target = Mathf.InverseLerp(minBpm, maxBpm, bpm);
+        currentBpm = bpm;
+        pulseActive = true;
 
-        if (animCoroutine != null)
-            StopCoroutine(animCoroutine);
+        float target = Mathf.InverseLerp(minBpm, maxBpm, bpm);
+        if (animCoroutine != null) StopCoroutine(animCoroutine);
         animCoroutine = StartCoroutine(AnimateFill(target));
     }
 
     private IEnumerator AnimateFill(float target)
     {
         float start = currentFill;
+        float duration = animBeats * 60f / currentBpm;
         float elapsed = 0f;
 
-        while (elapsed < animDuration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            currentFill = Mathf.Lerp(start, target, elapsed / animDuration);
+            float t = Mathf.Clamp01(elapsed / duration);
+            float tEased = 1f - Mathf.Pow(1f - t, 3f);
+            currentFill = Mathf.Lerp(start, target, tEased);
             yield return null;
         }
 
