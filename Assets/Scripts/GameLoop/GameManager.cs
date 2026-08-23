@@ -359,6 +359,7 @@ public class GameManager : MonoBehaviour
                     pendingRoundStartSfx = true;
                     nextPhaseDspTime = thisPhaseStart + introDuration;
                     hud?.ClearJudgments();
+                    hud?.ClearAttackProgress();
                     // phaseIndex를 증가시키지 않고 리턴 — 인트로 후 동일 phaseIndex로 재진입해 attack phase 시작
                     return;
                 }
@@ -418,6 +419,7 @@ public class GameManager : MonoBehaviour
 
         attackTurnRenderer?.ClearAll();
         hud?.ClearJudgments();
+        hud?.ClearAttackProgress();
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
         hud?.ClearPanelMessages();
@@ -466,6 +468,7 @@ public class GameManager : MonoBehaviour
     private void StartDefensePhase(double phaseStartDspTime)
     {
         currentJudgmentIndex = 0;
+        hud?.ResetCombo();
 
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         hud?.SetTurnOwner(GetDefenderPlayerId());
@@ -600,7 +603,14 @@ public class GameManager : MonoBehaviour
         GetDefenseLabel(GetDefenderPlayerId())?.ShowJudgment(judgment);
 
         if (judgment != Judgment.MISS)
+        {
             hud?.SetStarSuccess(currentJudgmentIndex);
+            hud?.IncrementCombo();
+        }
+        else
+        {
+            hud?.ResetCombo();
+        }
         currentJudgmentIndex++;
 
         if (judgment != Judgment.MISS) return;

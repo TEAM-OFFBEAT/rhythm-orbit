@@ -15,6 +15,7 @@ public class HUD : MonoBehaviour
     [SerializeField] private TMP_Text bpmText;
     [SerializeField] private BpmGaugeUI bpmGauge;
     [SerializeField] private StarsRenderer starsRenderer;
+    [SerializeField] private ComboUI comboUI;
 
     [Header("Panel Messages")]
     [SerializeField] private GameObject myPanelBubble;
@@ -190,6 +191,11 @@ public class HUD : MonoBehaviour
 
         int filledCount = Mathf.Min(actualCount, targetCount);
         starsRenderer.SetProgress(filledCount, actualCount);
+
+        if (actualCount > targetCount)
+            comboUI?.Reset();
+        else
+            comboUI?.SetCombo(actualCount);
     }
 
     /// <summary>
@@ -321,5 +327,18 @@ public class HUD : MonoBehaviour
     public void ClearAttackProgress()
     {
         starsRenderer?.Clear();
+        comboUI?.Reset();
+    }
+
+    /// <summary>현재 콤보를 1 증가시킨다. 방어 턴 성공 판정 시 GameManager가 호출한다.</summary>
+    public void IncrementCombo()
+    {
+        comboUI?.Increment();
+    }
+
+    /// <summary>콤보를 초기화한다. 방어 MISS 또는 방어 턴 시작 시 GameManager가 호출한다.</summary>
+    public void ResetCombo()
+    {
+        comboUI?.Reset();
     }
 }
