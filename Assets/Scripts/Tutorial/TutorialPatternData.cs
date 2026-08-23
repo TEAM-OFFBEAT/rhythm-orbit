@@ -9,12 +9,14 @@ public class TutorialPatternData
 {
     public string message;
     public NoteType[] notes;
+    public int[] gridSteps;
 
     public int NoteCount => notes == null ? 0 : notes.Length;
 
-    public TutorialPatternData(string message, NoteType[] notes)
+    public TutorialPatternData(string message, NoteType[] notes, int[] gridSteps = null)
     {
         this.message = message;
         this.notes = notes;
+        this.gridSteps = gridSteps;
     }
 }

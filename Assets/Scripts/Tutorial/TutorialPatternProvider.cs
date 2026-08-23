@@ -91,7 +91,7 @@ public class TutorialPatternProvider : MonoBehaviour
 
             default:
                 return new TutorialPatternData(
-                    "반가워",
+                    "교신해",
                     new[]
                     {
                         NoteType.LOW,
@@ -104,51 +104,37 @@ public class TutorialPatternProvider : MonoBehaviour
 
     public TutorialPatternData GetRallyOpponentPattern(int turn)
     {
-        switch (turn % 4)
+        switch ((turn /2 )% 4)
         {
             case 0:
                 return new TutorialPatternData(
                     "들리니",
-                    new[]
-                    {
-                        NoteType.HIGH,
-                        NoteType.LOW,
-                        NoteType.HIGH
-                    }
+                    new[] { NoteType.LOW, NoteType.LOW, NoteType.HIGH },
+                    new[] { 2, 4, 7 }
                 );
 
             case 1:
                 return new TutorialPatternData(
-                    "잘들려",
-                    new[]
-                    {
-                        NoteType.LOW,
-                        NoteType.HIGH,
-                        NoteType.LOW
-                    }
+                    "신호야",
+                    new[] { NoteType.LOW, NoteType.HIGH, NoteType.LOW },
+                    new[] { 2, 5, 7 }
                 );
 
             case 2:
                 return new TutorialPatternData(
                     "좋았어",
-                    new[]
-                    {
-                        NoteType.HIGH,
-                        NoteType.HIGH,
-                        NoteType.LOW
-                    }
+                    new[] { NoteType.HIGH, NoteType.HIGH, NoteType.LOW },
+                    new[] { 3, 4, 7 }
                 );
 
             default:
                 return new TutorialPatternData(
-                    "반가워",
-                    new[]
-                    {
-                        NoteType.LOW,
-                        NoteType.LOW,
-                        NoteType.HIGH
-                    }
+                    "다시해",
+                    new[] { NoteType.LOW, NoteType.LOW, NoteType.HIGH },
+                    new[] { 2, 3, 6 }
                 );
         }
     }
+
+    
 }

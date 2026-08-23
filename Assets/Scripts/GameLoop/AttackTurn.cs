@@ -221,6 +221,64 @@ public class AttackTurn : MonoBehaviour
     }
 
     /// <summary>
+    /// 튜토리얼용 상대 데모 공격 시작.
+    /// 지정한 노트 패턴과 gridSteps에 맞춰 자동 생성한다.
+    /// gridStep 1개는 현재 NoteDuration 기준 한 칸이다.
+    /// </summary>
+    public void StartOpponentAttackDemo(
+        string attackMessage,
+        NoteType[] demoPattern,
+        int[] gridSteps,
+        double startDspTime
+    )
+    {
+        if (demoPattern == null || demoPattern.Length == 0)
+        {
+            Debug.LogWarning("AttackTurn: 데모 패턴이 비어 있음.");
+            return;
+        }
+
+        StartAttack(
+            AttackSide.P2,
+            false,
+            demoPattern.Length,
+            attackMessage,
+            startDspTime
+        );
+
+        opponentDemoRelativeTimes.Clear();
+
+        double noteDuration = NoteDuration;
+
+        for (int i = 0; i < demoPattern.Length; i++)
+        {
+            int step;
+
+            if (gridSteps != null && i < gridSteps.Length)
+            {
+                step = Mathf.Max(0, gridSteps[i]);
+            }
+            else
+            {
+                // gridSteps를 안 넣으면 기존 방식 유지
+                step = 2 + i * 2;
+            }
+
+            double relativeTime = step * noteDuration;
+
+            if (relativeTime <= attackDuration)
+            {
+                opponentDemoRelativeTimes.Add((relativeTime, demoPattern[i]));
+            }
+        }
+
+        targetTapCount = opponentDemoRelativeTimes.Count;
+        nextOpponentDemoIndex = 0;
+
+        OnAttackProgressChanged?.Invoke(0, targetTapCount);
+    }
+
+    /// <summary>
     /// 공격 턴 입력을 처리한다.
     /// 공격 시간 안의 입력은 가장 가까운 박자선에 스냅한다.
     /// 박자 어긋남은 감점 카운트에 기록하되, 스냅된 노트는 생성한다.

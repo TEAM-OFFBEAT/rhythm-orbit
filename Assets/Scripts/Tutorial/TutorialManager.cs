@@ -660,6 +660,7 @@ public class TutorialManager : MonoBehaviour
         attackTurn.StartOpponentAttackDemo(
             pattern.message,
             pattern.notes,
+            pattern.gridSteps,
             attackStartDspTime
         );
 
@@ -1169,21 +1170,24 @@ public class TutorialManager : MonoBehaviour
                 return new TutorialDefensePattern(
                     "응",
                     new[] { NoteType.HIGH },
-                    showKeyHints: true
+                    showKeyHints: true,
+                    gridSteps: new[] { 4 }
                 );
 
             case 1:
                 return new TutorialDefensePattern(
                     "나",
                     new[] { NoteType.LOW },
-                    showKeyHints: true
+                    showKeyHints: true,
+                    gridSteps: new[] { 4 }
                 );
 
             default:
                 return new TutorialDefensePattern(
                     "반가워",
-                    new[] { NoteType.HIGH, NoteType.LOW, NoteType.HIGH },
-                    showKeyHints: false
+                    new[] { NoteType.LOW, NoteType.LOW, NoteType.HIGH },
+                    showKeyHints: false,
+                    gridSteps: new[] { 2, 3, 5 }
                 );
         }
     }
@@ -1273,7 +1277,8 @@ public class TutorialManager : MonoBehaviour
         TutorialDefensePattern defensePattern = new TutorialDefensePattern(
             pattern.message,
             pattern.notes,
-            showKeyHints: false
+            showKeyHints: false,
+            gridSteps: pattern.gridSteps
         );
 
         yield return RunOpponentDemoAttackThenDefense(
@@ -1817,25 +1822,28 @@ public class TutorialManager : MonoBehaviour
 
 
 /// <summary>
-/// 튜토리얼 방어 연습용 메시지/노트 패턴/키 힌트 표시 여부를 함께 담는다.
+/// 튜토리얼 방어 연습용 메시지/노트 패턴/키 힌트 표시 여부/노트 박자 위치를 함께 담는다.
 /// </summary>
 [System.Serializable]
 public class TutorialDefensePattern
 {
     public string message;
     public NoteType[] notes;
+    public int[] gridSteps;
     public bool showKeyHints;
 
     public int NoteCount => notes == null ? 0 : notes.Length;
 
-    public TutorialDefensePattern(string message, NoteType[] notes, bool showKeyHints)
+    public TutorialDefensePattern(
+        string message,
+        NoteType[] notes,
+        bool showKeyHints,
+        int[] gridSteps = null
+    )
     {
         this.message = message;
         this.notes = notes;
         this.showKeyHints = showKeyHints;
+        this.gridSteps = gridSteps;
     }
-
-    
-
-    
 }
