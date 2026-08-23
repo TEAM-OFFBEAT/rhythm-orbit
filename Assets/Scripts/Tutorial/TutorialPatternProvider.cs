@@ -131,7 +131,7 @@ public class TutorialPatternProvider : MonoBehaviour
                 return new TutorialPatternData(
                     "다시해",
                     new[] { NoteType.LOW, NoteType.LOW, NoteType.HIGH },
-                    new[] { 2, 3, 6 }
+                    new[] { 2, 3, 7 }
                 );
         }
     }
