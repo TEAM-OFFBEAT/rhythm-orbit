@@ -64,6 +64,7 @@ public class BpmGaugeUI : MonoBehaviour
 
         float target = Mathf.InverseLerp(minBpm, maxBpm, bpm);
         if (animCoroutine != null) StopCoroutine(animCoroutine);
+        if (!gameObject.activeInHierarchy) { currentFill = target; return; }
         animCoroutine = StartCoroutine(AnimateFill(target));
     }
 
