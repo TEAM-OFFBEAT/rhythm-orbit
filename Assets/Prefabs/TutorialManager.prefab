@@ -70,7 +70,7 @@ MonoBehaviour:
   tutorialMinimumSanity: 90
   defenseReactionBeats: 4
   playTutorialBgmOnStart: 1
-  tutorialBgmClip: {fileID: 8300000, guid: 211b59ddb07a5fe488f86db1eb1e4b47, type: 3}
+  tutorialBgmClip: {fileID: 8300000, guid: 69583065699452b4ca0195ad21146639, type: 3}
   tutorialBgmVolume: 1
   loopTutorialBgm: 1
   playHitSfx: 1
