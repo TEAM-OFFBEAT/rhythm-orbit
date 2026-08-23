@@ -71,7 +71,11 @@ public class TutorialManager : MonoBehaviour
 
     [Header("Tutorial Sound")]
     [SerializeField] private bool playTutorialBgmOnStart = false;
-    [SerializeField] private BgmId tutorialBgmId = BgmId.Tutorial;
+    [SerializeField] private AudioClip tutorialBgmClip;
+    private AudioSource tutorialBgmSource;
+    [SerializeField, Range(0f, 1f)] private float tutorialBgmVolume = 1f;
+    [SerializeField] private bool loopTutorialBgm = true;
+
 
     [SerializeField] private bool playHitSfx = true;
     [SerializeField] private bool playMissSfx = false;
@@ -196,6 +200,7 @@ public class TutorialManager : MonoBehaviour
     private void OnDisable()
     {
         StopGuideMetronome();
+        StopTutorialBgm();
         UnsubscribeEvents();
     }
 
@@ -293,7 +298,9 @@ public class TutorialManager : MonoBehaviour
         RhythmClock.Instance?.SetBpm(tutorialBpm);
         RhythmClock.Instance?.StartClock(tutorialStartDspTime);
 
-        TryPlayTutorialBgm();
+        SoundManager.Instance?.StopBgm();
+        
+        StartTutorialBgm(tutorialStartDspTime);
         StartGuideMetronome(tutorialStartDspTime);
         PrepareDirectHitSources();
 
@@ -1278,17 +1285,59 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 튜토리얼 BGM 재생 자리.
-    /// 아직 BGM이 없으면 playTutorialBgmOnStart를 꺼두면 된다.
+    /// 튜토리얼 전용 BGM을 지정한 DSP 시각에 예약 재생한다.
+    /// SoundManager를 거치지 않고 TutorialManager의 AudioSource만 사용한다.
     /// </summary>
-    private void TryPlayTutorialBgm()
+    private void StartTutorialBgm(double startDspTime)
     {
+        StopTutorialBgm();
+
         if (!playTutorialBgmOnStart)
         {
             return;
         }
 
-        SoundManager.Instance?.PlayBgm(tutorialBgmId);
+        if (tutorialBgmClip == null)
+        {
+            Debug.LogWarning("TutorialManager: tutorialBgmClip이 없어 튜토리얼 BGM을 재생하지 않음.");
+            return;
+        }
+
+        if (tutorialBgmSource == null)
+        {
+            GameObject sourceObject = new GameObject("TutorialBgmSource");
+            sourceObject.transform.SetParent(transform);
+
+            tutorialBgmSource = sourceObject.AddComponent<AudioSource>();
+        }
+
+        tutorialBgmSource.playOnAwake = false;
+        tutorialBgmSource.loop = loopTutorialBgm;
+        tutorialBgmSource.clip = tutorialBgmClip;
+        tutorialBgmSource.volume = tutorialBgmVolume;
+        tutorialBgmSource.pitch = 1f;
+        tutorialBgmSource.panStereo = 0f;
+        tutorialBgmSource.spatialBlend = 0f;
+        tutorialBgmSource.outputAudioMixerGroup = null;
+
+        double safeStartDspTime = Math.Max(startDspTime, AudioSettings.dspTime + 0.05);
+        tutorialBgmSource.PlayScheduled(safeStartDspTime);
+
+        Debug.Log(
+            $"TutorialManager: 튜토리얼 BGM 예약 재생 / " +
+            $"clip:{tutorialBgmClip.name}, start:{safeStartDspTime:0.000}, loop:{loopTutorialBgm}"
+        );
+    }
+
+    private void StopTutorialBgm()
+    {
+        if (tutorialBgmSource == null)
+        {
+            return;
+        }
+
+        tutorialBgmSource.Stop();
+        tutorialBgmSource.clip = null;
     }
 
     /// <summary>

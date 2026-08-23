@@ -69,11 +69,13 @@ MonoBehaviour:
   rallySanityLossPerTurn: 1
   tutorialMinimumSanity: 90
   defenseReactionBeats: 4
-  playTutorialBgmOnStart: 0
-  tutorialBgmId: 1
+  playTutorialBgmOnStart: 1
+  tutorialBgmClip: {fileID: 8300000, guid: 211b59ddb07a5fe488f86db1eb1e4b47, type: 3}
+  tutorialBgmVolume: 1
+  loopTutorialBgm: 1
   playHitSfx: 1
   playMissSfx: 0
-  playGuideMetronome: 1
+  playGuideMetronome: 0
   guideMetronomeClip: {fileID: 8300000, guid: 3c450153aa5e63540a711757e87d2b19, type: 3}
   guideMetronomeLoopSource: {fileID: 4265392361032758618}
   guideMetronomeIntervalBeats: 4
