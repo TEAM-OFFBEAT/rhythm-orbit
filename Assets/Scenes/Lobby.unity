@@ -175,8 +175,16 @@ PrefabInstance:
     m_TransformParent: {fileID: 421601158}
     m_Modifications:
     - target: {fileID: 276924494974352228, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
-      propertyPath: m_SortingOrder
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 2067952576}
+    - target: {fileID: 276924494974352228, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
+      propertyPath: m_RenderMode
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 276924494974352228, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 3068560221479716215, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.x
@@ -678,6 +686,18 @@ PrefabInstance:
     - target: {fileID: 5501738816694032748, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: m_Name
       value: LobbyCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 7101178437244378350, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 2067952576}
+    - target: {fileID: 7101178437244378350, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_RenderMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7101178437244378350, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_SortingOrder
+      value: 100
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

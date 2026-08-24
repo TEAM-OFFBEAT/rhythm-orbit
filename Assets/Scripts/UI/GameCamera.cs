@@ -27,13 +27,22 @@ public class GameCamera : MonoBehaviour
         float current = (float)Screen.width / Screen.height;
         float scale = current / target;
 
-        if (scale < 1f)
-            cam.rect = new Rect((1f - scale) / 2f, 0f, scale, 1f);
+        // scale < 1: 화면이 target보다 좁음 → 레터박스(상하 바), 뷰포트 = 전체 너비 × scale 높이
+        // scale > 1: 화면이 target보다 넓음 → 필라박스(좌우 바), 뷰포트 = (1/scale) 너비 × 전체 높이
+        // 두 경우 모두 camera.aspect = target(16:9)으로 유지됨
+        bool isLetterbox = scale < 1f;
+        if (isLetterbox)
+            cam.rect = new Rect(0f, (1f - scale) / 2f, 1f, scale);
         else
         {
-            float h = 1f / scale;
-            cam.rect = new Rect(0f, (1f - h) / 2f, 1f, h);
+            float w = 1f / scale;
+            cam.rect = new Rect((1f - w) / 2f, 0f, w, 1f);
         }
+
+        // CanvasScaler가 Screen 전체 크기를 기준으로 스케일을 계산하므로,
+        // 레터박스(상하 바)이면 너비 기준, 필라박스(좌우 바)이면 높이 기준으로 맞춰야 Canvas가 왜곡되지 않음
+        foreach (var scaler in UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.CanvasScaler>())
+            scaler.matchWidthOrHeight = isLetterbox ? 0f : 1f;
     }
 
     /// <summary>
