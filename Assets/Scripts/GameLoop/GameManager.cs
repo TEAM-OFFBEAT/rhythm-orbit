@@ -22,8 +22,9 @@ public class RoundSetting
     [Header("Sound")]
     public SfxId roundUpSfx = SfxId.RoundStart1;
 
-    [Header("Intro")]
-    public int introBeatCount = 16;
+    [Header("Turns")]
+    public int introTurns = 4;   // 라운드 시작 후 카메라 중앙 대기 + 입력 차단 구간 (턴 단위)
+    public int totalTurns = 12;  // 이 라운드의 전체 턴 수 (BGM 전체 길이와 일치)
 }
 public class GameManager : MonoBehaviour
 {
@@ -51,9 +52,7 @@ public class GameManager : MonoBehaviour
     [Header("Result UI")]
     [SerializeField] private ResultPanelUI resultPanelUI;
 
-    [Header("Round Progression")]
-    [SerializeField] private int attackPhasesPerRound = 2;
-
+    [Header("Round Settings")]
     [SerializeField] private RoundSetting[] roundSettings =
     {
         new RoundSetting
@@ -62,7 +61,9 @@ public class GameManager : MonoBehaviour
             bpm = 106f,
             minTargetNoteCount = 2,
             maxTargetNoteCount = 4,
-            roundUpSfx = SfxId.RoundStart1
+            roundUpSfx = SfxId.RoundStart1,
+            introTurns = 4,
+            totalTurns = 12,
         },
         new RoundSetting
         {
@@ -70,7 +71,9 @@ public class GameManager : MonoBehaviour
             bpm = 120f,
             minTargetNoteCount = 2,
             maxTargetNoteCount = 6,
-            roundUpSfx = SfxId.RoundStart2
+            roundUpSfx = SfxId.RoundStart2,
+            introTurns = 2,
+            totalTurns = 12,
         },
         new RoundSetting
         {
@@ -78,8 +81,10 @@ public class GameManager : MonoBehaviour
             bpm = 144f,
             minTargetNoteCount = 2,
             maxTargetNoteCount = 7,
-            roundUpSfx = SfxId.RoundStart3
-        }
+            roundUpSfx = SfxId.RoundStart3,
+            introTurns = 4,
+            totalTurns = 16,
+        },
     };
 
     [Header("Game Start Delay")]
@@ -279,8 +284,8 @@ public class GameManager : MonoBehaviour
         // 첫 공격 phase 시작 시점에 현재 라운드 BGM을 맞춰 예약한다.
         ScheduleCurrentCoreLoopBgm(nextPhaseDspTime);
 
-        // BGM 시작 후 introBeatCount 박자 대기, 그 뒤 SFX와 함께 게임루프 시작.
-        double introDuration = GetRoundIntroDuration();
+        // BGM 시작 후 introTurns 턴만큼 대기 — 카메라 중앙, 입력 차단.
+        double introDuration = GetCurrentTurnDuration() * 2.0 * GetCurrentIntroTurns();
         if (introDuration > 0.0)
         {
             gameCamera?.SetCenterView();
@@ -347,24 +352,29 @@ public class GameManager : MonoBehaviour
 
             if (nextRoundIndex != currentRoundIndex)
             {
+                // 전환 갭: 전 라운드 BPM 기준 2박(4분음표) = 8분음표 4개
+                // ApplyCurrentBpm 전에 읽어야 전 라운드 클락 기준으로 계산된다.
+                double gapDuration = RhythmClock.Instance != null
+                    ? RhythmClock.Instance.GetNoteDuration() * 4.0
+                    : 2.0 * (60.0 / Mathf.Max(1f, GetCurrentBpm()));
+
+                SoundManager.Instance?.PlaySfxScheduled(SfxId.RoundChange, thisPhaseStart);
+
                 currentRoundIndex = nextRoundIndex;
-
                 ApplyCurrentBpm(scheduleBgm: false);
-                ScheduleCurrentCoreLoopBgm(thisPhaseStart);
 
-                double introDuration = GetRoundIntroDuration();
-                if (introDuration > 0.0)
-                {
-                    gameCamera?.SetCenterView();
-                    pendingRoundStartSfx = true;
-                    nextPhaseDspTime = thisPhaseStart + introDuration;
-                    hud?.ClearJudgments();
-                    hud?.ClearAttackProgress();
-                    // phaseIndex를 증가시키지 않고 리턴 — 인트로 후 동일 phaseIndex로 재진입해 attack phase 시작
-                    return;
-                }
+                double nextRoundStart = thisPhaseStart + gapDuration;
+                ScheduleCurrentCoreLoopBgm(nextRoundStart, stopAt: thisPhaseStart);
 
-                PlayRoundStartSfx();
+                // BGM 시작 후 introTurns 턴만큼 추가 대기 — 카메라 중앙, 입력 차단.
+                double introDuration = GetCurrentTurnDuration() * 2.0 * GetCurrentIntroTurns();
+                gameCamera?.SetCenterView();
+                pendingRoundStartSfx = true;
+                nextPhaseDspTime = nextRoundStart + introDuration;
+                hud?.ClearJudgments();
+                hud?.ClearAttackProgress();
+                // phaseIndex를 증가시키지 않고 리턴 — 인트로 후 동일 phaseIndex로 재진입해 attack phase 시작
+                return;
             }
 
             currentTurnDuration     = GetCurrentTurnDuration();
@@ -890,17 +900,6 @@ public class GameManager : MonoBehaviour
     // ── Helpers ───────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// 현재 라운드 설정의 introBeatCount 기준으로 인트로 구간 길이를 초 단위로 반환한다.
-    /// </summary>
-    private double GetRoundIntroDuration()
-    {
-        RoundSetting setting = GetCurrentRoundSetting();
-        if (setting == null || setting.introBeatCount <= 0 || RhythmClock.Instance == null)
-            return 0.0;
-        return RhythmClock.Instance.GetBeatDuration() * setting.introBeatCount;
-    }
-
-    /// <summary>
     /// 현재 공격자의 반대 플레이어를 방어자로 반환한다.
     /// P1이 공격 중이면 P2가 방어자, P2가 공격 중이면 P1이 방어자다.
     /// </summary>
@@ -978,6 +977,15 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 현재 라운드 설정의 introTurns를 반환한다.
+    /// 인트로 구간(카메라 중앙 대기) 동안 게임플레이가 시작되지 않는 턴 수.
+    /// </summary>
+    private int GetCurrentIntroTurns()
+    {
+        return GetCurrentRoundSetting()?.introTurns ?? 0;
+    }
+
+    /// <summary>
     /// 현재 라운드 인덱스에 해당하는 RoundSetting을 반환한다.
     /// 라운드 설정이 비어 있으면 null을 반환한다.
     /// </summary>
@@ -994,37 +1002,32 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 공격 phase 인덱스를 기준으로 현재 라운드 인덱스를 계산한다.
-    /// attackPhasesPerRound가 2이면 두 번의 공격 phase마다 다음 라운드로 넘어간다.
+    /// 라운드별 totalTurns를 누적해 해당 인덱스가 어느 라운드에 속하는지 판단한다.
     /// </summary>
     private int GetRoundIndexByAttackPhase(int attackPhaseIdx)
     {
-        if (roundSettings == null || roundSettings.Length == 0)
+        if (roundSettings == null || roundSettings.Length == 0) return 0;
+
+        int cumulative = 0;
+        for (int i = 0; i < roundSettings.Length; i++)
         {
-            return 0;
+            cumulative += Mathf.Max(1, roundSettings[i].totalTurns - roundSettings[i].introTurns);
+            if (attackPhaseIdx < cumulative) return i;
         }
-
-        int safePhasesPerRound = Mathf.Max(1, attackPhasesPerRound);
-
-        return Mathf.Clamp(
-            attackPhaseIdx / safePhasesPerRound,
-            0,
-            roundSettings.Length - 1
-        );
+        return roundSettings.Length - 1;
     }
 
     /// <summary>
-    /// 현재 라운드 설정 기준으로 전체 예정 공격 턴 수를 계산한다.
-    /// roundSettings.Length * attackPhasesPerRound 만큼의 공격 턴을 전체 게임 길이로 본다.
+    /// 모든 라운드의 totalTurns 합을 전체 예정 공격 턴 수로 반환한다.
     /// </summary>
     private int GetTotalPlannedAttackTurnCount()
     {
-        if (roundSettings == null || roundSettings.Length == 0)
-        {
-            return 0;
-        }
+        if (roundSettings == null || roundSettings.Length == 0) return 0;
 
-        int safePhasesPerRound = Mathf.Max(1, attackPhasesPerRound);
-        return roundSettings.Length * safePhasesPerRound;
+        int total = 0;
+        foreach (RoundSetting s in roundSettings)
+            total += Mathf.Max(1, s.totalTurns - s.introTurns);
+        return total;
     }
 
     /// <summary>
@@ -1101,13 +1104,13 @@ public class GameManager : MonoBehaviour
     /// 현재 BPM에 매핑된 코어 루프 BGM을 지정한 DSP 시각에 예약 재생한다.
     /// SoundManager가 없거나 BGM 재생이 꺼져 있으면 아무것도 하지 않는다.
     /// </summary>
-    private void ScheduleCurrentCoreLoopBgm(double dspTime)
+    private void ScheduleCurrentCoreLoopBgm(double dspTime, double stopAt = -1)
     {
         if (!playCoreLoopBgm) return;
         if (SoundManager.Instance == null) return;
 
         float bpm = GetCurrentBpm();
-        SoundManager.Instance.ScheduleCoreLoopBgm(bpm, dspTime);
+        SoundManager.Instance.ScheduleCoreLoopBgm(bpm, dspTime, stopAt);
     }
 
     /// <summary>

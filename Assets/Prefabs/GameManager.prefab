@@ -50,26 +50,33 @@ MonoBehaviour:
   noteCountGenerator: {fileID: 0}
   randomMessageProvider: {fileID: 0}
   hud: {fileID: 0}
+  p1DefenseJudgmentLabel: {fileID: 0}
+  p2DefenseJudgmentLabel: {fileID: 0}
   gameCamera: {fileID: 0}
   sanitySystem: {fileID: 0}
   resultPanelUI: {fileID: 0}
-  attackPhasesPerRound: 8
   roundSettings:
   - roundName: R1
     bpm: 106
     minTargetNoteCount: 2
     maxTargetNoteCount: 4
     roundUpSfx: 7
+    introTurns: 4
+    totalTurns: 12
   - roundName: R2
     bpm: 120
     minTargetNoteCount: 2
     maxTargetNoteCount: 6
     roundUpSfx: 8
+    introTurns: 2
+    totalTurns: 12
   - roundName: R3
     bpm: 144
     minTargetNoteCount: 2
     maxTargetNoteCount: 7
     roundUpSfx: 9
+    introTurns: 4
+    totalTurns: 16
   useMillisecondStartDelay: 1
   gameStartDelayMs: 1000
   useBeatStartDelay: 1

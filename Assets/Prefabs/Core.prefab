@@ -65,34 +65,26 @@ MonoBehaviour:
   bgmSourceB: {fileID: 0}
   sfxPoolSize: 12
   bgmEntries:
-  - id: 0
-    clip: {fileID: 0}
-    volume: 0.52
-    loop: 0
-  - id: 1
-    clip: {fileID: 0}
-    volume: 0.57
-    loop: 0
-  - id: 2
-    clip: {fileID: 8300000, guid: 35e6ed8dc5b72554f868a39782e5683d, type: 3}
-    volume: 0.58
-    loop: 0
-  - id: 3
-    clip: {fileID: 8300000, guid: 716db8f57db517840b5f447f10eef5b0, type: 3}
-    volume: 0.57
-    loop: 0
-  - id: 4
-    clip: {fileID: 8300000, guid: a741aa8f472b4e54e8ea6337d162ab44, type: 3}
-    volume: 0.57
-    loop: 0
-  - id: 5
-    clip: {fileID: 0}
-    volume: 0.53
-    loop: 0
   - id: 1
     clip: {fileID: 8300000, guid: 9c7b06e6c644de94f89a2fb19384fd77, type: 3}
-    volume: 0.53
+    volume: 0.7
     loop: 1
+  - id: 2
+    clip: {fileID: 8300000, guid: 69583065699452b4ca0195ad21146639, type: 3}
+    volume: 0.7
+    loop: 0
+  - id: 3
+    clip: {fileID: 8300000, guid: 1dd29c60dda35b74f90a50d291b4720f, type: 3}
+    volume: 0.7
+    loop: 0
+  - id: 4
+    clip: {fileID: 8300000, guid: a73b436eba0618b41aedae37b16c1d00, type: 3}
+    volume: 0.7
+    loop: 0
+  - id: 5
+    clip: {fileID: 8300000, guid: 9da99e4dcc886bd4c9337c3bf9d7798a, type: 3}
+    volume: 0.7
+    loop: 0
   sfxEntries:
   - id: 0
     clip: {fileID: 8300000, guid: c7b1bd46e34c18749b16716b0e5797df, type: 3}
@@ -150,13 +142,17 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 72f0106a2f30e96439c94cbf2ae1e484, type: 3}
     volume: 0.55
     maxSimultaneous: 0
+  - id: 10
+    clip: {fileID: 8300000, guid: ce110ff0c99f39849aac45d1adfd3c8d, type: 3}
+    volume: 0.55
+    maxSimultaneous: 0
   coreLoopBgmMaps:
   - bpm: 106
-    bgmId: 2
-  - bpm: 120
     bgmId: 3
-  - bpm: 144
+  - bpm: 120
     bgmId: 4
+  - bpm: 144
+    bgmId: 5
   bgmScheduleLeadTime: 0.1
   masterVolume: 1
   bgmMasterVolume: 0.6

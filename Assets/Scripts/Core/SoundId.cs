@@ -23,6 +23,7 @@ public enum SfxId
     RoundStart1,
     RoundStart2,
     RoundStart3,
+    RoundChange,
 
     TurnSuccess,
     TurnFail,

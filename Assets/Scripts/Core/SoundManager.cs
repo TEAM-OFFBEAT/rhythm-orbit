@@ -174,7 +174,7 @@ public class SoundManager : MonoBehaviour
     /// BgmId 기준으로 지정한 DSP 시각에 BGM을 예약 재생한다.
     /// 코어루프 BGM처럼 양쪽 싱크가 중요한 경우 사용한다.
     /// </summary>
-    public void ScheduleBgm(BgmId id, double dspTime)
+    public void ScheduleBgm(BgmId id, double dspTime, double stopAt = -1)
     {
         if (!bgmMap.TryGetValue(id, out BgmEntry entry))
         {
@@ -182,10 +182,10 @@ public class SoundManager : MonoBehaviour
             return;
         }
 
-        ScheduleRawBgm(entry.clip, dspTime, entry.volume, entry.loop);
+        ScheduleRawBgm(entry.clip, dspTime, entry.volume, entry.loop, stopAt);
     }
 
-    private void ScheduleRawBgm(AudioClip clip, double dspTime, float volume, bool loop)
+    private void ScheduleRawBgm(AudioClip clip, double dspTime, float volume, bool loop, double stopAt = -1)
     {
         if (clip == null) return;
 
@@ -200,7 +200,7 @@ public class SoundManager : MonoBehaviour
 
         if (oldSource != null && oldSource.isPlaying)
         {
-            oldSource.SetScheduledEndTime(dspTime);
+            oldSource.SetScheduledEndTime(stopAt >= 0 ? stopAt : dspTime);
         }
 
         currentBgmSource = nextSource;
@@ -212,7 +212,7 @@ public class SoundManager : MonoBehaviour
     /// <summary>
     /// 현재 BPM에 매핑된 코어루프 BGM을 지정한 DSP 시각에 예약 재생한다.
     /// </summary>
-    public void ScheduleCoreLoopBgm(float bpm, double dspTime)
+    public void ScheduleCoreLoopBgm(float bpm, double dspTime, double stopAt = -1)
     {
         if (!TryGetCoreLoopBgmId(bpm, out BgmId bgmId))
         {
@@ -223,7 +223,7 @@ public class SoundManager : MonoBehaviour
         // TODO:
         // BPM 전환 인트로가 확정되면 여기서
         // intro 예약 → intro 끝나는 시각에 loop 예약 구조로 확장.
-        ScheduleBgm(bgmId, dspTime);
+        ScheduleBgm(bgmId, dspTime, stopAt);
     }
 
     /// <summary>
