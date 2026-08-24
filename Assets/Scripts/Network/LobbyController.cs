@@ -231,73 +231,47 @@ public class LobbyController : MonoBehaviour
     /// </summary>
     private static string GetLocalIPAddress()
     {
-        // 1순위: 현재 기본 라우팅에 사용되는 로컬 IP 찾기
-        // 보통 현재 연결 중인 Wi-Fi/Ethernet의 IPv4가 나옴.
-        try
+        // 1순위: 유선 Ethernet 어댑터 (직결 LAN 테스트 우선)
+        // 2순위: Wi-Fi 어댑터 (인터넷 연결)
+        foreach (NetworkInterfaceType ifType in new[] { NetworkInterfaceType.Ethernet, NetworkInterfaceType.Wireless80211 })
         {
-            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+            try
             {
-                socket.Connect("8.8.8.8", 65530);
-
-                if (socket.LocalEndPoint is IPEndPoint endPoint)
+                foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
                 {
-                    string ip = endPoint.Address.ToString();
-
-                    if (IsUsableIPv4(ip))
-                        return ip;
-                }
-            }
-        }
-        catch
-        {
-            // 아래 fallback으로 이동
-        }
-
-        // 2순위: 활성화된 Wi-Fi / Ethernet 어댑터에서 IPv4 찾기
-        try
-        {
-            foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (networkInterface.OperationalStatus != OperationalStatus.Up)
-                    continue;
-
-                if (networkInterface.NetworkInterfaceType != NetworkInterfaceType.Wireless80211 &&
-                    networkInterface.NetworkInterfaceType != NetworkInterfaceType.Ethernet)
-                    continue;
-
-                string name = networkInterface.Name.ToLower();
-                string description = networkInterface.Description.ToLower();
-
-                // 가상 어댑터 제외
-                if (name.Contains("virtual") || description.Contains("virtual") ||
-                    name.Contains("vmware") || description.Contains("vmware") ||
-                    name.Contains("virtualbox") || description.Contains("virtualbox") ||
-                    name.Contains("docker") || description.Contains("docker") ||
-                    name.Contains("wsl") || description.Contains("wsl") ||
-                    name.Contains("bluetooth") || description.Contains("bluetooth"))
-                {
-                    continue;
-                }
-
-                IPInterfaceProperties properties = networkInterface.GetIPProperties();
-
-                foreach (UnicastIPAddressInformation addressInfo in properties.UnicastAddresses)
-                {
-                    IPAddress address = addressInfo.Address;
-
-                    if (address.AddressFamily != AddressFamily.InterNetwork)
+                    if (networkInterface.OperationalStatus != OperationalStatus.Up)
                         continue;
 
-                    string ip = address.ToString();
+                    if (networkInterface.NetworkInterfaceType != ifType)
+                        continue;
 
-                    if (IsUsableIPv4(ip))
-                        return ip;
+                    string name = networkInterface.Name.ToLower();
+                    string description = networkInterface.Description.ToLower();
+
+                    // 가상 어댑터 제외
+                    if (name.Contains("virtual") || description.Contains("virtual") ||
+                        name.Contains("vmware") || description.Contains("vmware") ||
+                        name.Contains("virtualbox") || description.Contains("virtualbox") ||
+                        name.Contains("docker") || description.Contains("docker") ||
+                        name.Contains("wsl") || description.Contains("wsl") ||
+                        name.Contains("bluetooth") || description.Contains("bluetooth"))
+                    {
+                        continue;
+                    }
+
+                    foreach (UnicastIPAddressInformation addressInfo in networkInterface.GetIPProperties().UnicastAddresses)
+                    {
+                        if (addressInfo.Address.AddressFamily != AddressFamily.InterNetwork)
+                            continue;
+
+                        string ip = addressInfo.Address.ToString();
+
+                        if (IsUsableIPv4(ip))
+                            return ip;
+                    }
                 }
             }
-        }
-        catch
-        {
-            // 아래 fallback으로 이동
+            catch { }
         }
 
         return "IP 주소를 찾을 수 없음";
