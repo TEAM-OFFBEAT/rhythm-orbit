@@ -489,8 +489,6 @@ public class GameManager : MonoBehaviour
         float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
         float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
 
-        GetDefenseLabel(GetDefenderPlayerId())?.SetWorldX(judgeLineX);
-
         bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId);
         bool isNetworkMode   = NetworkManager.Instance != null;
 
@@ -1269,5 +1267,9 @@ public class GameManager : MonoBehaviour
         remoteDefenseMissCount = 0;
     }
 
-    private JudgmentLabel GetDefenseLabel(int playerId) => playerId == 1 ? p1DefenseJudgmentLabel : p2DefenseJudgmentLabel;
+    private JudgmentLabel GetDefenseLabel(int defenderPlayerId)
+    {
+        bool isLocalDefending = NetworkManager.Instance == null || defenderPlayerId == myLocalPlayerId;
+        return isLocalDefending ? p1DefenseJudgmentLabel : p2DefenseJudgmentLabel;
+    }
 }
