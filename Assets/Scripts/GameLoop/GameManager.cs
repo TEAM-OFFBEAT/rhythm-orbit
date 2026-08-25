@@ -489,6 +489,8 @@ public class GameManager : MonoBehaviour
         float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
         float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
 
+        GetDefenseLabel(GetDefenderPlayerId())?.SetWorldX(judgeLineX);
+
         bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId);
         bool isNetworkMode   = NetworkManager.Instance != null;
 
