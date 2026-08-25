@@ -186,6 +186,10 @@ PrefabInstance:
       propertyPath: m_SortingOrder
       value: 100
       objectReference: {fileID: 0}
+    - target: {fileID: 276924494974352228, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
+      propertyPath: m_PlaneDistance
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 3068560221479716215, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0.5
