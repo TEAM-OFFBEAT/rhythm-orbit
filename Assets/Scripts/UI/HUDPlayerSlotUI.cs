@@ -27,13 +27,16 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [SerializeField] private Color pulseColorMin = new Color(1f, 1f, 1f, 0.5f);
     [SerializeField] private Color pulseColorMax = Color.white;
     [SerializeField] private float pulseSpeed = 2f;
+    [Header("Inactive Dim")]
+    [SerializeField] private Image inactiveDimOverlay;
+    [SerializeField, Range(0f, 1f)] private float inactiveDimAlpha = 0.45f;
 
     private Coroutine pulseCoroutine;
 
     private void Awake()
     {
         SetPortrait(defaultPortrait);
-        SetActiveState(false);
+        SetActiveState(false, dimWhenInactive: false);
     }
 
     /// <summary>
@@ -81,7 +84,11 @@ public class HUDPlayerSlotUI : MonoBehaviour
     /// 이 플레이어가 현재 턴(공격 또는 방어)을 소유하면 하이라이트 스프라이트로 교체하고 발광 펄스를 시작한다.
     /// 그렇지 않으면 기본 패널 이미지로 복원한다.
     /// </summary>
-    public void SetActiveState(bool isActive)
+    /// <summary>
+    /// 이 플레이어가 현재 턴을 소유하면 하이라이트하고,
+    /// 턴을 소유하지 않는 슬롯은 필요할 때 어둡게 덮는다.
+    /// </summary>
+    public void SetActiveState(bool isActive, bool dimWhenInactive = false)
     {
         if (panelImage == null) return;
 
@@ -94,8 +101,32 @@ public class HUDPlayerSlotUI : MonoBehaviour
         panelImage.sprite = isActive ? highlightPanelSprite : defaultPanelSprite;
         panelImage.color = Color.white;
 
+        SetDimOverlayVisible(!isActive && dimWhenInactive);
+
         if (isActive)
+        {
             pulseCoroutine = StartCoroutine(PulseColor());
+        }
+    }
+
+
+    private void SetDimOverlayVisible(bool visible)
+    {
+        if (inactiveDimOverlay == null)
+        {
+            return;
+        }
+
+        inactiveDimOverlay.gameObject.SetActive(visible);
+
+        Color color = inactiveDimOverlay.color;
+        color.r = 0f;
+        color.g = 0f;
+        color.b = 0f;
+        color.a = visible ? inactiveDimAlpha : 0f;
+        inactiveDimOverlay.color = color;
+
+        inactiveDimOverlay.raycastTarget = false;
     }
 
     private IEnumerator PulseColor()

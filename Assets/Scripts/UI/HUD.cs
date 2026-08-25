@@ -108,8 +108,9 @@ public class HUD : MonoBehaviour
     public void SetTurnOwner(int activePlayerId)
     {
         bool mySlotActive = activePlayerId == localPlayerId;
-        mySlot?.SetActiveState(mySlotActive);
-        opponentSlot?.SetActiveState(!mySlotActive);
+
+        mySlot?.SetActiveState(mySlotActive, dimWhenInactive: true);
+        opponentSlot?.SetActiveState(!mySlotActive, dimWhenInactive: true);
     }
 
     /// <summary>
@@ -120,8 +121,9 @@ public class HUD : MonoBehaviour
     {
         mySlot?.ClearJudgment();
         opponentSlot?.ClearJudgment();
-        mySlot?.SetActiveState(false);
-        opponentSlot?.SetActiveState(false);
+
+        mySlot?.SetActiveState(false, dimWhenInactive: false);
+        opponentSlot?.SetActiveState(false, dimWhenInactive: false);
     }
 
     /// <summary>
