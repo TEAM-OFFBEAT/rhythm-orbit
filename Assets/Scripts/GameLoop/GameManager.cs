@@ -49,6 +49,11 @@ public class GameManager : MonoBehaviour
     [Header("Sanity System")]
     [SerializeField] private SanitySystem sanitySystem;
 
+    [Header("Surprise Event")]
+    [SerializeField] private SurpriseEventManager surpriseEventManager;
+
+    private int lastSurpriseEventPreparePhaseIndex = -1;
+
     [Header("Result UI")]
     [SerializeField] private ResultPanelUI resultPanelUI;
 
@@ -248,8 +253,13 @@ public class GameManager : MonoBehaviour
         if (currentState == GameState.END) return;
 
         double now = AudioSettings.dspTime;
+
+        TryEnterSurpriseEventBeforeNextPhase(now);
+
         if (now >= nextPhaseDspTime)
+        {
             AdvancePhase();
+        }
     }
 
     /// <summary>
@@ -268,6 +278,8 @@ public class GameManager : MonoBehaviour
         phaseIndex = 0;
         currentRoundIndex = 0;
         pendingRoundStartSfx = false;
+        lastSurpriseEventPreparePhaseIndex = -1;
+        surpriseEventManager?.ResetForNewGame();
 
         ApplyCurrentBpm(scheduleBgm: false);
         currentTurnDuration = GetCurrentTurnDuration();
@@ -329,6 +341,9 @@ public class GameManager : MonoBehaviour
 
     private void AdvancePhase()
     {
+        // 직전 4박 페이즈에 적용된 기습 이벤트가 있었다면 여기서 복귀 처리
+        surpriseEventManager?.EndActiveEvent();
+
         double thisPhaseStart = nextPhaseDspTime;
         bool   isAttackPhase  = (phaseIndex % 2 == 0);
         int    attackPhaseIdx = phaseIndex / 2;
@@ -388,6 +403,9 @@ public class GameManager : MonoBehaviour
             StartAttackPhase(thisPhaseStart, attackPhaseIdx);
         else
             StartDefensePhase(thisPhaseStart);
+
+        // 실제 공격/방어 4박 페이즈가 시작됐으므로 이벤트 적용을 시작한다.
+        surpriseEventManager?.BeginActiveEventPhase();
 
         phaseIndex++;
     }
@@ -1271,5 +1289,176 @@ public class GameManager : MonoBehaviour
     {
         bool isLocalDefending = NetworkManager.Instance == null || defenderPlayerId == myLocalPlayerId;
         return isLocalDefending ? p1DefenseJudgmentLabel : p2DefenseJudgmentLabel;
+    }
+
+    /// <summary>
+    /// 다음 페이즈 시작 직전에 기습 이벤트를 미리 진입시킨다.
+    /// 실제 적용은 AdvancePhase에서 BeginActiveEventPhase가 호출될 때 시작된다.
+    /// </summary>
+    private void TryEnterSurpriseEventBeforeNextPhase(double now)
+    {
+        if (surpriseEventManager == null)
+        {
+            return;
+        }
+
+        if (nextPhaseDspTime == double.MaxValue)
+        {
+            return;
+        }
+
+        if (phaseIndex == lastSurpriseEventPreparePhaseIndex)
+        {
+            return;
+        }
+
+        double timeUntilNextPhase = nextPhaseDspTime - now;
+
+        if (timeUntilNextPhase > surpriseEventManager.EventEntryLeadSeconds)
+        {
+            return;
+        }
+
+        if (timeUntilNextPhase < 0.0)
+        {
+            return;
+        }
+
+        lastSurpriseEventPreparePhaseIndex = phaseIndex;
+
+        bool nextIsAttackPhase = phaseIndex % 2 == 0;
+        int nextAttackPhaseIdx = phaseIndex / 2;
+
+        SurpriseEventPhase nextPhase = nextIsAttackPhase
+            ? SurpriseEventPhase.Attack
+            : SurpriseEventPhase.Defense;
+
+        int nextAttackerPlayerId = GetAttackerForPhase(nextAttackPhaseIdx);
+
+        int targetPlayerId = nextIsAttackPhase
+            ? nextAttackerPlayerId
+            : GetOtherPlayerId(nextAttackerPlayerId);
+
+        bool isExcludedTransition =
+            IsSurpriseEventExcludedTransition(nextIsAttackPhase, nextAttackPhaseIdx);
+
+        int remainingValidTransitions =
+            CountRemainingValidTransitionsIncludingCurrent(phaseIndex);
+
+        bool prepared = surpriseEventManager.TryPrepareEvent(
+            nextPhase,
+            targetPlayerId,
+            nextPhaseDspTime,
+            isExcludedTransition,
+            remainingValidTransitions
+        );
+
+        if (prepared)
+        {
+            surpriseEventManager.EnterPreparedEvent();
+        }
+    }
+
+    private int GetOtherPlayerId(int playerId)
+    {
+        return playerId == 1 ? 2 : 1;
+    }
+
+    /// <summary>
+    /// 기습 이벤트 발생 제외 구간인지 판단한다.
+    /// 현재 GameManager 구조에서는 첫 공격과 첫 방어가 같은 attackPhaseIdx를 공유하므로,
+    /// 라운드 안에서 attackIndex가 0이면 둘 다 제외하면 된다.
+    /// </summary>
+    private bool IsSurpriseEventExcludedTransition(bool isAttackPhase, int attackPhaseIdx)
+    {
+        int totalAttackTurnCount = GetTotalPlannedAttackTurnCount();
+
+        if (attackPhaseIdx < 0 || attackPhaseIdx >= totalAttackTurnCount)
+        {
+            return true;
+        }
+
+        int attackIndexInRound = GetAttackIndexInRound(attackPhaseIdx);
+
+        // 라운드의 첫 공격 / 첫 방어는 이벤트 제외
+        return attackIndexInRound == 0;
+    }
+
+    /// <summary>
+    /// 전체 attackPhaseIdx를 현재 라운드 안의 공격 인덱스로 변환한다.
+    /// </summary>
+    private int GetAttackIndexInRound(int attackPhaseIdx)
+    {
+        if (roundSettings == null || roundSettings.Length == 0)
+        {
+            return attackPhaseIdx;
+        }
+
+        int remainingAttackIndex = attackPhaseIdx;
+
+        for (int i = 0; i < roundSettings.Length; i++)
+        {
+            int attackCountInRound = GetPlayableAttackTurnCountInRound(i);
+
+            if (remainingAttackIndex < attackCountInRound)
+            {
+                return remainingAttackIndex;
+            }
+
+            remainingAttackIndex -= attackCountInRound;
+        }
+
+        return remainingAttackIndex;
+    }
+
+    /// <summary>
+    /// 특정 라운드에서 실제 플레이되는 공격 턴 수를 반환한다.
+    /// 현재 GameManager는 totalTurns - introTurns를 실제 공격 턴 수로 사용하고 있다.
+    /// </summary>
+    private int GetPlayableAttackTurnCountInRound(int roundIndex)
+    {
+        if (roundSettings == null || roundSettings.Length == 0)
+        {
+            return 0;
+        }
+
+        int safeIndex = Mathf.Clamp(roundIndex, 0, roundSettings.Length - 1);
+        RoundSetting setting = roundSettings[safeIndex];
+
+        return Mathf.Max(1, setting.totalTurns - setting.introTurns);
+    }
+
+    /// <summary>
+    /// 현재 phaseIndex부터 게임 종료 전까지 남은 유효 이벤트 판정 기회를 계산한다.
+    /// 최소 횟수 보장 규칙은 현재 기회까지 포함해서 계산해야 한다.
+    /// </summary>
+    private int CountRemainingValidTransitionsIncludingCurrent(int fromPhaseIndex)
+    {
+        int totalAttackTurnCount = GetTotalPlannedAttackTurnCount();
+
+        if (totalAttackTurnCount <= 0)
+        {
+            return 0;
+        }
+
+        // 공격 1개마다 공격 페이즈 1개 + 방어 페이즈 1개가 있으므로 * 2
+        int totalPhaseCount = totalAttackTurnCount * 2;
+
+        int count = 0;
+
+        for (int testPhaseIndex = fromPhaseIndex; testPhaseIndex < totalPhaseCount; testPhaseIndex++)
+        {
+            bool testIsAttackPhase = testPhaseIndex % 2 == 0;
+            int testAttackPhaseIdx = testPhaseIndex / 2;
+
+            if (IsSurpriseEventExcludedTransition(testIsAttackPhase, testAttackPhaseIdx))
+            {
+                continue;
+            }
+
+            count++;
+        }
+
+        return count;
     }
 }
