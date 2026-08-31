@@ -39,7 +39,6 @@ public class DefenseTurn : MonoBehaviour
     private readonly List<Judgment> judgments = new();
     private bool isRunning;
     private bool isAiDefense;
-    private bool isMirrorView;
     private double defenseEndDspTime;
     private AttackSide pendingAttackSide;
     private double pendingAttackDuration;
@@ -56,23 +55,20 @@ public class DefenseTurn : MonoBehaviour
             {
                 if (now < pendingNotes[i].judgeTime) continue;
 
-                // AI/미러뷰 자동 PERFECT는 실제 입력이 아니므로 타격음 재생 X
+                // AI 자동 PERFECT는 실제 입력이 아니므로 타격음 재생 X
                 ResolveDefenseNote(pendingNotes[i], Judgment.PERFECT, playInputSfx: false);
             }
         }
         else
         {
-            if (!isMirrorView)
+            double missTimeout = GetDefenseTimingWindowSeconds();
+
+            for (int i = pendingNotes.Count - 1; i >= 0; i--)
             {
-                double missTimeout = GetDefenseTimingWindowSeconds();
+                if (now < pendingNotes[i].judgeTime - noteActivationLeadTimeMs / 1000.0) continue;
+                if (now <= pendingNotes[i].judgeTime + missTimeout) continue;
 
-                for (int i = pendingNotes.Count - 1; i >= 0; i--)
-                {
-                    if (now < pendingNotes[i].judgeTime - noteActivationLeadTimeMs / 1000.0) continue;
-                    if (now <= pendingNotes[i].judgeTime + missTimeout) continue;
-
-                    ResolveDefenseNote(pendingNotes[i], Judgment.MISS);
-                }
+                ResolveDefenseNote(pendingNotes[i], Judgment.MISS);
             }
         }
 
@@ -91,7 +87,6 @@ public class DefenseTurn : MonoBehaviour
         double remoteAttackStartDspTime = 0.0)
     {
         this.networkManager = networkManager;
-        isMirrorView = NetworkManager.Instance != null && networkManager == null;
         if (attackTurnRenderer == null)
         {
             Debug.LogError("DefenseTurn: AttackTurnRenderer가 연결되지 않았습니다.");
@@ -173,7 +168,6 @@ public class DefenseTurn : MonoBehaviour
         double attackDuration, NetworkManager networkManager, double defenseStartDspTime)
     {
         this.networkManager = networkManager;
-        isMirrorView = false;
         isAiDefense  = false;
 
         if (attackTurnRenderer == null)
@@ -272,7 +266,7 @@ public class DefenseTurn : MonoBehaviour
 
         judgments.Add(judgment);
 
-        bool shouldPlayInputSfx = playInputSfx && !isMirrorView && !isAiDefense;
+        bool shouldPlayInputSfx = playInputSfx && !isAiDefense;
 
         if (shouldPlayInputSfx)
         {
