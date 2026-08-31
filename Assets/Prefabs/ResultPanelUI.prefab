@@ -1692,8 +1692,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 144c63897e0beee469ec3946b117e35a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResultPanelUI
-  winPanel: {fileID: 6435369991156012176}
-  losePanel: {fileID: 6861393568633329157}
+  p1WinPanel: {fileID: 6435369991156012176}
+  p2WinPanel: {fileID: 6861393568633329157}
   successPanel: {fileID: 5057033826907835860}
   lobbyButtons:
   - {fileID: 6916876432230263230}
