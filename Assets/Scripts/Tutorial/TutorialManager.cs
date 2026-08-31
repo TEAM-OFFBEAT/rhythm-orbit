@@ -312,7 +312,6 @@ public class TutorialManager : MonoBehaviour
             lobbyButtonRoot.SetActive(false);
         }
 
-        attackTurnRenderer.SetLocalPlayer(GetPlayerId(playerSide));
         attackTurnRenderer.ClearAll();
         
         attackHighBeatDemoStarted = false;
@@ -809,12 +808,7 @@ public class TutorialManager : MonoBehaviour
         if (!string.IsNullOrEmpty(currentAttackMessage))
         {
             string decoded = BuildDecodedMessage(currentAttackMessage, result.Judgments);
-            // 튜토리얼은 방어자 패널에 표시 (ShowInDefenderPanel은 공격자 패널 기준이므로 직접 분기)
-            bool defenderIsLocalPlayer = currentDefenseAttackerSide != playerSide;
-            if (defenderIsLocalPlayer)
-                hud?.ShowMyPanelMessage(decoded);
-            else
-                hud?.ShowOpponentPanelMessage(decoded);
+            hud?.ShowInDefenderPanel(decoded, currentDefenseAttackerSide);
         }
 
         if (!currentDefenseIsAiDefense)
