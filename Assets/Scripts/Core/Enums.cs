@@ -1,7 +1,7 @@
 public enum Judgment { PERFECT, GOOD, MISS }
 public enum GameState { ATTACK, DEFENSE, TURN_CHANGE, END }
 public enum NoteType { HIGH, LOW }
-public enum GameResultType { Win, Lose, CommunicationSuccess }
+public enum GameResultType { P1Win, P2Win, CommunicationSuccess }
 public enum PacketType
 {
     PING, PONG,        // 클럭 동기화 — RTT 측정으로 두 기기의 dspTime 오프셋 계산

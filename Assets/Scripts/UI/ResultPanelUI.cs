@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
@@ -11,8 +12,10 @@ using UnityEngine.UI;
 public class ResultPanelUI : MonoBehaviour
 {
     [Header("Result Panels")]
-    [SerializeField] private GameObject winPanel;
-    [SerializeField] private GameObject losePanel;
+    [FormerlySerializedAs("winPanel")]
+    [SerializeField] private GameObject p1WinPanel;
+    [FormerlySerializedAs("losePanel")]
+    [SerializeField] private GameObject p2WinPanel;
     [SerializeField] private GameObject successPanel;
 
     [Header("Buttons")]
@@ -70,12 +73,12 @@ public class ResultPanelUI : MonoBehaviour
 
         switch (resultType)
         {
-            case GameResultType.Win:
-                SetActivePanel(winPanel);
+            case GameResultType.P1Win:
+                SetActivePanel(p1WinPanel);
                 break;
 
-            case GameResultType.Lose:
-                SetActivePanel(losePanel);
+            case GameResultType.P2Win:
+                SetActivePanel(p2WinPanel);
                 break;
 
             case GameResultType.CommunicationSuccess:
@@ -96,20 +99,9 @@ public class ResultPanelUI : MonoBehaviour
 
     private void HideChildPanels()
     {
-        if (winPanel != null)
-        {
-            winPanel.SetActive(false);
-        }
-
-        if (losePanel != null)
-        {
-            losePanel.SetActive(false);
-        }
-
-        if (successPanel != null)
-        {
-            successPanel.SetActive(false);
-        }
+        if (p1WinPanel != null) p1WinPanel.SetActive(false);
+        if (p2WinPanel != null) p2WinPanel.SetActive(false);
+        if (successPanel != null) successPanel.SetActive(false);
     }
 
     private void SetActivePanel(GameObject panel)
