@@ -4,7 +4,7 @@ using TMPro;
 
 /// <summary>
 /// 게임 HUD 전체를 관리하는 UI 중계자.
-/// GameManager로부터 받은 P1/P2 데이터를 로컬 플레이어 관점의 My/Opponent 슬롯에 맞게 전달한다.
+/// 두 클라이언트 모두 동일한 절대 화면(P1 좌측 하단, P2 우측 상단)을 표시한다.
 /// </summary>
 public class HUD : MonoBehaviour
 {
@@ -18,57 +18,47 @@ public class HUD : MonoBehaviour
     [SerializeField] private ComboUI comboUI;
 
     [Header("Panel Messages")]
-    [SerializeField] private GameObject myPanelBubble;
-    [SerializeField] private TMP_Text myPanelMessageLabel;
-    [SerializeField] private GameObject opponentPanelBubble;
-    [SerializeField] private TMP_Text opponentPanelMessageLabel;
+    [SerializeField] private GameObject p1PanelBubble;
+    [SerializeField] private TMP_Text p1PanelMessageLabel;
+    [SerializeField] private GameObject p2PanelBubble;
+    [SerializeField] private TMP_Text p2PanelMessageLabel;
     [SerializeField] private string defaultBubbleMessage = "...";
 
     [Header("Player HUD Slots")]
-    [SerializeField] private HUDPlayerSlotUI mySlot;
-    [SerializeField] private HUDPlayerSlotUI opponentSlot;
+    [SerializeField] private HUDPlayerSlotUI p1Slot;
+    [SerializeField] private HUDPlayerSlotUI p2Slot;
 
-    // 로컬 플레이어의 ID.
-    // 네트워크 모드에서는 NetworkManager.LocalPlayerId를 GameManager가 전달한다.
-    // 로컬 테스트 모드에서는 기본값 1을 사용한다.
-    private int localPlayerId = 1;
-
-    private Coroutine myPanelHideCoroutine;
-    private Coroutine opponentPanelHideCoroutine;
+    private Coroutine p1PanelHideCoroutine;
+    private Coroutine p2PanelHideCoroutine;
 
     private float currentBpm;
     private Coroutine bpmTextCoroutine;
 
     private void Awake()
     {
-        if (myPanelBubble != null) myPanelBubble.SetActive(true);
-        if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
-        if (opponentPanelBubble != null) opponentPanelBubble.SetActive(true);
-        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
+        if (p1PanelBubble != null) p1PanelBubble.SetActive(true);
+        if (p1PanelMessageLabel != null) p1PanelMessageLabel.text = defaultBubbleMessage;
+        if (p2PanelBubble != null) p2PanelBubble.SetActive(true);
+        if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = defaultBubbleMessage;
     }
 
     /// <summary>
-    /// 로컬 플레이어 기준으로 My/Opponent 슬롯의 이름과 Host/Client 역할 표시를 설정한다.
-    /// GameManager.Awake()에서 로컬 플레이어 ID를 읽은 뒤 호출한다.
+    /// 게임 시작 시 HUD를 초기 상태로 설정한다.
+    /// 절대 좌표 렌더링 전환으로 localPlayerId는 더 이상 사용하지 않는다.
     /// </summary>
     public void SetupPlayerPerspective(int localPlayerId)
     {
-        this.localPlayerId = Mathf.Clamp(localPlayerId, 1, 2);
-
         ClearJudgments();
     }
 
     /// <summary>
-    /// P1/P2 정신력 값을 로컬 플레이어 관점의 My/Opponent 슬롯에 맞게 표시한다.
+    /// P1/P2 정신력 값을 절대 좌표 슬롯에 표시한다.
     /// SanitySystem.OnSanityChanged 이벤트를 받은 GameManager가 호출한다.
     /// </summary>
     public void UpdateSanity(int p1Sanity, int p2Sanity, int maxSanity)
     {
-        int mySanity = localPlayerId == 1 ? p1Sanity : p2Sanity;
-        int opponentSanity = localPlayerId == 1 ? p2Sanity : p1Sanity;
-
-        mySlot?.UpdateSanity(mySanity, maxSanity);
-        opponentSlot?.UpdateSanity(opponentSanity, maxSanity);
+        p1Slot?.UpdateSanity(p1Sanity, maxSanity);
+        p2Slot?.UpdateSanity(p2Sanity, maxSanity);
     }
 
     /// <summary>
@@ -81,49 +71,38 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// 방어자 판정 결과를 My/Opponent 슬롯 중 올바른 위치에 표시한다.
-    /// attackerSide가 P1이면 방어자는 P2, attackerSide가 P2이면 방어자는 P1이다.
+    /// 방어자의 판정 결과를 해당 플레이어의 절대 좌표 슬롯에 표시한다.
+    /// P1이 공격하면 P2(방어자) 슬롯에, P2가 공격하면 P1(방어자) 슬롯에 표시한다.
     /// </summary>
     public void ShowJudgment(Judgment judgment, AttackSide attackerSide)
     {
-        int attackerPlayerId = attackerSide == AttackSide.P1 ? 1 : 2;
-        int defenderPlayerId = attackerPlayerId == 1 ? 2 : 1;
-
-        bool isMyJudgment = defenderPlayerId == localPlayerId;
-
-        if (isMyJudgment)
-        {
-            mySlot?.ShowJudgment(judgment);
-        }
+        if (attackerSide == AttackSide.P1)
+            p2Slot?.ShowJudgment(judgment);
         else
-        {
-            opponentSlot?.ShowJudgment(judgment);
-        }
+            p1Slot?.ShowJudgment(judgment);
     }
 
     /// <summary>
-    /// 현재 턴을 소유한 플레이어의 패널을 하이라이트하고 상대 패널은 기본 상태로 전환한다.
+    /// 현재 활성 플레이어(공격자 또는 방어자)의 슬롯을 하이라이트하고 나머지는 기본 상태로 전환한다.
     /// 공격 phase 진입 시 공격자 ID, 방어 phase 진입 시 방어자 ID를 전달한다.
     /// </summary>
     public void SetTurnOwner(int activePlayerId)
     {
-        bool mySlotActive = activePlayerId == localPlayerId;
-
-        mySlot?.SetActiveState(mySlotActive, dimWhenInactive: true);
-        opponentSlot?.SetActiveState(!mySlotActive, dimWhenInactive: true);
+        p1Slot?.SetActiveState(activePlayerId == 1, dimWhenInactive: true);
+        p2Slot?.SetActiveState(activePlayerId == 2, dimWhenInactive: true);
     }
 
     /// <summary>
-    /// My/Opponent 슬롯의 판정 라벨과 패널 상태(스프라이트, 글로우)를 기본 상태로 초기화한다.
+    /// P1/P2 슬롯의 판정 라벨과 패널 상태(스프라이트, 글로우)를 기본 상태로 초기화한다.
     /// 턴 전환 및 라운드 인트로 진입 시 GameManager가 호출한다.
     /// </summary>
     public void ClearJudgments()
     {
-        mySlot?.ClearJudgment();
-        opponentSlot?.ClearJudgment();
+        p1Slot?.ClearJudgment();
+        p2Slot?.ClearJudgment();
 
-        mySlot?.SetActiveState(false, dimWhenInactive: false);
-        opponentSlot?.SetActiveState(false, dimWhenInactive: false);
+        p1Slot?.SetActiveState(false, dimWhenInactive: false);
+        p2Slot?.SetActiveState(false, dimWhenInactive: false);
     }
 
     /// <summary>
@@ -210,91 +189,85 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격자 패널에만 메세지를 표시한다.
-    /// 공격자가 로컬 플레이어이면 내 패널, 아니면 상대 패널에 표시한다.
+    /// 공격자 패널(P1 공격 시 P1 패널, P2 공격 시 P2 패널)에 메시지를 표시한다.
     /// </summary>
     public void ShowInAttackerPanel(string message, AttackSide attackerSide)
     {
-        bool isLocalAttacker = (attackerSide == AttackSide.P1 && localPlayerId == 1) ||
-                               (attackerSide == AttackSide.P2 && localPlayerId == 2);
-        if (isLocalAttacker)
-            ShowMyPanelMessage(message);
+        if (attackerSide == AttackSide.P1)
+            ShowP1PanelMessage(message);
         else
-            ShowOpponentPanelMessage(message);
+            ShowP2PanelMessage(message);
     }
 
     /// <summary>
-    /// 방어자 패널에만 메세지를 표시한다.
-    /// 방어자가 로컬 플레이어이면 내 패널, 아니면 상대 패널에 표시한다.
+    /// 방어자 패널(P1 공격 시 P2 패널, P2 공격 시 P1 패널)에 메시지를 표시한다.
     /// </summary>
     public void ShowInDefenderPanel(string message, AttackSide attackerSide)
     {
-        bool isLocalDefender = (attackerSide == AttackSide.P1 && localPlayerId == 2) ||
-                               (attackerSide == AttackSide.P2 && localPlayerId == 1);
-        if (isLocalDefender)
-            ShowOpponentPanelMessage(message);
+        if (attackerSide == AttackSide.P1)
+            ShowP2PanelMessage(message);
         else
-            ShowMyPanelMessage(message);
+            ShowP1PanelMessage(message);
     }
 
     /// <summary>
-    /// 내 패널 메세지 레이블에 텍스트를 표시하고, 2박자 후 디폴트 메세지로 되돌린다.
+    /// P1 패널 메세지 레이블에 텍스트를 표시하고, 2박자 후 디폴트 메세지로 되돌린다.
     /// </summary>
-    public void ShowMyPanelMessage(string message)
+    public void ShowP1PanelMessage(string message)
     {
-        if (myPanelHideCoroutine != null) { StopCoroutine(myPanelHideCoroutine); myPanelHideCoroutine = null; }
+        if (p1PanelHideCoroutine != null) { StopCoroutine(p1PanelHideCoroutine); p1PanelHideCoroutine = null; }
 
         if (string.IsNullOrEmpty(message))
         {
-            if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
+            if (p1PanelMessageLabel != null) p1PanelMessageLabel.text = defaultBubbleMessage;
             return;
         }
 
-        if (myPanelMessageLabel != null) myPanelMessageLabel.text = message;
-        myPanelHideCoroutine = StartCoroutine(RevertMyPanelToDefault());
+        if (p1PanelMessageLabel != null) p1PanelMessageLabel.text = message;
+        p1PanelHideCoroutine = StartCoroutine(RevertP1PanelToDefault());
     }
 
     /// <summary>
-    /// 상대 패널 메세지 레이블에 텍스트를 표시하고, 2박자 후 디폴트 메세지로 되돌린다.
+    /// P2 패널 메세지 레이블에 텍스트를 표시하고, 2박자 후 디폴트 메세지로 되돌린다.
     /// </summary>
-    public void ShowOpponentPanelMessage(string message)
+    public void ShowP2PanelMessage(string message)
     {
-        if (opponentPanelHideCoroutine != null) { StopCoroutine(opponentPanelHideCoroutine); opponentPanelHideCoroutine = null; }
+        if (p2PanelHideCoroutine != null) { StopCoroutine(p2PanelHideCoroutine); p2PanelHideCoroutine = null; }
 
         if (string.IsNullOrEmpty(message))
         {
-            if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
+            if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = defaultBubbleMessage;
             return;
         }
 
-        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = message;
-        opponentPanelHideCoroutine = StartCoroutine(RevertOpponentPanelToDefault());
+        if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = message;
+        p2PanelHideCoroutine = StartCoroutine(RevertP2PanelToDefault());
     }
 
     /// <summary>
-    /// 양쪽 패널 메세지를 즉시 디폴트 메세지로 초기화한다. 턴 시작 시 GameManager가 호출한다.
+    /// 양쪽 패널 메세지를 즉시 디폴트 메세지로 초기화한다.
     /// </summary>
     public void ClearPanelMessages()
     {
-        if (myPanelHideCoroutine != null) { StopCoroutine(myPanelHideCoroutine); myPanelHideCoroutine = null; }
-        if (opponentPanelHideCoroutine != null) { StopCoroutine(opponentPanelHideCoroutine); opponentPanelHideCoroutine = null; }
+        if (p1PanelHideCoroutine != null) { StopCoroutine(p1PanelHideCoroutine); p1PanelHideCoroutine = null; }
+        if (p2PanelHideCoroutine != null) { StopCoroutine(p2PanelHideCoroutine); p2PanelHideCoroutine = null; }
 
-        if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
-        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
+        if (p1PanelMessageLabel != null) p1PanelMessageLabel.text = defaultBubbleMessage;
+        if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = defaultBubbleMessage;
     }
 
-    private IEnumerator RevertMyPanelToDefault()
+    private IEnumerator RevertP1PanelToDefault()
     {
         yield return new WaitForSeconds(GetTwoBeatSeconds());
-        if (myPanelMessageLabel != null) myPanelMessageLabel.text = defaultBubbleMessage;
-        myPanelHideCoroutine = null;
+        if (p1PanelMessageLabel != null) p1PanelMessageLabel.text = defaultBubbleMessage;
+        p1PanelHideCoroutine = null;
     }
 
-    private IEnumerator RevertOpponentPanelToDefault()
+    private IEnumerator RevertP2PanelToDefault()
     {
         yield return new WaitForSeconds(GetTwoBeatSeconds());
-        if (opponentPanelMessageLabel != null) opponentPanelMessageLabel.text = defaultBubbleMessage;
-        opponentPanelHideCoroutine = null;
+        if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = defaultBubbleMessage;
+        p2PanelHideCoroutine = null;
     }
 
     private IEnumerator AnimateBpmText(float from, float to)

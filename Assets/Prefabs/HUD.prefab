@@ -237,7 +237,7 @@ GameObject:
   - component: {fileID: 2544950469035726709}
   - component: {fileID: 2238106652220085221}
   m_Layer: 0
-  m_Name: OpponentBubble
+  m_Name: P2Bubble
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -444,7 +444,7 @@ GameObject:
   - component: {fileID: 8641312207841538542}
   - component: {fileID: 2057407754436431171}
   m_Layer: 0
-  m_Name: MyProfileImage
+  m_Name: P1ProfileImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1352,7 +1352,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5293866453357517201}
   m_Layer: 0
-  m_Name: OpponentSanityBar
+  m_Name: P2SanityBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1646,7 +1646,7 @@ GameObject:
   - component: {fileID: 7445309267396514156}
   - component: {fileID: 3808855878415715405}
   m_Layer: 0
-  m_Name: OpponentProfileImage
+  m_Name: P2ProfileImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2298,13 +2298,13 @@ MonoBehaviour:
   bpmGauge: {fileID: 1588680164888605684}
   starsRenderer: {fileID: 3191135036401536041}
   comboUI: {fileID: 608873060688987043}
-  myPanelBubble: {fileID: 8719111734257793979}
-  myPanelMessageLabel: {fileID: 4714608394398427370}
-  opponentPanelBubble: {fileID: 3495025592639068400}
-  opponentPanelMessageLabel: {fileID: 4116349870052404721}
+  p1PanelBubble: {fileID: 8719111734257793979}
+  p1PanelMessageLabel: {fileID: 4714608394398427370}
+  p2PanelBubble: {fileID: 3495025592639068400}
+  p2PanelMessageLabel: {fileID: 4116349870052404721}
   defaultBubbleMessage: ...
-  mySlot: {fileID: 8460358692341138137}
-  opponentSlot: {fileID: 8057561938852359967}
+  p1Slot: {fileID: 8460358692341138137}
+  p2Slot: {fileID: 8057561938852359967}
 --- !u!114 &1953009781935199911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2347,7 +2347,7 @@ GameObject:
   - component: {fileID: 180698023763945965}
   - component: {fileID: 2068514032017481954}
   m_Layer: 0
-  m_Name: MyBubble
+  m_Name: P1Bubble
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2424,7 +2424,7 @@ GameObject:
   - component: {fileID: 4897033064702728408}
   - component: {fileID: 8460358692341138137}
   m_Layer: 0
-  m_Name: My Panel
+  m_Name: P1 Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2532,7 +2532,7 @@ GameObject:
   - component: {fileID: 7702125488828697384}
   - component: {fileID: 8057561938852359967}
   m_Layer: 0
-  m_Name: Opponent Panel
+  m_Name: P2 Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2637,7 +2637,7 @@ GameObject:
   m_Component:
   - component: {fileID: 120589602015071689}
   m_Layer: 0
-  m_Name: MySanityBar
+  m_Name: P1SanityBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
