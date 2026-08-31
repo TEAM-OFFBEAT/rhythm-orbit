@@ -68,8 +68,8 @@ MonoBehaviour:
   m_text: "\uD29C\uD1A0\uB9AC\uC5BC \uB300\uC0AC \uD29C\uD1A0\uB9AC\uC5BC \uB300\uC0AC
     \uD29C\uD1A0\uB9AC\uC5BC \uB300\uC0AC"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 88bf27a26e10de146a83d589feccc5c5, type: 2}
-  m_sharedMaterial: {fileID: 4834826722952762383, guid: 88bf27a26e10de146a83d589feccc5c5, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b7301f5ef749b1447ac1e35c907d7a30, type: 2}
+  m_sharedMaterial: {fileID: 3492436540289683632, guid: b7301f5ef749b1447ac1e35c907d7a30, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -205,8 +205,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uB85C\uBE44\uB85C \uC774\uB3D9\n"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 88bf27a26e10de146a83d589feccc5c5, type: 2}
-  m_sharedMaterial: {fileID: 4834826722952762383, guid: 88bf27a26e10de146a83d589feccc5c5, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b7301f5ef749b1447ac1e35c907d7a30, type: 2}
+  m_sharedMaterial: {fileID: 3492436540289683632, guid: b7301f5ef749b1447ac1e35c907d7a30, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -333,6 +333,7 @@ MonoBehaviour:
   useBlinkBetweenLines: 1
   blinkSecondsBetweenLines: 0.1
   hidePanelDuringBlink: 0
+  dialogueVisualLeadSeconds: 0.04
 --- !u!114 &6663090737158837669
 MonoBehaviour:
   m_ObjectHideFlags: 0
