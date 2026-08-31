@@ -12,7 +12,6 @@ public class AttackTurnRenderer : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform p1AttackLine;
     [SerializeField] private Transform p2AttackLine;
-    // [SerializeField] private Transform attackGridContainer;
     [SerializeField] private Transform attackNoteContainer;
 
     [Header("Positions")]
@@ -25,22 +24,12 @@ public class AttackTurnRenderer : MonoBehaviour
     [SerializeField] private Transform p1DefenseLine;
     [SerializeField] private Transform p2DefenseLine;
 
-    // [Header("Grid Visual")]
-    // [SerializeField] private Sprite gridLineSprite;
-    // [SerializeField] private Vector2 gridLineSize = new Vector2(0.03f, 1.2f);
-    // [SerializeField] private Color beatGridColor = new Color(1f, 0.82f, 0.36f, 0.65f);
-    // [SerializeField] private Color halfBeatGridColor = new Color(1f, 1f, 1f, 0.22f);
-
-
     private struct NoteEntry { public Transform rect; public int noteId; public float initialX; public double judgeTime; }
     private readonly List<NoteEntry> spawnedNotes = new();
-    // private readonly List<Transform> gridLines = new();
 
     private bool isTransferring;
     private float transferJudgeLineX;
     private float transferSpeed;
-
-    private int localPlayerId = 1;
 
     private AttackSide currentSide;
     private double attackStartDspTime;
@@ -52,40 +41,34 @@ public class AttackTurnRenderer : MonoBehaviour
         if (attackNoteContainer == null)
             attackNoteContainer = transform;
 
-        // if (attackGridContainer == null)
-        //     attackGridContainer = transform;
-
         if (p1AttackLine != null) p1AttackLine.gameObject.SetActive(false);
         if (p2AttackLine != null) p2AttackLine.gameObject.SetActive(false);
     }
 
     /// <summary>
-    /// AttackTurn에서 공격 시작 시 호출. 고정 박자선을 만들고 공격 판정선 이동을 시작.
+    /// AttackTurn에서 공격 시작 시 호출. 공격 판정선 이동을 시작한다.
     /// </summary>
     public void BeginAttackVisual(AttackSide side, double startDspTime, double duration, int gridStepCount)
     {
         ClearAll();
-        AttackSide visual = GetVisualSide(side);
-        currentSide = visual;
+        currentSide = side;
         attackStartDspTime = startDspTime;
         attackDuration = System.Math.Max(0.01, duration);
         isMoving = true;
 
-        // BuildAttackGrid(visual, gridStepCount);
-
-        Transform line = GetAttackLine(visual);
+        Transform line = GetAttackLine(side);
         if (line == null)
         {
-            Debug.LogWarning($"{visual}AttackLine이 연결되지 않았습니다.");
+            Debug.LogWarning($"{side}AttackLine이 연결되지 않았습니다.");
             return;
         }
 
         line.gameObject.SetActive(true);
-        SetLineX(visual, GetStartXDirect(visual));
+        SetLineX(side, GetStartX(side));
     }
 
     /// <summary>
-    /// AttackTurn에서 공격 노트 생성 시 호출. noteRelativeTime 위치에 노트를 표시.
+    /// AttackTurn에서 공격 노트 생성 시 호출. noteRelativeTime 위치에 노트를 표시한다.
     /// </summary>
     public void SpawnAttackNote(AttackSide side, NoteData note, double duration)
     {
@@ -99,17 +82,16 @@ public class AttackTurnRenderer : MonoBehaviour
         if (t == null) return;
         if (attackNoteContainer != null) t.SetParent(attackNoteContainer, false);
 
-        AttackSide visual = GetVisualSide(side);
         double safeDuration = System.Math.Max(0.01, duration);
         float ratio = Mathf.Clamp01((float)(note.noteRelativeTime / safeDuration));
-        float x = Mathf.Lerp(GetStartXDirect(visual), GetEndXDirect(visual), ratio);
+        float x = Mathf.Lerp(GetStartX(side), GetEndX(side), ratio);
 
         t.localPosition = new Vector3(x, 0f, 0f);
         spawnedNotes.Add(new NoteEntry { rect = t, noteId = note.noteId, initialX = x });
     }
 
     /// <summary>
-    /// 공격 판정선 이동만 정지. 생성된 노트와 고정선은 유지.
+    /// 공격 판정선 이동만 정지. 생성된 노트는 유지한다.
     /// </summary>
     public void StopLine()
     {
@@ -119,32 +101,7 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// GameManager.Awake()에서 호출. 로컬 플레이어 ID에 따라 좌표 관점을 설정한다.
-    /// </summary>
-    public void SetLocalPlayer(int id)
-    {
-        localPlayerId = id;
-    }
-
-    /// <summary>
-    /// 절대 플레이어 사이드를 관점 기반 시각 사이드로 변환한다.
-    /// 로컬 플레이어는 항상 P1 좌표(오→왼), 상대는 항상 P2 좌표(왼→오)를 사용.
-    /// </summary>
-    private AttackSide GetVisualSide(AttackSide absoluteSide)
-    {
-        bool isLocal = (absoluteSide == AttackSide.P1 && localPlayerId == 1) ||
-                       (absoluteSide == AttackSide.P2 && localPlayerId == 2);
-        return isLocal ? AttackSide.P1 : AttackSide.P2;
-    }
-
-    private float GetStartXDirect(AttackSide visualSide)
-        => visualSide == AttackSide.P1 ? p1StartX : p2StartX;
-
-    private float GetEndXDirect(AttackSide visualSide)
-        => visualSide == AttackSide.P1 ? p1EndX : p2EndX;
-
-    /// <summary>
-    /// 스폰된 공격 노트를 모두 제거하고 판정선을 비활성화.
+    /// 스폰된 공격 노트를 모두 제거하고 판정선을 비활성화한다.
     /// </summary>
     public void ClearAll()
     {
@@ -157,7 +114,6 @@ public class AttackTurnRenderer : MonoBehaviour
         foreach (NoteEntry entry in spawnedNotes)
             NoteRenderer.Instance?.ReleaseNote(entry.noteId);
         spawnedNotes.Clear();
-        // ClearGrid();
     }
 
     private void Update()
@@ -166,47 +122,13 @@ public class AttackTurnRenderer : MonoBehaviour
         {
             double elapsed = AudioSettings.dspTime - attackStartDspTime;
             float t = Mathf.Clamp01((float)(elapsed / attackDuration));
-            float x = Mathf.Lerp(GetStartXDirect(currentSide), GetEndXDirect(currentSide), t);
+            float x = Mathf.Lerp(GetStartX(currentSide), GetEndX(currentSide), t);
             SetLineX(currentSide, x);
             if (t >= 1f) isMoving = false;
         }
 
         if (isTransferring) UpdateTransferMovement();
     }
-
-    // private void BuildAttackGrid(AttackSide side, int gridStepCount)
-    // {
-    //     ClearGrid();
-    //     if (attackGridContainer == null)
-    //     {
-    //         Debug.LogWarning("AttackGridContainer가 연결되지 않았습니다.");
-    //         return;
-    //     }
-    //     int safeCount = Mathf.Max(1, gridStepCount);
-    //     for (int i = 0; i <= safeCount; i++)
-    //     {
-    //         float t = (float)i / safeCount;
-    //         float x = Mathf.Lerp(GetStartX(side), GetEndX(side), t);
-    //         GameObject go = new GameObject($"GridLine_{i}", typeof(SpriteRenderer));
-    //         Transform lineT = go.transform;
-    //         lineT.SetParent(attackGridContainer, false);
-    //         lineT.localPosition = new Vector3(x, 0f, 0f);
-    //         lineT.localScale = new Vector3(gridLineSize.x, gridLineSize.y, 1f);
-    //         SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
-    //         sr.sprite = gridLineSprite;
-    //         sr.color = i % 2 == 0 ? beatGridColor : halfBeatGridColor;
-    //         gridLines.Add(lineT);
-    //     }
-    // }
-
-    // private void ClearGrid()
-    // {
-    //     foreach (Transform t in gridLines)
-    //     {
-    //         if (t != null) Destroy(t.gameObject);
-    //     }
-    //     gridLines.Clear();
-    // }
 
     private Transform GetAttackLine(AttackSide side) => side == AttackSide.P1 ? p1AttackLine : p2AttackLine;
 
@@ -220,7 +142,7 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// 노트별 도착 시각(judgeTime)을 설정. DefenseTurn.Begin()에서 노트별로 호출 후 StartTransfer 를 호출.
+    /// 노트별 도착 시각(judgeTime)을 설정한다. DefenseTurn.Begin()에서 노트별로 호출 후 StartTransfer를 호출한다.
     /// </summary>
     public void SetNoteJudgeTime(int noteId, double judgeTime)
     {
@@ -235,7 +157,7 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// 방어 전환 시 호출. 각 노트는 SetNoteJudgeTime으로 설정된 judgeTime에서 역산한 출발 시각에 따라 이동 시작.
+    /// 방어 전환 시 호출. 각 노트는 SetNoteJudgeTime으로 설정된 judgeTime에서 역산한 출발 시각에 따라 이동 시작한다.
     /// </summary>
     public void StartTransfer(float judgeLineX, float speed)
     {
@@ -245,7 +167,7 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// noteId에 해당하는 노트를 제거. DefenseTurn에서 판정 후 호출.
+    /// noteId에 해당하는 노트를 제거한다. DefenseTurn에서 판정 후 호출한다.
     /// </summary>
     public void RemoveNote(int noteId)
     {
@@ -259,33 +181,25 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 구간 시작 X 좌표. 관점 변환을 적용한다.
+    /// 공격 구간 시작 X 좌표를 절대 좌표로 반환한다.
     /// </summary>
-    public float GetStartX(AttackSide side)
-    {
-        AttackSide visual = GetVisualSide(side);
-        return visual == AttackSide.P1 ? p1StartX : p2StartX;
-    }
+    public float GetStartX(AttackSide side) => side == AttackSide.P1 ? p1StartX : p2StartX;
 
     /// <summary>
-    /// 공격 구간 끝 X 좌표. 관점 변환을 적용한다.
+    /// 공격 구간 끝 X 좌표를 절대 좌표로 반환한다.
     /// </summary>
-    public float GetEndX(AttackSide side)
-    {
-        AttackSide visual = GetVisualSide(side);
-        return visual == AttackSide.P1 ? p1EndX : p2EndX;
-    }
+    public float GetEndX(AttackSide side) => side == AttackSide.P1 ? p1EndX : p2EndX;
 
     /// <summary>
-    /// 공격자 기준 방어 판정선 X 좌표. 관점 변환 후 반대편 DefenseLine 위치를 반환.
+    /// 공격자 기준 방어 판정선 X 좌표를 절대 좌표로 반환한다.
+    /// P1 공격 시 P2 방어선, P2 공격 시 P1 방어선 위치를 반환한다.
     /// </summary>
     public float GetJudgeLineX(AttackSide attackerSide)
     {
-        AttackSide visual = GetVisualSide(attackerSide);
-        Transform line = visual == AttackSide.P1 ? p2DefenseLine : p1DefenseLine;
+        Transform line = attackerSide == AttackSide.P1 ? p2DefenseLine : p1DefenseLine;
         if (line != null) return line.position.x;
         Debug.LogWarning($"AttackTurnRenderer: DefenseLine이 연결되지 않았습니다.");
-        return visual == AttackSide.P1 ? 15f : -15f;
+        return attackerSide == AttackSide.P1 ? 15f : -15f;
     }
 
     private void UpdateTransferMovement()
