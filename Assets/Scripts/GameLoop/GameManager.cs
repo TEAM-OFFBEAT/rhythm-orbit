@@ -125,15 +125,16 @@ public class GameManager : MonoBehaviour
     private int remoteDefenseMissCount;
     private bool isWaitingRemoteDefenseResult;
 
-    // 공격자 미러뷰에서 수신한 JUDGMENT 패킷을 noteId 순으로 보관한다.
-    // 모든 판정이 도착하면 GetDefenderPanelMessage에 전달해 방어자 패널 메세지를 구성한다.
+    // 공격자 클라이언트에서 수신한 JUDGMENT 패킷을 noteId 순으로 보관한다.
+    // AdvancePhase에서 방어자 패널 메시지를 구성할 때 사용한다.
     private readonly List<Judgment> remoteJudgmentBuffer = new();
 
-    // 로컬 모드 방어 페이즈에서 Begin()에 전달할 공격 결과
+    // 로컬 모드 및 공격자 관찰 뷰 전환에 사용할 공격 결과 캐시
     private AttackResult? lastLocalAttackResult;
 
     // 패널 메세지 표시에 필요한 턴 상태 캐시
     private string currentAttackMessage = "";
+    private string defendingMessage = "";
     private bool currentAttackSuccess;
     private int currentJudgmentIndex;
     private int currentPhaseNoteCount; // 네트워크 공격자 클라이언트에서 방어 종료 판단에 사용
@@ -181,7 +182,6 @@ public class GameManager : MonoBehaviour
         {
             myLocalPlayerId  = net.LocalPlayerId;
             attackerPlayerId = net.FirstAttackerId;
-            attackTurnRenderer?.SetLocalPlayer(myLocalPlayerId);
 
             net.OnNoteCreated        += HandleNetworkNoteCreated;
             net.OnJudgmentReceived   += HandleNetworkJudgment;
@@ -321,9 +321,8 @@ public class GameManager : MonoBehaviour
         }
         else if (currentState == GameState.DEFENSE)
         {
-            bool isMirrorView = NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId;
-            if (!isMirrorView)
-                defenseTurn.OnTap(noteType);
+            bool isLocalDefender = NetworkManager.Instance == null || attackerPlayerId != myLocalPlayerId;
+            if (isLocalDefender) defenseTurn.OnTap(noteType);
         }
     }
 
@@ -353,6 +352,25 @@ public class GameManager : MonoBehaviour
         if (isAttackPhase)
         {
             PlayPendingRemoteDefenseResultSfx();
+
+            // 관찰자(공격자 클라이언트)의 방어 결과 메시지: DSP 페이즈 루프 기준으로 표시
+            bool isLocalAttacker = NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId;
+            if (isLocalAttacker)
+            {
+                if (currentPhaseNoteCount == 0)
+                {
+                    string msg = randomMessageProvider?.GetDefenderPanelMessage(
+                        currentAttackMessage, new Judgment[0], currentAttackSuccess) ?? "";
+                    hud?.ShowInDefenderPanel(msg, GetAttackSide(attackerPlayerId));
+                }
+                else if (remoteJudgmentBuffer.Count > 0)
+                {
+                    string msg = randomMessageProvider?.GetDefenderPanelMessage(
+                        currentAttackMessage, remoteJudgmentBuffer.ToArray(), currentAttackSuccess) ?? "";
+                    hud?.ShowInDefenderPanel(msg, GetAttackSide(attackerPlayerId));
+                    remoteJudgmentBuffer.Clear();
+                }
+            }
 
             if (ShouldEndByCommunicationSuccess(attackPhaseIdx))
             {
@@ -450,7 +468,6 @@ public class GameManager : MonoBehaviour
         hud?.ClearAttackProgress();
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
-        hud?.ClearPanelMessages();
         hud?.SetTurnOwner(attackerPlayerId);
         gameCamera?.SetAttackView(attackerSide);
 
@@ -496,6 +513,7 @@ public class GameManager : MonoBehaviour
     private void StartDefensePhase(double phaseStartDspTime)
     {
         currentJudgmentIndex = 0;
+        defendingMessage = currentAttackMessage;
         hud?.ResetCombo();
 
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
@@ -510,10 +528,10 @@ public class GameManager : MonoBehaviour
         bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId);
         bool isNetworkMode   = NetworkManager.Instance != null;
 
+        currentState = GameState.DEFENSE;
+
         if (!isLocalAttacker && isNetworkMode)
         {
-            currentState = GameState.DEFENSE;
-
             bool remoteAttackSuccess = currentReceivedNoteCount == currentTargetNoteCount;
             currentAttackSuccess = remoteAttackSuccess;
             PlayTurnResultSfx(remoteAttackSuccess);
@@ -523,12 +541,16 @@ public class GameManager : MonoBehaviour
             defenseTurn?.BeginTransfer(judgeLineX, attackStartX, attackEndX,
                 currentTurnDuration, NetworkManager.Instance, phaseStartDspTime);
         }
-        else if (!isNetworkMode)
+        else if (isLocalAttacker && isNetworkMode)
         {
-            currentState = GameState.DEFENSE;
+            // 공격자 관찰 뷰: 렌더링만 시작, 판정 없음
+            // HandleAttackEnded보다 늦게 실행됐으면 여기서 바로 시작, 아니면 HandleAttackEnded가 처리
+            BeginAttackerObserverTransfer();
+        }
+        else
+        {
             BeginLocalDefense();  // lastLocalAttackResult이 이미 세팅돼 있으면 즉시 시작, 아니면 HandleAttackEnded 쪽이 처리
         }
-        // isLocalAttacker && isNetworkMode: 공격자 미러뷰는 HandleAttackEnded에서 처리
     }
 
     // AttackTurn.Update()와 GameManager.Update() 실행 순서에 무관하게 defenseTurn.Begin()을 정확히 한 번 호출한다.
@@ -552,10 +574,43 @@ public class GameManager : MonoBehaviour
         lastLocalAttackResult = null;
     }
 
+    // 네트워크 공격자 클라이언트에서 방어 페이즈 전환 시 노트 이동 렌더링만 시작한다.
+    // AttackTurn.Update()와 GameManager.Update() 실행 순서에 무관하게 정확히 한 번 호출된다.
+    private void BeginAttackerObserverTransfer()
+    {
+        if (!lastLocalAttackResult.HasValue) return;
+
+        var notes = lastLocalAttackResult.Value.Notes;
+        lastLocalAttackResult = null;
+
+        if (notes == null || notes.Count == 0) return;
+
+        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
+        float judgeLineX   = attackTurnRenderer?.GetJudgeLineX(attackerSide) ?? 0f;
+        float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
+        float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
+
+        double firstRelativeTime = double.MaxValue;
+        foreach (var n in notes)
+            if (n.noteRelativeTime < firstRelativeTime) firstRelativeTime = n.noteRelativeTime;
+
+        float firstInitialX = Mathf.Lerp(attackStartX, attackEndX,
+            (float)(firstRelativeTime / System.Math.Max(0.01, currentTurnDuration)));
+        float transferSpeed = firstRelativeTime > 0.0
+            ? Mathf.Abs(judgeLineX - firstInitialX) / (float)firstRelativeTime
+            : 5f;
+
+        double defenseStartDspTime = localAttackStartDspTime + currentTurnDuration;
+        foreach (var n in notes)
+            attackTurnRenderer?.SetNoteJudgeTime(n.noteId, defenseStartDspTime + n.noteRelativeTime);
+
+        attackTurnRenderer?.StartTransfer(judgeLineX, transferSpeed);
+    }
+
     // ── Attack/Defense Event Handlers ─────────────────────────────────────────────
 
     /// <summary>
-    /// 공격 턴 종료 시 공격자 패널티를 적용하고 네트워크 모드에서 미러뷰를 시작한다.
+    /// 공격 턴 종료 시 공격자 패널티를 적용하고 네트워크 모드에서 관찰 뷰 렌더링을 시작한다.
     /// 공격자의 정신력이 0이 되는 경우 게임 종료 처리는 SanitySystem.OnPlayerDefeated 이벤트가 담당한다.
     /// </summary>
     private void HandleAttackEnded(AttackResult attackResult)
@@ -591,26 +646,15 @@ public class GameManager : MonoBehaviour
 
         if (currentState == GameState.END) return;
 
-        // 공격자 미러 뷰 (로컬 공격자가 방어 phase에서 반대편 뷰로)
+        // 네트워크 공격자: JUDGMENT 패킷 수신 대기 및 관찰 뷰 전환
         if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId)
         {
             remoteDefenseMissCount = 0;
             isWaitingRemoteDefenseResult = true;
 
-            float judgeLineX   = attackTurnRenderer?.GetJudgeLineX(attackerSide) ?? 0f;
-            float attackStartX = attackTurnRenderer?.GetStartX(attackerSide) ?? 5f;
-            float attackEndX   = attackTurnRenderer?.GetEndX(attackerSide) ?? -5f;
-
-            defenseTurn?.Begin(
-                attackResult.Notes,
-                judgeLineX,
-                attackStartX,
-                attackEndX,
-                attackTurn.AttackDuration,
-                isAiDefense: true,
-                networkManager: null,
-                remoteAttackStartDspTime: attackTurn.AttackStartDspTime
-            );
+            // StartDefensePhase보다 늦게 실행됐으면 여기서 바로 렌더링 시작
+            if (currentState == GameState.DEFENSE)
+                BeginAttackerObserverTransfer();
         }
     }
 
@@ -621,10 +665,6 @@ public class GameManager : MonoBehaviour
     private void HandleJudgment(Judgment judgment)
     {
         if (currentState == GameState.END) return;
-
-        // 네트워크 모드에서 내가 공격자라면,
-        // 방어 판정 표시는 상대가 보낸 JUDGMENT 패킷을 받은 HandleNetworkJudgment가 담당한다.
-        if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId) return;
 
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         hud?.ShowJudgment(judgment, attackerSide);
@@ -663,20 +703,16 @@ public class GameManager : MonoBehaviour
     {
         if (currentState == GameState.END) return;
 
-        // 네트워크 모드에서 내가 공격자라면 이 DefenseTurn은 미러뷰/AI 처리이므로
-        // 실제 상대 방어 결과음은 JUDGMENT 누적값으로 따로 재생한다.
-        if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId)
-        {
-            Debug.Log($"Defense Mirror End / miss:{result.MissCount}");
-            return;
-        }
-
         bool defenseSuccess = IsDefenseTurnSuccess(result);
         PlayTurnResultSfx(defenseSuccess);
 
-        AttackSide attackerSide = GetAttackSide(attackerPlayerId);
-        string defensePanelMsg = randomMessageProvider?.GetDefenderPanelMessage(currentAttackMessage, result.Judgments, currentAttackSuccess) ?? "";
-        hud?.ShowInDefenderPanel(defensePanelMsg, attackerSide);
+        Judgment[] judgments = result.Judgments ?? new Judgment[0];
+        string msg = randomMessageProvider?.GetDefenderPanelMessage(
+            defendingMessage, judgments, attackSuccess: judgments.Length == 0 || result.MissCount <= 0) ?? "";
+        if (myLocalPlayerId == 1)
+            hud?.ShowP1PanelMessage(msg);
+        else
+            hud?.ShowP2PanelMessage(msg);
 
         Debug.Log($"Defense End / miss:{result.MissCount}");
     }
@@ -748,16 +784,9 @@ public class GameManager : MonoBehaviour
         }
         currentJudgmentIndex++;
 
-        // 모든 판정이 도착했을 때 공격자 클라이언트의 방어자 패널(상대 패널)에 결과 메세지 표시
-        if (currentPhaseNoteCount > 0 && currentJudgmentIndex >= currentPhaseNoteCount)
-        {
-            Judgment[] judgments = remoteJudgmentBuffer.ToArray();
-            string observeMsg = randomMessageProvider?.GetDefenderPanelMessage(currentAttackMessage, judgments, currentAttackSuccess) ?? "";
-            hud?.ShowInDefenderPanel(observeMsg, attackerSide);
-        }
-
         // JUDGMENT는 시각 동기화 전용 — 정신력 처리 없음 (SANITY_CHANGE가 별도 처리)
-        attackTurnRenderer?.RemoveNote(packet.noteId);  // 공격자 미러뷰에서 노트 제거
+        // 관찰자 메시지는 AdvancePhase에서 remoteJudgmentBuffer로 표시
+        attackTurnRenderer?.RemoveNote(packet.noteId);  // 공격자 관찰 뷰에서 판정된 노트 제거
         hud?.ShowJudgment(judgment, attackerSide);
         GetDefenseLabel(GetDefenderPlayerId())?.ShowJudgment(judgment);
     }
@@ -851,9 +880,9 @@ public class GameManager : MonoBehaviour
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
 
-        GameResultType resultType = defeatedPlayerId == myLocalPlayerId
-            ? GameResultType.Lose
-            : GameResultType.Win;
+        GameResultType resultType = defeatedPlayerId == 1
+            ? GameResultType.P2Win
+            : GameResultType.P1Win;
 
         resultPanelUI?.Show(resultType);
 
@@ -861,8 +890,9 @@ public class GameManager : MonoBehaviour
         // GameWin/GameLose는 효과음이므로 별개로 재생한다.
         SoundManager.Instance?.StopBgm();
 
+        bool localPlayerWon = defeatedPlayerId != myLocalPlayerId;
         SoundManager.Instance?.PlaySfx(
-            resultType == GameResultType.Win
+            localPlayerWon
                 ? SfxId.GameWin
                 : SfxId.GameLose
         );
@@ -1287,8 +1317,7 @@ public class GameManager : MonoBehaviour
 
     private JudgmentLabel GetDefenseLabel(int defenderPlayerId)
     {
-        bool isLocalDefending = NetworkManager.Instance == null || defenderPlayerId == myLocalPlayerId;
-        return isLocalDefending ? p1DefenseJudgmentLabel : p2DefenseJudgmentLabel;
+        return defenderPlayerId == 1 ? p1DefenseJudgmentLabel : p2DefenseJudgmentLabel;
     }
 
     /// <summary>
