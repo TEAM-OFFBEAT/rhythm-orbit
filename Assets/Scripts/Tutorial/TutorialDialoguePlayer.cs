@@ -13,6 +13,16 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [SerializeField] private GameObject guidePanel;
     [SerializeField] private TMP_Text guideText;
 
+    [Header("Typewriter")]
+    [SerializeField] private TypewriterText typewriterText;
+    [SerializeField] private bool useTypewriter = true;
+
+    [Tooltip("문장 타이핑이 끝난 뒤 다음 문장으로 넘어가기 전에 유지할 시간.")]
+    [SerializeField, Min(0f)] private float holdSecondsAfterTyping = 0.6f;
+
+    [Tooltip("문장이 너무 길어도 최소한 이 시간 이상은 타이핑에 사용한다.")]
+    [SerializeField, Min(0.01f)] private float minimumTypingSeconds = 0.15f;
+
     [Header("Timing")]
     [SerializeField] private float fallbackBpm = 90f;
     [SerializeField] private bool hideOnAwake = true;
@@ -35,6 +45,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
     private void Awake()
     {
         currentBpm = fallbackBpm;
+
+        if (typewriterText == null && guideText != null)
+        {
+            typewriterText = guideText.GetComponent<TypewriterText>();
+        }
 
         if (hideOnAwake)
         {
@@ -61,6 +76,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
     /// </summary>
     public void Show(string text)
     {
+        ShowInstant(text);
+    }
+
+    private void ShowInstant(string text)
+    {
         if (guidePanel == null)
         {
             Debug.LogWarning("TutorialDialoguePlayer: guidePanel이 연결되지 않음.");
@@ -75,7 +95,43 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         guidePanel.SetActive(true);
         guideText.gameObject.SetActive(true);
-        guideText.text = text;
+
+        if (typewriterText != null)
+        {
+            typewriterText.SetInstant(text);
+        }
+        else
+        {
+            guideText.text = text;
+            guideText.maxVisibleCharacters = int.MaxValue;
+        }
+    }
+
+    private void ShowTyped(string text, float durationSeconds)
+    {
+        if (guidePanel == null)
+        {
+            Debug.LogWarning("TutorialDialoguePlayer: guidePanel이 연결되지 않음.");
+            return;
+        }
+
+        if (guideText == null)
+        {
+            Debug.LogWarning("TutorialDialoguePlayer: guideText가 연결되지 않음.");
+            return;
+        }
+
+        guidePanel.SetActive(true);
+        guideText.gameObject.SetActive(true);
+
+        if (useTypewriter && typewriterText != null)
+        {
+            typewriterText.Play(text, durationSeconds);
+        }
+        else
+        {
+            ShowInstant(text);
+        }
     }
 
     /// <summary>
@@ -87,6 +143,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
         {
             StopCoroutine(temporaryMessageCoroutine);
             temporaryMessageCoroutine = null;
+        }
+
+        if (typewriterText != null)
+        {
+            typewriterText.Stop();
         }
 
         if (guidePanel != null)
@@ -133,16 +194,19 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
             double visualShowDspTime = lineStartDspTime - dialogueVisualLeadSeconds;
 
-            yield return WaitUntilDspTime(visualShowDspTime);
-
-            Show(lines[i]);
-            onLineStarted?.Invoke(i, lines[i]);
-
             bool hasNextLine = i < lines.Length - 1;
 
             float blinkSeconds = useBlinkBetweenLines && hasNextLine
                 ? Mathf.Clamp(blinkSecondsBetweenLines, 0f, lineSeconds * 0.5f)
                 : 0f;
+
+            float totalVisibleSeconds = lineSeconds + dialogueVisualLeadSeconds;
+            float typingSeconds = CalculateTypingSeconds(totalVisibleSeconds, blinkSeconds);
+
+            yield return WaitUntilDspTime(visualShowDspTime);
+
+            ShowTyped(lines[i], typingSeconds);
+            onLineStarted?.Invoke(i, lines[i]);
 
             double blinkStartDspTime = nextLineStartDspTime - blinkSeconds;
 
@@ -161,6 +225,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
             Hide();
         }
     }
+
     /// <summary>
     /// 튜토리얼 반응 문장을 지정한 박자 동안 표시한다.
     /// 턴 진행을 막지 않기 위해 코루틴을 내부에서 실행하고 바로 반환한다.
@@ -198,9 +263,12 @@ public class TutorialDialoguePlayer : MonoBehaviour
     {
         Debug.Log($"Tutorial Reaction: {text}");
 
-        Show(text);
+        float safeSeconds = Mathf.Max(0.1f, seconds);
+        float typingSeconds = CalculateTypingSeconds(safeSeconds, blinkSeconds: 0f);
 
-        yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, seconds));
+        ShowTyped(text, typingSeconds);
+
+        yield return new WaitForSecondsRealtime(safeSeconds);
 
         if (hideWhenFinished)
         {
@@ -220,6 +288,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
             StopCoroutine(temporaryMessageCoroutine);
             temporaryMessageCoroutine = null;
         }
+
+        if (typewriterText != null)
+        {
+            typewriterText.Stop();
+        }
     }
 
     private float GetBeatSeconds()
@@ -232,8 +305,31 @@ public class TutorialDialoguePlayer : MonoBehaviour
         return 60f / Mathf.Max(1f, currentBpm);
     }
 
+    private float CalculateTypingSeconds(float totalVisibleSeconds, float blinkSeconds)
+    {
+        float availableSeconds = Mathf.Max(0.05f, totalVisibleSeconds - blinkSeconds);
+
+        float safeMinimumTypingSeconds = Mathf.Min(
+            Mathf.Max(0.01f, minimumTypingSeconds),
+            availableSeconds
+        );
+
+        float maxHoldSeconds = Mathf.Max(0f, availableSeconds - safeMinimumTypingSeconds);
+        float safeHoldSeconds = Mathf.Min(holdSecondsAfterTyping, maxHoldSeconds);
+
+        return Mathf.Max(
+            safeMinimumTypingSeconds,
+            availableSeconds - safeHoldSeconds
+        );
+    }
+
     private void ShowBlinkBlank()
     {
+        if (typewriterText != null)
+        {
+            typewriterText.Stop();
+        }
+
         if (hidePanelDuringBlink)
         {
             if (guidePanel != null)
@@ -252,6 +348,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
         if (guideText != null)
         {
             guideText.text = string.Empty;
+            guideText.maxVisibleCharacters = 0;
             guideText.gameObject.SetActive(false);
         }
     }
