@@ -945,6 +945,54 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 메인루프 진행 중 재시작 또는 로비 이동을 위해 현재 게임 진행 상태를 정리한다.
+    /// 씬을 다시 로드하기 직전에 호출한다.
+    /// </summary>
+    public void StopCurrentMainLoopForSceneChange()
+    {
+        currentState = GameState.END;
+        nextPhaseDspTime = double.MaxValue;
+
+        phaseIndex = 0;
+        currentRoundIndex = 0;
+        pendingRoundStartSfx = false;
+        lastSurpriseEventPreparePhaseIndex = -1;
+
+        currentTargetNoteCount = 0;
+        currentReceivedNoteCount = 0;
+        remoteDefenseMissCount = 0;
+        isWaitingRemoteDefenseResult = false;
+
+        currentAttackMessage = "";
+        defendingMessage = "";
+        currentAttackSuccess = false;
+        currentJudgmentIndex = 0;
+        currentPhaseNoteCount = 0;
+        isApplyingRemoteGameState = false;
+
+        noteTypeByNoteId.Clear();
+        remoteJudgmentBuffer.Clear();
+        lastLocalAttackResult = null;
+
+        attackTurn?.CancelAttack();
+        defenseTurn?.CancelDefense();
+
+        attackTurnRenderer?.ClearAll();
+
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+        hud?.ClearPanelMessages();
+
+        p1DefenseJudgmentLabel?.ClearJudgment();
+        p2DefenseJudgmentLabel?.ClearJudgment();
+
+        surpriseEventManager?.ResetForNewGame();
+        resultPanelUI?.HideAll();
+
+        SoundManager.Instance?.StopBgm();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────────
 
     /// <summary>
