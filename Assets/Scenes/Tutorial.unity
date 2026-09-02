@@ -1467,18 +1467,6 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 314441054}
-    - target: {fileID: 1851112342850279531, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: GoToLobby
-      objectReference: {fileID: 0}
-    - target: {fileID: 1851112342850279531, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: TutorialManager, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 1851112342850279531, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
     - target: {fileID: 5815403447023689153, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
       propertyPath: m_Name
       value: TutorialUI

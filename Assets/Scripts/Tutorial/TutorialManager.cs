@@ -308,8 +308,10 @@ public class TutorialManager : MonoBehaviour
         dialoguePlayer?.Hide();
 
         if (lobbyButtonRoot != null)
-        {
-            lobbyButtonRoot.SetActive(false);
+        {   
+            //튜토리얼을 항상 나갈 수 있게 수정
+            //lobbyButtonRoot.SetActive(false);
+            lobbyButtonRoot.SetActive(true);
         }
 
         attackTurnRenderer.ClearAll();
