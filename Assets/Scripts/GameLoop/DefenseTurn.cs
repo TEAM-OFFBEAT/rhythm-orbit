@@ -347,4 +347,21 @@ public class DefenseTurn : MonoBehaviour
         return RhythmClock.Instance.GetNoteDuration(subdivisions) * defenseTimingWindowRatio;
     }
 
+    /// <summary>
+    /// 재시작 또는 씬 이동을 위해 진행 중인 방어 턴을 강제로 정리한다.
+    /// OnDefenseEnded는 호출하지 않는다.
+    /// </summary>
+    public void CancelDefense()
+    {
+        isRunning = false;
+        isAiDefense = false;
+
+        pendingNotes.Clear();
+        receivedNotes.Clear();
+        judgments.Clear();
+
+        networkManager = null;
+        defenseEndDspTime = 0.0;
+        pendingAttackDuration = 0.0;
+    }
 }

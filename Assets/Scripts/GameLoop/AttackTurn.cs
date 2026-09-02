@@ -510,4 +510,30 @@ public class AttackTurn : MonoBehaviour
 
         Debug.Log($"Attack Message Selected / target:{targetTapCount}, message:{currentAttackMessage}");
     }
+
+    /// <summary>
+    /// 재시작 또는 씬 이동을 위해 진행 중인 공격 턴을 강제로 정리한다.
+    /// OnAttackEnded는 호출하지 않는다.
+    /// </summary>
+    public void CancelAttack()
+    {
+        isRunning = false;
+        isLocalPlayerAttack = false;
+
+        badTimingInputCount = 0;
+        missingNoteCount = 0;
+        extraNoteCount = 0;
+        duplicateInputCount = 0;
+
+        createdNotes.Clear();
+        opponentDemoRelativeTimes.Clear();
+        createdGridSteps.Clear();
+
+        targetTapCount = 0;
+        nextNoteId = 0;
+        nextOpponentDemoIndex = 0;
+        currentAttackMessage = "";
+
+        attackTurnRenderer?.StopLine();
+    }
 }

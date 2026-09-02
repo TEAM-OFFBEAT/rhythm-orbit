@@ -262,6 +262,11 @@ public class ResultPanelUI : MonoBehaviour
 
     private void HandleReplayRequest(ReplayRequestPacket packet)
     {
+        if (!gameObject.activeInHierarchy)
+        {
+            return;
+        }
+
         if (isOpponentDisconnected)
         {
             return;
@@ -356,6 +361,11 @@ public class ResultPanelUI : MonoBehaviour
     /// </summary>
     private void HandleNetworkGameStart(GameStartPacket packet)
     {
+        if (!gameObject.activeInHierarchy)
+        {
+            return;
+        }
+
         NetworkManager net = NetworkManager.Instance;
 
         if (net == null)
@@ -428,6 +438,11 @@ public class ResultPanelUI : MonoBehaviour
     /// </summary>
     private void HandleNetworkDisconnected()
     {
+        if (!gameObject.activeInHierarchy)
+        {
+            return;
+        }
+
         isOpponentDisconnected = true;
         remoteReplayRequested = false;
 
