@@ -141,7 +141,6 @@ public class GameManager : MonoBehaviour
 
     //private int completedTurnCount;
     private int currentRoundIndex;
-    private bool pendingRoundStartSfx;
 
     private GameState currentState;
     private int attackerPlayerId = 1;
@@ -277,7 +276,6 @@ public class GameManager : MonoBehaviour
 
         phaseIndex = 0;
         currentRoundIndex = 0;
-        pendingRoundStartSfx = false;
         lastSurpriseEventPreparePhaseIndex = -1;
         surpriseEventManager?.ResetForNewGame();
 
@@ -298,15 +296,13 @@ public class GameManager : MonoBehaviour
 
         // BGM 시작 후 introTurns 턴만큼 대기 — 카메라 중앙, 입력 차단.
         double introDuration = GetCurrentTurnDuration() * 2.0 * GetCurrentIntroTurns();
+        RoundSetting startSetting = GetCurrentRoundSetting();
+        if (startSetting != null)
+            SoundManager.Instance?.PlaySfxScheduled(startSetting.roundUpSfx, nextPhaseDspTime);
         if (introDuration > 0.0)
         {
             gameCamera?.SetCenterView();
-            pendingRoundStartSfx = true;
             nextPhaseDspTime += introDuration;
-        }
-        else
-        {
-            PlayRoundStartSfx();
         }
     }
 
@@ -399,10 +395,13 @@ public class GameManager : MonoBehaviour
                 double nextRoundStart = thisPhaseStart + gapDuration;
                 ScheduleCurrentCoreLoopBgm(nextRoundStart, stopAt: thisPhaseStart);
 
+                RoundSetting nextSetting = GetCurrentRoundSetting();
+                if (nextSetting != null)
+                    SoundManager.Instance?.PlaySfxScheduled(nextSetting.roundUpSfx, nextRoundStart);
+
                 // BGM 시작 후 introTurns 턴만큼 추가 대기 — 카메라 중앙, 입력 차단.
                 double introDuration = GetCurrentTurnDuration() * 2.0 * GetCurrentIntroTurns();
                 gameCamera?.SetCenterView();
-                pendingRoundStartSfx = true;
                 nextPhaseDspTime = nextRoundStart + introDuration;
                 hud?.ClearJudgments();
                 hud?.ClearAttackProgress();
@@ -453,12 +452,6 @@ public class GameManager : MonoBehaviour
     private void StartAttackPhase(double phaseStartDspTime, int attackPhaseIdx)
     {
         noteTypeByNoteId.Clear();
-
-        if (pendingRoundStartSfx)
-        {
-            pendingRoundStartSfx = false;
-            PlayRoundStartSfx();
-        }
 
         currentState = GameState.ATTACK;
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
@@ -956,7 +949,6 @@ public class GameManager : MonoBehaviour
 
         phaseIndex = 0;
         currentRoundIndex = 0;
-        pendingRoundStartSfx = false;
         lastSurpriseEventPreparePhaseIndex = -1;
 
         currentTargetNoteCount = 0;
@@ -1207,22 +1199,6 @@ public class GameManager : MonoBehaviour
 
         float bpm = GetCurrentBpm();
         SoundManager.Instance.ScheduleCoreLoopBgm(bpm, dspTime, stopAt);
-    }
-
-    /// <summary>
-    /// 현재 라운드의 시작 효과음을 재생한다.
-    /// R1, R2, R3 라운드 진입 연출에 사용한다.
-    /// </summary>
-    private void PlayRoundStartSfx()
-    {
-        RoundSetting setting = GetCurrentRoundSetting();
-
-        if (setting == null) return;
-        if (SoundManager.Instance == null) return;
-
-        SoundManager.Instance.PlaySfx(setting.roundUpSfx);
-
-        Debug.Log($"Round Start SFX / round:{setting.roundName}, sfx:{setting.roundUpSfx}");
     }
 
     /// <summary>
