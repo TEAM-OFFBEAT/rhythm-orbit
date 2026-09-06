@@ -9,7 +9,7 @@ public class GameCamera : MonoBehaviour
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
 
     [Header("Movement")]
-    [SerializeField] private float lerpSpeed = 4f;
+    [SerializeField] private float lerpSpeed;
 
     private float targetX;
 
