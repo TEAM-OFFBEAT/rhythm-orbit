@@ -9,7 +9,6 @@ using UnityEngine;
 public struct AttackResult
 {
     public IReadOnlyList<NoteData> Notes; //방어 턴으로 넘길 공격 노트 목록
-    public int BadTimingInputCount;       //공격 시간 밖 입력 또는 박자 이탈 횟수
     public int MissingNoteCount;          //공격 노트 누락 횟수
     public int ExtraNoteCount;            //공격 초과 입력 횟수
     public int DuplicateInputCount;       //공격 중복 입력 횟수
@@ -48,7 +47,6 @@ public class AttackTurn : MonoBehaviour
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private NetworkManager networkManager; // null이면 로컬 전용
 
-    private int badTimingInputCount;
     private int missingNoteCount;
     private int extraNoteCount;
     private int duplicateInputCount;
@@ -114,6 +112,12 @@ public class AttackTurn : MonoBehaviour
     /// GameManager가 구독해 성공이면 HitHigh/HitLow, 실패면 Miss 사운드를 재생한다.
     /// </summary>
     public event System.Action<NoteType, bool> OnAttackInputResolved;
+
+    /// <summary>
+    /// 공격 구간 밖 입력 또는 박자 이탈 발생 시 발행.
+    /// GameManager가 구독해 즉각 정신력 패널티를 적용한다.
+    /// </summary>
+    public event System.Action OnAttackBadTimingInput;
     
     public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
 
@@ -293,7 +297,7 @@ public class AttackTurn : MonoBehaviour
         // 공격 시간 자체 밖 입력은 스냅 보정 대상이 아니므로 노트를 생성하지 않는다.
         if (relativeTime < 0.0 || relativeTime > attackDuration)
         {
-            badTimingInputCount++;
+            OnAttackBadTimingInput?.Invoke();
             OnAttackInputResolved?.Invoke(noteType, false);
             return;
         }
@@ -316,7 +320,7 @@ public class AttackTurn : MonoBehaviour
         // 박자 어긋남은 감점 대상이지만, 기획 기준상 가장 가까운 박자선으로 보정해 전달한다.
         if (!isTimingSuccess)
         {
-            badTimingInputCount++;
+            OnAttackBadTimingInput?.Invoke();
         }
 
         // 목표 개수를 초과한 입력은 패널티 카운트에 기록하지만, 노트 자체는 생성한다.
@@ -359,7 +363,6 @@ public class AttackTurn : MonoBehaviour
         extraNoteCount = 0;
         missingNoteCount = 0;
         duplicateInputCount = 0;
-        badTimingInputCount = 0;
 
         double noteDuration = NoteDuration;
         gridStepCount = Mathf.Max(1, attackMeasureCount) * StepsPerMeasure;
@@ -443,14 +446,12 @@ public class AttackTurn : MonoBehaviour
 
         Debug.Log(
             $"Attack End / noteCount: {createdNotes.Count}, target: {targetTapCount}, " +
-            $"badTiming:{badTimingInputCount}, missing:{missingNoteCount}, " +
-            $"extra:{extraNoteCount}, duplicate:{duplicateInputCount}"
+            $"missing:{missingNoteCount}, extra:{extraNoteCount}, duplicate:{duplicateInputCount}"
         );
 
         AttackResult result = new AttackResult
         {
             Notes = new List<NoteData>(createdNotes).AsReadOnly(),
-            BadTimingInputCount = badTimingInputCount,
             MissingNoteCount = missingNoteCount,
             ExtraNoteCount = extraNoteCount,
             DuplicateInputCount = duplicateInputCount
@@ -520,7 +521,6 @@ public class AttackTurn : MonoBehaviour
         isRunning = false;
         isLocalPlayerAttack = false;
 
-        badTimingInputCount = 0;
         missingNoteCount = 0;
         extraNoteCount = 0;
         duplicateInputCount = 0;

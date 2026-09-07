@@ -29,9 +29,9 @@ public class SanitySystem : MonoBehaviour
 
     /// <summary>
     /// 특정 플레이어가 정신력 피해를 받았을 때 발행.
-    /// 전달값: playerId, 실제 감소량, 감소 사유.
+    /// 전달값: playerId, 실제 감소량.
     /// </summary>
-    public event Action<int, int, string> OnSanityDamaged;
+    public event Action<int, int> OnSanityDamaged;
 
     /// <summary>
     /// 특정 플레이어의 정신력이 0 이하가 되었을 때 발행.
@@ -40,6 +40,7 @@ public class SanitySystem : MonoBehaviour
     public event Action<int> OnPlayerDefeated;
 
     public int MaxSanity => Mathf.Max(1, maxSanity);
+    public int BadTimingInputPenalty => badTimingInputPenalty;
     public int P1Sanity { get; private set; }
     public int P2Sanity { get; private set; }
 
@@ -64,33 +65,15 @@ public class SanitySystem : MonoBehaviour
     /// </summary>
     public void ApplyAttackResult(int attackerPlayerId, AttackResult result)
     {
-        ApplyDamage(
-            attackerPlayerId,
-            result.BadTimingInputCount * badTimingInputPenalty,
-            "공격 박자 어긋남"
-        );
-
         bool hasNoteCountMismatch =
             result.MissingNoteCount > 0 ||
             result.ExtraNoteCount > 0;
 
         if (hasNoteCountMismatch)
-        {
-            ApplyDamage(
-                attackerPlayerId,
-                noteCountMismatchPenalty,
-                "공격 목표 탭 수 초과/미달"
-            );
-        }
+            ApplyDamage(attackerPlayerId, noteCountMismatchPenalty);
 
         if (penalizeDuplicateInput)
-        {
-            ApplyDamage(
-                attackerPlayerId,
-                result.DuplicateInputCount * duplicateInputPenaltyPerInput,
-                "공격 중복 입력"
-            );
-        }
+            ApplyDamage(attackerPlayerId, result.DuplicateInputCount * duplicateInputPenaltyPerInput);
     }
 
     /// <summary>
@@ -99,7 +82,7 @@ public class SanitySystem : MonoBehaviour
     /// </summary>
     public int CalculateAttackPenalty(AttackResult result)
     {
-        int amount = result.BadTimingInputCount * badTimingInputPenalty;
+        int amount = 0;
 
         bool hasNoteCountMismatch =
             result.MissingNoteCount > 0 ||
@@ -123,7 +106,7 @@ public class SanitySystem : MonoBehaviour
     /// </summary>
     public void ApplyDirect(int targetPlayerId, int amount)
     {
-        ApplyDamage(targetPlayerId, amount, "네트워크 수신");
+        ApplyDamage(targetPlayerId, amount);
     }
 
     /// <summary>
@@ -131,7 +114,7 @@ public class SanitySystem : MonoBehaviour
     /// </summary>
     public int ApplyDefenseMiss(int defenderPlayerId)
     {
-        ApplyDamage(defenderPlayerId, defenseMissPenaltyPerNote, "방어 실패");
+        ApplyDamage(defenderPlayerId, defenseMissPenaltyPerNote);
         return defenseMissPenaltyPerNote;
     }
 
@@ -148,7 +131,7 @@ public class SanitySystem : MonoBehaviour
     /// 정신력은 0과 MaxSanity 사이로 보정되며,
     /// 실제 감소량이 있을 때만 이벤트를 발행한다.
     /// </summary>
-    private void ApplyDamage(int playerId, int amount, string reason)
+    private void ApplyDamage(int playerId, int amount)
     {
         if (amount <= 0) return;
 
@@ -161,9 +144,9 @@ public class SanitySystem : MonoBehaviour
         SetSanity(playerId, next);
 
         OnSanityChanged?.Invoke(P1Sanity, P2Sanity, MaxSanity);
-        OnSanityDamaged?.Invoke(playerId, actualDamage, reason);
+        OnSanityDamaged?.Invoke(playerId, actualDamage);
 
-        Debug.Log($"Sanity Damage / P{playerId} -{actualDamage} / reason: {reason}");
+        Debug.Log($"Sanity Damage / P{playerId} -{actualDamage}");
 
         if (next <= 0)
         {

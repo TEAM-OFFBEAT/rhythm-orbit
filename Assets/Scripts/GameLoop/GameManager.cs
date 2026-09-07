@@ -171,6 +171,7 @@ public class GameManager : MonoBehaviour
         attackTurn.OnAttackMessageSelected += HandleAttackMessageSelected;
         attackTurn.OnAttackProgressChanged += HandleAttackProgressChanged;
         attackTurn.OnAttackInputResolved += HandleHitResolved;
+        attackTurn.OnAttackBadTimingInput += HandleAttackBadTimingInput;
 
         defenseTurn.OnDefenseEnded += HandleDefenseEnded;
         defenseTurn.OnJudgment += HandleJudgment;
@@ -206,6 +207,7 @@ public class GameManager : MonoBehaviour
             attackTurn.OnAttackMessageSelected -= HandleAttackMessageSelected;
             attackTurn.OnAttackProgressChanged -= HandleAttackProgressChanged;
             attackTurn.OnAttackInputResolved -= HandleHitResolved;
+            attackTurn.OnAttackBadTimingInput -= HandleAttackBadTimingInput;
         }
 
         if (defenseTurn != null)
@@ -601,6 +603,14 @@ public class GameManager : MonoBehaviour
     }
 
     // ── Attack/Defense Event Handlers ─────────────────────────────────────────────
+
+    /// <summary>
+    /// 공격 구간 밖 입력 또는 박자 이탈 시 즉각 정신력 패널티를 적용한다.
+    /// </summary>
+    private void HandleAttackBadTimingInput()
+    {
+        sanitySystem?.ApplyDirect(attackerPlayerId, sanitySystem.BadTimingInputPenalty);
+    }
 
     /// <summary>
     /// 공격 턴 종료 시 공격자 패널티를 적용하고 네트워크 모드에서 관찰 뷰 렌더링을 시작한다.
