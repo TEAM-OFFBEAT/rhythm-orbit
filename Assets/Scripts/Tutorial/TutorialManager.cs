@@ -565,7 +565,7 @@ public class TutorialManager : MonoBehaviour
                     useViewTransitionDelay: false
                 );
 
-                ApplyTutorialRallySanityLoss(GetOpponentSide(playerSide));
+                //ApplyTutorialRallySanityLoss(GetOpponentSide(playerSide));
             }
             else
             {
@@ -584,7 +584,10 @@ public class TutorialManager : MonoBehaviour
                     useDefenseViewDelay: false
                 );
 
-                ApplyTutorialRallySanityLoss(playerSide);
+                if (latestDefenseResultAvailable && latestDefenseMissCount > 0)
+                {
+                    ApplyTutorialRallySanityLoss(playerSide);
+                }
             }
 
             attackTurnRenderer.ClearAll();
