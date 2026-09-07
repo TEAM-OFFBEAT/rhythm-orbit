@@ -130,6 +130,19 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private double beatDemoDuration = 2.0;
     [SerializeField] private int demoFirstNoteId = 900000;
 
+    [Header("Tutorial Key Hint Colors")]
+    [SerializeField] private Color highKeyHintColor = new Color(1f, 0.35f, 0.75f);
+    [SerializeField] private Color lowKeyHintColor = new Color(0.35f, 1f, 0.45f);
+    
+    [Header("Intro Star Demo")]
+    [SerializeField] private bool showIntroStarDemo = true;
+
+    [Tooltip("인트로 설명 몇 번째 문장에서 별 UI를 보여줄지 설정한다. 1부터 시작한다.")]
+    [SerializeField, Min(1)] private int introStarDemoLineNumber = 3;
+
+    [Tooltip("인트로에서 예시로 보여줄 목표 별 개수.")]
+    [SerializeField, Min(1)] private int introStarDemoCount = 3;
+
     [Header("Guide Lines")]
     [SerializeField] private string[] introGuideLines =
     {
@@ -261,8 +274,7 @@ public class TutorialManager : MonoBehaviour
         yield return WaitUntilDspTime(tutorialStartDspTime);
 
         currentStep = TutorialStep.IntroDialogue;
-        yield return PlayDialogue(introGuideLines);
-
+        yield return PlayIntroDialogueWithStarDemo();
         attackTurnRenderer.ClearAll();
 
         currentStep = TutorialStep.AttackDialogue;
@@ -937,6 +949,30 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 인트로 설명 대사를 재생한다.
+    /// 지정한 문장이 시작될 때 별 UI를 예시로 표시한다.
+    /// </summary>
+    private IEnumerator PlayIntroDialogueWithStarDemo()
+    {
+        if (dialoguePlayer == null)
+        {
+            yield break;
+        }
+
+        double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
+
+        yield return dialoguePlayer.PlayLines(
+            introGuideLines,
+            guideBeatsPerLine,
+            hideWhenFinished: true,
+            onLineStarted: HandleIntroGuideLineStarted,
+            forcedStartDspTime: startDspTime
+        );
+
+        hud?.ClearAttackProgress();
+    }
+
+    /// <summary>
     /// 공격턴 설명 대사를 재생한다.
     /// 지정한 문장이 시작될 때 고주파/저주파 비트 소개 노트를 각각 표시한다.
     /// </summary>
@@ -991,10 +1027,33 @@ public class TutorialManager : MonoBehaviour
             safeDuration
         );
 
+        ShowBeatDemoKeyHint(note);
+
         Debug.Log(
             $"TutorialManager: Beat demo note 생성 / " +
             $"id:{note.noteId}, type:{note.noteType}, ratio:{positionRatio:0.00}"
         );
+    }
+
+    /// <summary>
+    /// 비트 소개용 노트 위에 F/J 키 힌트를 표시한다.
+    /// </summary>
+    private void ShowBeatDemoKeyHint(NoteData note)
+    {
+        if (note == null)
+        {
+            return;
+        }
+
+        if (NoteRenderer.Instance == null)
+        {
+            return;
+        }
+
+        string key = note.noteType == NoteType.HIGH ? "F" : "J";
+
+        Color color = GetTutorialKeyHintColor(note.noteType);
+        NoteRenderer.Instance.ShowKeyHint(note.noteId, key, color);
     }
 
     /// <summary>
@@ -1246,11 +1305,16 @@ public class TutorialManager : MonoBehaviour
         }
 
         string key = note.noteType == NoteType.HIGH ? "F" : "J";
-        Color color = note.noteType == NoteType.HIGH
-            ? new Color(0.45f, 0.9f, 1f)
-            : new Color(1f, 0.25f, 0.25f);
+        Color color = GetTutorialKeyHintColor(note.noteType);
 
         NoteRenderer.Instance.ShowKeyHint(note.noteId, key, color);
+    }
+
+    private Color GetTutorialKeyHintColor(NoteType noteType)
+    {
+        return noteType == NoteType.HIGH
+            ? highKeyHintColor
+            : lowKeyHintColor;
     }
     
     /// <summary>
@@ -1666,7 +1730,7 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 공격턴 설명 문장 시작 시 호출된다.
-    /// 공격턴 설명 4번째 문장에서 고주파, 5번째 문장에서 저주파 노트를 표시한다.
+    /// 지정한 문장이 시작될 때 고주파/저주파 비트 소개 노트를 각각 표시한다.
     /// </summary>
     private void HandleAttackGuideLineStarted(int lineIndex, string lineText)
     {
@@ -1691,8 +1755,6 @@ public class TutorialManager : MonoBehaviour
                 NoteType.HIGH,
                 demoHighNotePositionRatio
             );
-
-            return;
         }
 
         if (lineIndex == lowTargetIndex && !attackLowBeatDemoStarted)
@@ -1709,6 +1771,33 @@ public class TutorialManager : MonoBehaviour
                 demoLowNotePositionRatio
             );
         }
+    }
+
+    /// <summary>
+    /// 인트로 설명 문장 시작 시 호출된다.
+    /// 별 UI 설명 문장에서 목표 탭 수 UI를 잠깐 표시한다.
+    /// </summary>
+    private void HandleIntroGuideLineStarted(int lineIndex, string lineText)
+    {
+        if (!showIntroStarDemo)
+        {
+            return;
+        }
+
+        int targetIndex = Mathf.Max(1, introStarDemoLineNumber) - 1;
+
+        if (lineIndex != targetIndex)
+        {
+            return;
+        }
+
+        hud?.ClearAttackProgress();
+        hud?.UpdateAttackProgress(0, introStarDemoCount);
+
+        Debug.Log(
+            $"TutorialManager: Intro star demo 표시 / " +
+            $"line:{lineIndex + 1}, count:{introStarDemoCount}, text:{lineText}"
+        );
     }
 
     /// <summary>
