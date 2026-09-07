@@ -24,6 +24,12 @@ public class AttackTurnRenderer : MonoBehaviour
     [SerializeField] private Transform p1DefenseLine;
     [SerializeField] private Transform p2DefenseLine;
 
+    [Header("EVT_ATK_01 Half Note Indicator")]
+    [Tooltip("반쪽 노트 표시용 SpriteRenderer. 자식 오브젝트에 배치하고 연결한다.")]
+    [SerializeField] private SpriteRenderer halfNoteIndicator;
+    [SerializeField] private Sprite halfHighSprite;
+    [SerializeField] private Sprite halfLowSprite;
+
     private struct NoteEntry { public Transform rect; public int noteId; public float initialX; public double judgeTime; }
     private readonly List<NoteEntry> spawnedNotes = new();
 
@@ -91,6 +97,35 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
+    /// EVT_ATK_01 첫 탭 시 호출. 그리드 위치에 반쪽 노트 인디케이터를 표시한다.
+    /// P1(오른쪽→왼쪽 이동)은 flipX=false, P2(왼쪽→오른쪽)는 flipX=true.
+    /// </summary>
+    public void SpawnHalfAttackNote(AttackSide side, NoteType type, double noteRelativeTime, double attackDuration)
+    {
+        if (halfNoteIndicator == null) return;
+
+        double safeDuration = System.Math.Max(0.01, attackDuration);
+        float ratio = Mathf.Clamp01((float)(noteRelativeTime / safeDuration));
+        float x = Mathf.Lerp(GetStartX(side), GetEndX(side), ratio);
+
+        halfNoteIndicator.transform.localPosition = new Vector3(x, 0f, 0f);
+        halfNoteIndicator.sprite = type == NoteType.HIGH ? halfHighSprite : halfLowSprite;
+        halfNoteIndicator.flipX = (side == AttackSide.P2);
+        halfNoteIndicator.transform.localScale = UnityEngine.Vector3.one;
+        halfNoteIndicator.gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// 반쪽 노트 인디케이터를 숨긴다.
+    /// 완성 또는 파괴 시 호출된다.
+    /// </summary>
+    public void ClearHalfNote()
+    {
+        if (halfNoteIndicator != null)
+            halfNoteIndicator.gameObject.SetActive(false);
+    }
+
+    /// <summary>
     /// 공격 판정선 이동만 정지. 생성된 노트는 유지한다.
     /// </summary>
     public void StopLine()
@@ -114,6 +149,7 @@ public class AttackTurnRenderer : MonoBehaviour
         foreach (NoteEntry entry in spawnedNotes)
             NoteRenderer.Instance?.ReleaseNote(entry.noteId);
         spawnedNotes.Clear();
+        ClearHalfNote();
     }
 
     private void Update()

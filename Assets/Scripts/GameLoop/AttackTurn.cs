@@ -118,6 +118,18 @@ public class AttackTurn : MonoBehaviour
     /// GameManager가 구독해 즉각 정신력 패널티를 적용한다.
     /// </summary>
     public event System.Action OnAttackBadTimingInput;
+
+    // ─── EVT_ATK_01 더블탭 모드 ───
+    private bool doubleTapModeActive;
+    private bool hasPendingHalfNote;
+    private int pendingGridStep;
+    private NoteType pendingNoteType;
+
+    /// <summary>
+    /// 반쪽 노트가 파괴될 때 발행한다.
+    /// Atk01SurpriseEventHandler가 구독해 정신력 -2를 처리한다.
+    /// </summary>
+    public event System.Action OnHalfNoteIncomplete;
     
     public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
 
@@ -291,6 +303,12 @@ public class AttackTurn : MonoBehaviour
     {
         if (!isRunning || !isLocalPlayerAttack) return;
 
+        if (doubleTapModeActive)
+        {
+            HandleDoubleTapInput(noteType);
+            return;
+        }
+
         double noteDuration = NoteDuration;
         double relativeTime = GetCorrectedRelativeInputTime();
 
@@ -427,6 +445,85 @@ public class AttackTurn : MonoBehaviour
         Debug.Log($"Attack Note Created / id: {note.noteId}, type: {note.noteType}, relativeTime: {note.noteRelativeTime:0.000}s");
     }
 
+    private void HandleDoubleTapInput(NoteType noteType)
+    {
+        double noteDuration = NoteDuration;
+        double relativeTime = GetCorrectedRelativeInputTime();
+
+        if (relativeTime < 0.0 || relativeTime > attackDuration)
+        {
+            OnAttackBadTimingInput?.Invoke();
+            OnAttackInputResolved?.Invoke(noteType, false);
+            return;
+        }
+
+        if (!hasPendingHalfNote)
+        {
+            int gridStep = GetNearestPlayableGridStep(relativeTime, noteDuration);
+
+            if (createdGridSteps.Contains(gridStep))
+            {
+                duplicateInputCount++;
+                return;
+            }
+
+            double snappedTime = gridStep * noteDuration;
+            double offsetMs = System.Math.Abs(relativeTime - snappedTime) * 1000.0;
+            double timingWindowMs = noteDuration * attackTimingWindowRatio * 1000.0;
+            if (offsetMs > timingWindowMs)
+            {
+                OnAttackBadTimingInput?.Invoke();
+                OnAttackInputResolved?.Invoke(noteType, false);
+                return;
+            }
+
+            hasPendingHalfNote = true;
+            pendingGridStep = gridStep;
+            pendingNoteType = noteType;
+            attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
+        }
+        else if (noteType == pendingNoteType)
+        {
+            // 같은 키: 완성
+            attackTurnRenderer?.ClearHalfNote();
+            double snappedTime = pendingGridStep * noteDuration;
+            hasPendingHalfNote = false;
+            CreateAttackNote(snappedTime, pendingNoteType, isInputSuccessForSfx: true);
+        }
+        else
+        {
+            // 다른 키: 파괴 후 현재 탭을 새 첫 탭으로
+            FlushPendingHalfNote();
+
+            int gridStep = GetNearestPlayableGridStep(relativeTime, noteDuration);
+            if (!createdGridSteps.Contains(gridStep))
+            {
+                double snappedTime = gridStep * noteDuration;
+                double offsetMs = System.Math.Abs(relativeTime - snappedTime) * 1000.0;
+                double timingWindowMs = noteDuration * attackTimingWindowRatio * 1000.0;
+                if (offsetMs > timingWindowMs)
+                {
+                    OnAttackBadTimingInput?.Invoke();
+                    OnAttackInputResolved?.Invoke(noteType, false);
+                    return;
+                }
+
+                hasPendingHalfNote = true;
+                pendingGridStep = gridStep;
+                pendingNoteType = noteType;
+                attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
+            }
+        }
+    }
+
+    private void FlushPendingHalfNote()
+    {
+        if (!hasPendingHalfNote) return;
+        hasPendingHalfNote = false;
+        attackTurnRenderer?.ClearHalfNote();
+        OnHalfNoteIncomplete?.Invoke();
+    }
+
     /// <summary>
     /// 공격 턴을 종료하고 AttackResult를 생성해 GameManager에 전달한다.
     /// 부족한 노트 수는 이 시점에 계산한다.
@@ -434,6 +531,8 @@ public class AttackTurn : MonoBehaviour
     private void EndAttack()
     {
         if (!isRunning) return;
+
+        if (doubleTapModeActive) FlushPendingHalfNote();
 
         isRunning = false;
 
@@ -513,12 +612,37 @@ public class AttackTurn : MonoBehaviour
     }
 
     /// <summary>
+    /// EVT_ATK_01 진입 시 호출. 이후 OnTap()이 더블탭 모드로 동작한다.
+    /// </summary>
+    public void ActivateDoubleTapMode()
+    {
+        doubleTapModeActive = true;
+        hasPendingHalfNote = false;
+    }
+
+    /// <summary>
+    /// EVT_ATK_01 복귀 시 호출. 대기 중인 반쪽 노트가 있으면 파괴 처리 후 모드를 해제한다.
+    /// </summary>
+    public void DeactivateDoubleTapMode()
+    {
+        FlushPendingHalfNote();
+        doubleTapModeActive = false;
+    }
+
+    /// <summary>
     /// 재시작 또는 씬 이동을 위해 진행 중인 공격 턴을 강제로 정리한다.
     /// OnAttackEnded는 호출하지 않는다.
     /// </summary>
     public void CancelAttack()
     {
         isRunning = false;
+
+        if (doubleTapModeActive)
+        {
+            attackTurnRenderer?.ClearHalfNote();
+            hasPendingHalfNote = false;
+        }
+
         isLocalPlayerAttack = false;
 
         missingNoteCount = 0;

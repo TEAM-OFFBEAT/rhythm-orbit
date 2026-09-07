@@ -222,7 +222,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1916312057659672543}
-  - component: {fileID: 3214737365689454249}
+  - component: {fileID: 6202061554648172130}
   m_Layer: 0
   m_Name: Debug_ATK_01
   m_TagString: Untagged
@@ -245,7 +245,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5201996008550233309}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3214737365689454249
+--- !u!114 &6202061554648172130
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -254,7 +254,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8665179780232507600}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa4c9a7e9dbfc3547bc97a099531d538, type: 3}
+  m_Script: {fileID: 11500000, guid: 913281442166786469691c0c88c9a732, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DebugSurpriseEventHandler
-  eventId: 1
+  m_EditorClassIdentifier: Assembly-CSharp::Atk01SurpriseEventHandler
+  incompletePenalty: 2
