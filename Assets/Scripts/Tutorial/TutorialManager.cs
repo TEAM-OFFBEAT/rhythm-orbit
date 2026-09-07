@@ -1061,7 +1061,7 @@ public class TutorialManager : MonoBehaviour
     {
         StopGuideMetronome();
 
-        dialoguePlayer?.Show("튜토리얼 완료! 이제 본 교신을 시작할 수 있어.");
+        dialoguePlayer?.Show("튜토리얼 완료다모! 수고했다모!");
 
         PlayerPrefs.SetInt(TutorialCompletedKey, 1);
         PlayerPrefs.Save();
