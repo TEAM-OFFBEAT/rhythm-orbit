@@ -91,11 +91,11 @@ MonoBehaviour:
     volume: 0.53
     maxSimultaneous: 5
   - id: 1
-    clip: {fileID: 8300000, guid: a4c76329a83db3c46bd6878f22e8af53, type: 3}
+    clip: {fileID: 8300000, guid: 40fa9ed42f2944346b9f4c9e7e76c952, type: 3}
     volume: 0.54
     maxSimultaneous: 0
   - id: 2
-    clip: {fileID: 8300000, guid: 273da7621b32c144e80b27df6722ff25, type: 3}
+    clip: {fileID: 8300000, guid: 31552378a877ce244baa81a285805daa, type: 3}
     volume: 0.56
     maxSimultaneous: 0
   - id: 3
