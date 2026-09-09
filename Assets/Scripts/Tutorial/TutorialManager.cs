@@ -114,12 +114,14 @@ public class TutorialManager : MonoBehaviour
 
     [Header("Attack Beat Demo")]
     [SerializeField] private bool playAttackBeatDemo = true;
-
-    [Tooltip("공격턴 설명 몇 번째 문장에서 고주파 비트를 보여줄지 설정한다. 1부터 시작한다.")]
-    [SerializeField, Min(1)] private int attackHighBeatDemoLineNumber = 4;
-
-    [Tooltip("공격턴 설명 몇 번째 문장에서 저주파 비트를 보여줄지 설정한다. 1부터 시작한다.")]
-    [SerializeField, Min(1)] private int attackLowBeatDemoLineNumber = 5;
+    
+    [Tooltip("F 비트가 나온 뒤 J 비트가 나오기까지의 간격. 박자 단위.")]
+    [SerializeField, Min(0f)] private float beatDemoIntervalBeats = 1f;
+    
+    [Tooltip("공격 설명 몇 번째 대사 시작 때 F/J 데모 노트를 제거할지 설정한다. 1부터 시작한다.")]
+    [SerializeField, Min(1)] private int beatDemoClearLineNumber = 3;
+    private Coroutine attackBeatDemoCoroutine;
+    private readonly List<int> activeBeatDemoNoteIds = new List<int>();
 
     [Tooltip("고주파 노트가 공격 라인에서 생성될 위치 비율.0.5가 중앙이다.")]
     [SerializeField, Range(0f, 1f)] private float demoHighNotePositionRatio = 0.47f;
@@ -144,33 +146,10 @@ public class TutorialManager : MonoBehaviour
     [SerializeField, Min(1)] private int introStarDemoCount = 3;
 
     [Header("Guide Lines")]
-    [SerializeField] private string[] introGuideLines =
-    {
-        "만나서 반가워! 튜토리얼을 도와줄 리모야.",
-        "리듬오빗에서는 비트를 보내고 받으면서 교신을 이어가야 해.",
-        "비트는 고주파 비트와 저주파 비트 두 종류가 있어."
-    };
-
-    [SerializeField] private string[] attackGuideLines =
-    {
-        "먼저 공격 턴이야.",
-        "F키로 고주파 비트, J키로 저주파 비트를 만들 수 있어.",
-        "판정선이 움직일 때 원하는 박자에 맞춰 비트를 보내보자."
-    };
-
-    [SerializeField] private string[] defenseGuideLines =
-    {
-        "이번엔 방어 턴이야.",
-        "상대가 보낸 비트가 판정선에 닿을 때 같은 키를 눌러 받아치면 돼.",
-        "고주파 비트는 F, 저주파 비트는 J로 방어해보자."
-    };
-
-    [SerializeField] private string[] rallyGuideLines =
-    {
-        "이제 실전처럼 공격과 방어를 번갈아 연습해보자.",
-        "랠리 단계부터 정신력 게이지가 표시돼.",
-        "튜토리얼에서는 정신력이 아주 조금만 줄고, 패배하지는 않아."
-    };
+    [SerializeField] private TutorialGuideLineData[] introGuideLines;
+    [SerializeField] private TutorialGuideLineData[] attackGuideLines;
+    [SerializeField] private TutorialGuideLineData[] defenseGuideLines;
+    [SerializeField] private TutorialGuideLineData[] rallyGuideLines;
 
     [Header("Tutorial Pattern")]
     
@@ -212,6 +191,9 @@ public class TutorialManager : MonoBehaviour
 
     private void OnDisable()
     {
+        StopAttackBeatDemoCoroutine();
+        ClearBeatDemoNotes();
+
         StopGuideMetronome();
         StopTutorialBgm();
         UnsubscribeEvents();
@@ -274,11 +256,11 @@ public class TutorialManager : MonoBehaviour
         yield return WaitUntilDspTime(tutorialStartDspTime);
 
         currentStep = TutorialStep.IntroDialogue;
-        yield return PlayIntroDialogueWithStarDemo();
+        yield return PlayIntroDialogue();
         attackTurnRenderer.ClearAll();
 
         currentStep = TutorialStep.AttackDialogue;
-        yield return PlayAttackDialogueWithBeatDemo();
+        yield return PlayAttackDialogue();
         yield return RunAttackPractice();
 
         currentStep = TutorialStep.DefenseDialogue;
@@ -328,6 +310,8 @@ public class TutorialManager : MonoBehaviour
 
         attackTurnRenderer.ClearAll();
         
+        ClearBeatDemoNotes();
+
         attackHighBeatDemoStarted = false;
         attackLowBeatDemoStarted = false;
         nextDemoNoteId = demoFirstNoteId;
@@ -409,6 +393,8 @@ public class TutorialManager : MonoBehaviour
             Debug.Log("TutorialManager: AttackPractice 시작");
         }
 
+        //ClearBeatDemoNotes();
+
         ShowPracticeStartMessage(attackPracticeStartMessage);
 
         bool success = false;
@@ -444,7 +430,7 @@ public class TutorialManager : MonoBehaviour
             {
                 if (!feedbackVisible)
                 {
-                    dialoguePlayer?.Show("다음 단계로 넘어가기 위해 F나 J를 눌러보라모.");
+                    dialoguePlayer?.Show("F / J 키를 눌러 공격을 보내자모!");
                     feedbackVisible = true;
                 }
 
@@ -624,6 +610,9 @@ public class TutorialManager : MonoBehaviour
         currentStep = inputStep;
         currentHudAttackerSide = playerSide;
         PrepareAttackWaitState();
+
+        // 공격 설명에서 보여준 F/J 데모 노트를 실제 공격 턴 시작 직전에 같이 제거한다.
+        ClearBeatDemoNotes();
 
         attackTurnRenderer.ClearAll();
         hud?.ClearAttackProgress();
@@ -917,7 +906,7 @@ public class TutorialManager : MonoBehaviour
     private JudgmentLabel GetDefenseLabel(AttackSide attackerSide)
         => attackerSide == AttackSide.P1 ? p2DefenseJudgmentLabel : p1DefenseJudgmentLabel;
 
-    private IEnumerator PlayDialogue(string[] lines)
+    private IEnumerator PlayDialogue(TutorialGuideLineData[] lines)
     {
         if (dialoguePlayer == null)
         {
@@ -935,7 +924,7 @@ public class TutorialManager : MonoBehaviour
         );
     }
 
-    private IEnumerator PlayDialogue(string[] lines, double forcedStartDspTime)
+    private IEnumerator PlayDialogue(TutorialGuideLineData[] lines, double forcedStartDspTime)
     {
         if (dialoguePlayer == null)
         {
@@ -953,9 +942,9 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 인트로 설명 대사를 재생한다.
-    /// 지정한 문장이 시작될 때 별 UI를 예시로 표시한다.
+    /// TutorialGuideLineData에 설정된 줄에서 별 UI와 별 글로우를 함께 표시한다.
     /// </summary>
-    private IEnumerator PlayIntroDialogueWithStarDemo()
+    private IEnumerator PlayIntroDialogue()
     {
         if (dialoguePlayer == null)
         {
@@ -973,13 +962,14 @@ public class TutorialManager : MonoBehaviour
         );
 
         hud?.ClearAttackProgress();
+        //dialoguePlayer.ClearLineVisualCues();
     }
 
     /// <summary>
     /// 공격턴 설명 대사를 재생한다.
-    /// 지정한 문장이 시작될 때 고주파/저주파 비트 소개 노트를 각각 표시한다.
+    /// TutorialGuideLineData에 설정된 줄에서 F/J 비트 데모와 강조 연출을 실행한다.
     /// </summary>
-    private IEnumerator PlayAttackDialogueWithBeatDemo()
+    private IEnumerator PlayAttackDialogue()
     {
         if (dialoguePlayer == null)
         {
@@ -988,6 +978,14 @@ public class TutorialManager : MonoBehaviour
 
         attackHighBeatDemoStarted = false;
         attackLowBeatDemoStarted = false;
+
+        if (attackBeatDemoCoroutine != null)
+        {
+            StopCoroutine(attackBeatDemoCoroutine);
+            attackBeatDemoCoroutine = null;
+        }
+
+        ClearBeatDemoNotes();
 
         double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
 
@@ -998,6 +996,12 @@ public class TutorialManager : MonoBehaviour
             onLineStarted: HandleAttackGuideLineStarted,
             forcedStartDspTime: startDspTime
         );
+
+        if (attackBeatDemoCoroutine != null)
+        {
+            StopCoroutine(attackBeatDemoCoroutine);
+            attackBeatDemoCoroutine = null;
+        }
     }
 
 
@@ -1032,10 +1036,49 @@ public class TutorialManager : MonoBehaviour
 
         ShowBeatDemoKeyHint(note);
 
+        activeBeatDemoNoteIds.Add(note.noteId);
+
         Debug.Log(
             $"TutorialManager: Beat demo note 생성 / " +
             $"id:{note.noteId}, type:{note.noteType}, ratio:{positionRatio:0.00}"
         );
+    }
+
+    /// <summary>
+    /// 남아 있는 공격 설명용 F/J 데모 노트를 모두 제거한다.
+    /// AttackTurnRenderer 목록에서 못 찾는 경우를 대비해 NoteRenderer에서도 직접 Release한다.
+    /// </summary>
+    private void ClearBeatDemoNotes()
+    {
+        if (activeBeatDemoNoteIds.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = activeBeatDemoNoteIds.Count - 1; i >= 0; i--)
+        {
+            int noteId = activeBeatDemoNoteIds[i];
+
+            attackTurnRenderer?.RemoveNote(noteId);
+            NoteRenderer.Instance?.ReleaseNote(noteId);
+        }
+
+        activeBeatDemoNoteIds.Clear();
+    }
+
+    /// <summary>
+    /// 공격 설명용 F/J 데모 코루틴을 중지한다.
+    /// 아직 J가 생성되기 전이라면, 뒤늦게 J가 생성되는 것을 막는다.
+    /// </summary>
+    private void StopAttackBeatDemoCoroutine()
+    {
+        if (attackBeatDemoCoroutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(attackBeatDemoCoroutine);
+        attackBeatDemoCoroutine = null;
     }
 
     /// <summary>
@@ -1733,25 +1776,53 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 공격턴 설명 문장 시작 시 호출된다.
-    /// 지정한 문장이 시작될 때 고주파/저주파 비트 소개 노트를 각각 표시한다.
+    /// playHighThenLowDemo가 켜진 줄에서 F → J 비트 소개 노트를 시간차로 표시한다.
+    /// 설정한 대사 번호에 도달하면 F/J 데모 노트를 제거한다.
     /// </summary>
-    private void HandleAttackGuideLineStarted(int lineIndex, string lineText)
+    private void HandleAttackGuideLineStarted(int lineIndex, TutorialGuideLineData lineData)
     {
+        if (lineData == null)
+        {
+            return;
+        }
+
+        int clearLineIndex = Mathf.Max(1, beatDemoClearLineNumber) - 1;
+
+        if (lineIndex == clearLineIndex)
+        {
+            StopAttackBeatDemoCoroutine();
+            ClearBeatDemoNotes();
+        }
+
         if (!playAttackBeatDemo)
         {
             return;
         }
 
-        int highTargetIndex = Mathf.Max(1, attackHighBeatDemoLineNumber) - 1;
-        int lowTargetIndex = Mathf.Max(1, attackLowBeatDemoLineNumber) - 1;
+        if (!lineData.playHighThenLowDemo)
+        {
+            return;
+        }
 
-        if (lineIndex == highTargetIndex && !attackHighBeatDemoStarted)
+        StopAttackBeatDemoCoroutine();
+
+        attackBeatDemoCoroutine = StartCoroutine(
+            PlayAttackBeatDemoSequence(lineIndex, lineData)
+        );
+    }
+
+    /// <summary>
+    /// 공격 설명 중 F 비트와 J 비트를 박자 단위 간격으로 순서대로 보여준다.
+    /// </summary>
+    private IEnumerator PlayAttackBeatDemoSequence(int lineIndex, TutorialGuideLineData lineData)
+    {
+        if (!attackHighBeatDemoStarted)
         {
             attackHighBeatDemoStarted = true;
 
             Debug.Log(
                 $"TutorialManager: Attack high beat demo 시작 / " +
-                $"attackLine:{lineIndex + 1}, text:{lineText}"
+                $"line:{lineIndex + 1}, text:{lineData.text}"
             );
 
             SpawnBeatDemoNote(
@@ -1760,13 +1831,20 @@ public class TutorialManager : MonoBehaviour
             );
         }
 
-        if (lineIndex == lowTargetIndex && !attackLowBeatDemoStarted)
+        float intervalSeconds = GetTutorialBeatSeconds() * Mathf.Max(0f, beatDemoIntervalBeats);
+
+        if (intervalSeconds > 0f)
+        {
+            yield return new WaitForSecondsRealtime(intervalSeconds);
+        }
+
+        if (!attackLowBeatDemoStarted)
         {
             attackLowBeatDemoStarted = true;
 
             Debug.Log(
                 $"TutorialManager: Attack low beat demo 시작 / " +
-                $"attackLine:{lineIndex + 1}, text:{lineText}"
+                $"line:{lineIndex + 1}, text:{lineData.text}"
             );
 
             SpawnBeatDemoNote(
@@ -1774,32 +1852,32 @@ public class TutorialManager : MonoBehaviour
                 demoLowNotePositionRatio
             );
         }
+
+        attackBeatDemoCoroutine = null;
     }
 
     /// <summary>
     /// 인트로 설명 문장 시작 시 호출된다.
-    /// 별 UI 설명 문장에서 목표 탭 수 UI를 잠깐 표시한다.
+    /// 별 강조가 켜진 줄에서 목표 탭 수 UI를 함께 표시한다.
     /// </summary>
-    private void HandleIntroGuideLineStarted(int lineIndex, string lineText)
+    private void HandleIntroGuideLineStarted(int lineIndex, TutorialGuideLineData lineData)
     {
-        if (!showIntroStarDemo)
+        if (lineData == null)
         {
             return;
         }
 
-        int targetIndex = Mathf.Max(1, introStarDemoLineNumber) - 1;
-
-        if (lineIndex != targetIndex)
+        if (!lineData.highlightStars)
         {
             return;
         }
 
-        hud?.ClearAttackProgress();
-        hud?.UpdateAttackProgress(0, introStarDemoCount);
+        //hud?.ClearAttackProgress();
+        //hud?.UpdateAttackProgress(0, introStarDemoCount);
 
         Debug.Log(
             $"TutorialManager: Intro star demo 표시 / " +
-            $"line:{lineIndex + 1}, count:{introStarDemoCount}, text:{lineText}"
+            $"line:{lineIndex + 1}, count:{introStarDemoCount}, text:{lineData.text}"
         );
     }
 

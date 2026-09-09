@@ -1,7 +1,8 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using System;
+using UnityEngine.UI;
 
 /// <summary>
 /// 튜토리얼 안내/대사/반응 패널만 담당한다.
@@ -12,6 +13,16 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [Header("Guide UI")]
     [SerializeField] private GameObject guidePanel;
     [SerializeField] private TMP_Text guideText;
+
+    [Tooltip("리모 프로필로 사용할 Image. 기존 플레이어 패널의 프로필 Image를 연결한다.")]
+    [SerializeField] private Image rymoPortraitImage;
+
+    [Header("Highlight UI")]
+    [SerializeField] private GameObject starHighlightRoot;
+    [SerializeField] private GameObject attackJudgeLineHighlightRoot;
+    [SerializeField] private GameObject defenseJudgeLineHighlightRoot;
+    [SerializeField] private GameObject highBitHighlightRoot;
+    [SerializeField] private GameObject lowBitHighlightRoot;
 
     [Header("Typewriter")]
     [SerializeField] private TypewriterText typewriterText;
@@ -51,15 +62,14 @@ public class TutorialDialoguePlayer : MonoBehaviour
             typewriterText = guideText.GetComponent<TypewriterText>();
         }
 
+        ClearHighlights();
+
         if (hideOnAwake)
         {
             Hide();
         }
     }
 
-    /// <summary>
-    /// TutorialManager가 현재 튜토리얼 BPM을 전달한다.
-    /// </summary>
     public void SetBpm(float bpm)
     {
         if (bpm <= 0f)
@@ -72,10 +82,21 @@ public class TutorialDialoguePlayer : MonoBehaviour
     }
 
     /// <summary>
-    /// 안내 패널에 문장 하나를 표시한다.
+    /// 리모 프로필 이미지를 즉시 변경한다.
     /// </summary>
+    public void SetRymoPortrait(Sprite portrait)
+    {
+        if (rymoPortraitImage == null || portrait == null)
+        {
+            return;
+        }
+
+        rymoPortraitImage.sprite = portrait;
+    }
+
     public void Show(string text)
     {
+        ClearHighlights();
         ShowInstant(text);
     }
 
@@ -134,9 +155,6 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 안내 패널을 숨긴다.
-    /// </summary>
     public void Hide()
     {
         if (temporaryMessageCoroutine != null)
@@ -150,6 +168,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
             typewriterText.Stop();
         }
 
+        ClearHighlights();
+
         if (guidePanel != null)
         {
             guidePanel.SetActive(false);
@@ -157,16 +177,14 @@ public class TutorialDialoguePlayer : MonoBehaviour
     }
 
     /// <summary>
-    /// 여러 안내 문장을 BPM 박자 단위로 순서대로 출력한다.
-    /// 각 문장이 시작될 때 onLineStarted 콜백을 호출할 수 있다.
-    /// lineIndex는 0부터 시작한다.
+    /// 기존 string[] 대사용. 임시 호환용으로 남겨둔다.
     /// </summary>
     public IEnumerator PlayLines(
-    string[] lines,
-    int beatsPerLine,
-    bool hideWhenFinished = true,
-    Action<int, string> onLineStarted = null,
-    double? forcedStartDspTime = null
+        string[] lines,
+        int beatsPerLine,
+        bool hideWhenFinished = true,
+        Action<int, string> onLineStarted = null,
+        double? forcedStartDspTime = null
     )
     {
         if (lines == null || lines.Length == 0)
@@ -191,7 +209,6 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
             double lineStartDspTime = dialogueStartDspTime + i * lineSeconds;
             double nextLineStartDspTime = dialogueStartDspTime + (i + 1) * lineSeconds;
-
             double visualShowDspTime = lineStartDspTime - dialogueVisualLeadSeconds;
 
             bool hasNextLine = i < lines.Length - 1;
@@ -205,6 +222,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
             yield return WaitUntilDspTime(visualShowDspTime);
 
+            ClearHighlights();
             ShowTyped(lines[i], typingSeconds);
             onLineStarted?.Invoke(i, lines[i]);
 
@@ -220,6 +238,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
             yield return WaitUntilDspTime(nextLineStartDspTime);
         }
 
+        ClearHighlights();
+
         if (hideWhenFinished)
         {
             Hide();
@@ -227,9 +247,113 @@ public class TutorialDialoguePlayer : MonoBehaviour
     }
 
     /// <summary>
-    /// 튜토리얼 반응 문장을 지정한 박자 동안 표시한다.
-    /// 턴 진행을 막지 않기 위해 코루틴을 내부에서 실행하고 바로 반환한다.
+    /// TutorialGuideLineData[] 대사용.
+    /// 대사 텍스트, 리모 프로필, 강조 연출을 줄 단위로 함께 적용한다.
     /// </summary>
+    public IEnumerator PlayLines(
+        TutorialGuideLineData[] lines,
+        int beatsPerLine,
+        bool hideWhenFinished = true,
+        Action<int, TutorialGuideLineData> onLineStarted = null,
+        double? forcedStartDspTime = null
+    )
+    {
+        if (lines == null || lines.Length == 0)
+        {
+            yield break;
+        }
+
+        StopTemporaryMessage();
+
+        int safeBeats = Mathf.Max(1, beatsPerLine);
+        float beatSeconds = GetBeatSeconds();
+        float lineSeconds = beatSeconds * safeBeats;
+
+        double dialogueStartDspTime = forcedStartDspTime ?? AudioSettings.dspTime;
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            TutorialGuideLineData line = lines[i];
+
+            if (line == null || string.IsNullOrWhiteSpace(line.text))
+            {
+                continue;
+            }
+
+            double lineStartDspTime = dialogueStartDspTime + i * lineSeconds;
+            double nextLineStartDspTime = dialogueStartDspTime + (i + 1) * lineSeconds;
+            double visualShowDspTime = lineStartDspTime - dialogueVisualLeadSeconds;
+
+            bool hasNextLine = i < lines.Length - 1;
+
+            float blinkSeconds = useBlinkBetweenLines && hasNextLine
+                ? Mathf.Clamp(blinkSecondsBetweenLines, 0f, lineSeconds * 0.5f)
+                : 0f;
+
+            float totalVisibleSeconds = lineSeconds + dialogueVisualLeadSeconds;
+            float typingSeconds = CalculateTypingSeconds(totalVisibleSeconds, blinkSeconds);
+
+            yield return WaitUntilDspTime(visualShowDspTime);
+
+            ApplyLineVisual(line);
+            ShowTyped(line.text, typingSeconds);
+            onLineStarted?.Invoke(i, line);
+
+            double blinkStartDspTime = nextLineStartDspTime - blinkSeconds;
+
+            yield return WaitUntilDspTime(blinkStartDspTime);
+
+            if (blinkSeconds > 0f)
+            {
+                ShowBlinkBlank();
+            }
+
+            yield return WaitUntilDspTime(nextLineStartDspTime);
+        }
+
+        ClearHighlights();
+
+        if (hideWhenFinished)
+        {
+            Hide();
+        }
+    }
+
+    private void ApplyLineVisual(TutorialGuideLineData line)
+    {
+        ClearHighlights();
+
+        if (line == null)
+        {
+            return;
+        }
+
+        SetRymoPortrait(line.rymoPortrait);
+
+        SetActiveSafe(starHighlightRoot, line.highlightStars);
+        SetActiveSafe(attackJudgeLineHighlightRoot, line.highlightAttackJudgeLine);
+        SetActiveSafe(defenseJudgeLineHighlightRoot, line.highlightDefenseJudgeLine);
+        SetActiveSafe(highBitHighlightRoot, line.highlightHighBit);
+        SetActiveSafe(lowBitHighlightRoot, line.highlightLowBit);
+    }
+
+    public void ClearHighlights()
+    {
+        SetActiveSafe(starHighlightRoot, false);
+        SetActiveSafe(attackJudgeLineHighlightRoot, false);
+        SetActiveSafe(defenseJudgeLineHighlightRoot, false);
+        SetActiveSafe(highBitHighlightRoot, false);
+        SetActiveSafe(lowBitHighlightRoot, false);
+    }
+
+    private void SetActiveSafe(GameObject target, bool active)
+    {
+        if (target != null)
+        {
+            target.SetActive(active);
+        }
+    }
+
     public void ShowReactionForBeats(string text, int beats, bool hideWhenFinished = true)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -241,10 +365,6 @@ public class TutorialDialoguePlayer : MonoBehaviour
         ShowTemporary(text, seconds, hideWhenFinished);
     }
 
-    /// <summary>
-    /// 튜토리얼 반응 문장을 지정한 초 동안 표시한다.
-    /// 턴 진행을 막지 않는다.
-    /// </summary>
     public void ShowTemporary(string text, float seconds, bool hideWhenFinished = true)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -262,6 +382,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
     private IEnumerator ShowTemporaryRoutine(string text, float seconds, bool hideWhenFinished)
     {
         Debug.Log($"Tutorial Reaction: {text}");
+
+        ClearHighlights();
 
         float safeSeconds = Mathf.Max(0.1f, seconds);
         float typingSeconds = CalculateTypingSeconds(safeSeconds, blinkSeconds: 0f);
@@ -330,6 +452,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
             typewriterText.Stop();
         }
 
+        ClearHighlights();
+
         if (hidePanelDuringBlink)
         {
             if (guidePanel != null)
@@ -352,7 +476,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
             guideText.gameObject.SetActive(false);
         }
     }
-    
+
     private IEnumerator WaitUntilDspTime(double targetDspTime)
     {
         while (AudioSettings.dspTime < targetDspTime)
