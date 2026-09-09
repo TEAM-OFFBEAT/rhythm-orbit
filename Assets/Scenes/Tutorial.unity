@@ -1467,6 +1467,10 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 314441054}
+    - target: {fileID: 4444317207378080594, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
+      propertyPath: rymoPortraitImage
+      value: 
+      objectReference: {fileID: 1837305348}
     - target: {fileID: 5815403447023689153, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
       propertyPath: m_Name
       value: TutorialUI
@@ -1613,6 +1617,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc2ac1332cdec014996829a8db874dee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JudgmentLabel
+--- !u!114 &1837305348 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3808855878415715405, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+  m_PrefabInstance: {fileID: 942637795}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!114 &1859392733 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9119886832554702949, guid: feb0289c027318244a2c43727103e4bd, type: 3}
