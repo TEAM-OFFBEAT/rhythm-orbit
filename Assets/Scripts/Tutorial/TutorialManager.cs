@@ -1331,7 +1331,7 @@ public class TutorialManager : MonoBehaviour
             case 0:
                 return "괜찮다모. 지금은 타이밍을 익히는 단계다모!";
             case 1:
-                return "고주파는 F, 저주파는 J를 기억하라모!.";
+                return "고주파는 F, 저주파는 J를 기억하라모!";
             default:
                 return "연습은 실전에서도 이어진다모!";
         }
