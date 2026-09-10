@@ -41,7 +41,7 @@ public class GameCamera : MonoBehaviour
 
         // CanvasScaler가 Screen 전체 크기를 기준으로 스케일을 계산하므로,
         // 레터박스(상하 바)이면 너비 기준, 필라박스(좌우 바)이면 높이 기준으로 맞춰야 Canvas가 왜곡되지 않음
-        foreach (var scaler in UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.CanvasScaler>())
+        foreach (var scaler in UnityEngine.Object.FindObjectsByType<UnityEngine.UI.CanvasScaler>())
             scaler.matchWidthOrHeight = isLetterbox ? 0f : 1f;
     }
 

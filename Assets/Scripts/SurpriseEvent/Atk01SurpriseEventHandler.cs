@@ -17,8 +17,8 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
     private void Awake()
     {
-        attackTurn = FindObjectOfType<AttackTurn>();
-        sanitySystem = FindObjectOfType<SanitySystem>();
+        attackTurn = FindAnyObjectByType<AttackTurn>();
+        sanitySystem = FindAnyObjectByType<SanitySystem>();
     }
 
     public SurpriseEventId EventId => SurpriseEventId.EVT_ATK_01_IncompleteTransmission;

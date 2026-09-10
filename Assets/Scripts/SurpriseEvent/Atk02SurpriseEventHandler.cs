@@ -26,7 +26,7 @@ public class Atk02SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     private void Awake()
     {
         if (attackTurnRenderer == null)
-            attackTurnRenderer = FindObjectOfType<AttackTurnRenderer>();
+            attackTurnRenderer = FindAnyObjectByType<AttackTurnRenderer>();
     }
 
     public SurpriseEventId EventId => SurpriseEventId.EVT_ATK_02_PulseInterference;
