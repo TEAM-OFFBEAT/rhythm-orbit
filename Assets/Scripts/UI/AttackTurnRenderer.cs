@@ -110,7 +110,7 @@ public class AttackTurnRenderer : MonoBehaviour
 
         halfNoteIndicator.transform.localPosition = new Vector3(x, 0f, 0f);
         halfNoteIndicator.sprite = type == NoteType.HIGH ? halfHighSprite : halfLowSprite;
-        halfNoteIndicator.flipX = (side == AttackSide.P2);
+        halfNoteIndicator.flipX = (side == AttackSide.P1);
         halfNoteIndicator.transform.localScale = UnityEngine.Vector3.one;
         halfNoteIndicator.gameObject.SetActive(true);
     }
