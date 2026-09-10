@@ -120,8 +120,11 @@ public class AttackTurn : MonoBehaviour
     public event System.Action OnAttackBadTimingInput;
 
     // ─── EVT_ATK_01 더블탭 모드 ───
+    [SerializeField, Range(0.05f, 1f)] private float halfNoteTimeoutSeconds = 0.3f;
+
     private bool doubleTapModeActive;
     private bool hasPendingHalfNote;
+    private double halfNoteCreatedDspTime;
     private int pendingGridStep;
     private NoteType pendingNoteType;
 
@@ -356,6 +359,12 @@ public class AttackTurn : MonoBehaviour
 
         double elapsed = AudioSettings.dspTime - attackStartDspTime;
 
+        if (doubleTapModeActive && hasPendingHalfNote &&
+            AudioSettings.dspTime - halfNoteCreatedDspTime > halfNoteTimeoutSeconds)
+        {
+            FlushPendingHalfNote();
+        }
+
         if (!isLocalPlayerAttack)
             UpdateOpponentDemo(elapsed);
 
@@ -478,6 +487,7 @@ public class AttackTurn : MonoBehaviour
             }
 
             hasPendingHalfNote = true;
+            halfNoteCreatedDspTime = AudioSettings.dspTime;
             pendingGridStep = gridStep;
             pendingNoteType = noteType;
             attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
@@ -509,6 +519,7 @@ public class AttackTurn : MonoBehaviour
                 }
 
                 hasPendingHalfNote = true;
+                halfNoteCreatedDspTime = AudioSettings.dspTime;
                 pendingGridStep = gridStep;
                 pendingNoteType = noteType;
                 attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
