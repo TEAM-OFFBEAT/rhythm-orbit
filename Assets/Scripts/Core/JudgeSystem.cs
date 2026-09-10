@@ -2,10 +2,8 @@ using UnityEngine;
 
 public class JudgeSystem : SceneSingleton<JudgeSystem>
 {
-    [SerializeField] private double perfectWindowMs = 50.0;
-    [SerializeField] private double goodWindowMs = 100.0;
-    public double PerfectWindowMs => perfectWindowMs;
-    public double GoodWindowMs => goodWindowMs;
+    [SerializeField, Range(0f, 0.5f)] private float perfectWindowRatio = 0.20f;
+    [SerializeField, Range(0f, 0.5f)] private float goodWindowRatio = 0.25f;
     public double KeyInputOffsetMs { get; private set; } //키 입력 오프셋
     public double AudioOffsetMs { get; private set; } //오디오 출력 오프셋
     protected override void Awake()
@@ -16,13 +14,15 @@ public class JudgeSystem : SceneSingleton<JudgeSystem>
     }
 
     /// <summary>
-    /// 입력 오프셋 보정 후 타이밍 오차를 계산해 Perfect/Good/Miss를 반환.
+    /// 입력 오프셋 보정 후 타이밍 오차를 현재 BPM 반박 기준 비율로 판정해 Perfect/Good/Miss를 반환.
+    /// noteDurationSeconds는 RhythmClock.GetNoteDuration(subdivisions) 값을 전달한다.
     /// </summary>
-    public Judgment Judge(double inputTime, double judgeTime)
+    public Judgment Judge(double inputTime, double judgeTime, double noteDurationSeconds)
     {
         double adj = System.Math.Abs(CalcOffsetMs(inputTime, judgeTime));
-        if (adj <= perfectWindowMs) return Judgment.PERFECT;
-        if (adj <= goodWindowMs) return Judgment.GOOD;
+        double noteDurationMs = noteDurationSeconds * 1000.0;
+        if (adj <= noteDurationMs * perfectWindowRatio) return Judgment.PERFECT;
+        if (adj <= noteDurationMs * goodWindowRatio) return Judgment.GOOD;
         return Judgment.MISS;
     }
 

@@ -207,8 +207,8 @@ public class DefenseTurn : MonoBehaviour
 
     /// <summary>
     /// 방어 턴 입력을 처리한다.
-    /// 시간상 가장 가까운 활성 노트를 먼저 찾고, 타이밍과 키가 모두 맞으면 성공으로 처리한다.
-    /// 타이밍이 벗어나거나 키가 틀리면 해당 노트를 MISS로 처리한다.
+    /// 시간상 가장 가까운 활성 노트를 먼저 찾고, 키가 맞으면 JudgeSystem에 타이밍 판정을 위임한다.
+    /// 키가 틀리면 즉시 MISS로 처리한다.
     /// </summary>
     public void OnTap(NoteType inputNoteType)
     {
@@ -226,30 +226,23 @@ public class DefenseTurn : MonoBehaviour
             return;
         }
 
-        double timingWindowSeconds = GetDefenseTimingWindowSeconds();
-        double offsetSeconds = System.Math.Abs(inputTime - target.judgeTime);
-
-        bool isTimingSuccess = offsetSeconds <= timingWindowSeconds;
         bool isKeySuccess = inputNoteType == target.noteType;
 
         Judgment result;
 
-        if (!isTimingSuccess || !isKeySuccess)
+        if (!isKeySuccess)
         {
             result = Judgment.MISS;
         }
         else
         {
-            result = JudgeSystem.Instance != null
-                ? JudgeSystem.Instance.Judge(inputTime, target.judgeTime)
-                : Judgment.GOOD;
+            double noteDuration = RhythmClock.Instance != null
+                ? RhythmClock.Instance.GetNoteDuration(subdivisions)
+                : fallbackMissTimeoutMs / 1000.0 / defenseTimingWindowRatio;
 
-            // 최종 성공 기준은 ±25%와 올바른 키이므로,
-            // JudgeSystem 세부 window 때문에 MISS가 나오더라도 성공으로 보정한다.
-            if (result == Judgment.MISS)
-            {
-                result = Judgment.GOOD;
-            }
+            result = JudgeSystem.Instance != null
+                ? JudgeSystem.Instance.Judge(inputTime, target.judgeTime, noteDuration)
+                : Judgment.GOOD;
         }
 
         ResolveDefenseNote(target, result);
