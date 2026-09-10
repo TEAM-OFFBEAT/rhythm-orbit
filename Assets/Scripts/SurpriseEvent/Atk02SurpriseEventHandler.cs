@@ -37,15 +37,14 @@ public class Atk02SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     public void EnterEvent(SurpriseEventContext context)
     {
         activeSide = context.targetPlayerId == 1 ? AttackSide.P1 : AttackSide.P2;
-        entryWaveCoroutine = StartCoroutine(AnimateSingleWave(activeSide));
     }
 
     /// <summary>
-    /// 공격 4박 페이즈 시작 시 파동 반복 루프 시작.
-    /// 진행 파동은 공격 시작 후 1주기(waveInterval) 뒤부터.
+    /// 공격 턴 시작 시점에 진입 파동 1회 + 반복 루프 시작.
     /// </summary>
     public void BeginEventPhase(SurpriseEventContext context)
     {
+        entryWaveCoroutine = StartCoroutine(AnimateSingleWave(activeSide));
         waveLoopCoroutine = StartCoroutine(WaveLoop(activeSide));
     }
 
