@@ -463,7 +463,6 @@ GameObject:
   - component: {fileID: 3257838096475146788}
   - component: {fileID: 2122622708766211929}
   - component: {fileID: 1789688729734994622}
-  - component: {fileID: 6273489149666329003}
   m_Layer: 5
   m_Name: GlowImage
   m_TagString: Untagged
@@ -487,8 +486,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -140, y: 100}
-  m_SizeDelta: {x: 82, y: 77}
+  m_AnchoredPosition: {x: -99, y: 96}
+  m_SizeDelta: {x: 186, y: 102}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2122622708766211929
 CanvasRenderer:
@@ -518,7 +517,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -143093403870304159, guid: a98e6e078d567284e8cf98ef9ec48e4d, type: 3}
+  m_Sprite: {fileID: 2368100552483185636, guid: 638fe8aaab5f66742a6ba7ab0ae06b52, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -528,24 +527,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &6273489149666329003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3798966437837350337}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7db0ddb94677fca4b897ae05c25b4d31, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SimpleGlowPulse
-  playOnAwake: 1
-  minScale: 1.05
-  maxScale: 1.2
-  minAlpha: 0.15
-  maxAlpha: 0.45
-  pulseSpeed: 2.5
 --- !u!1 &3895871109644017381
 GameObject:
   m_ObjectHideFlags: 0
@@ -580,8 +561,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -140, y: 100}
-  m_SizeDelta: {x: 82, y: 77}
+  m_AnchoredPosition: {x: -99, y: 96}
+  m_SizeDelta: {x: 160, y: 77}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7521271412944660895
 CanvasRenderer:
@@ -611,7 +592,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -143093403870304159, guid: a98e6e078d567284e8cf98ef9ec48e4d, type: 3}
+  m_Sprite: {fileID: -3989300262440939440, guid: 638fe8aaab5f66742a6ba7ab0ae06b52, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -955,6 +936,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 985266320611493060}
+  - component: {fileID: 8152064515156987422}
   m_Layer: 5
   m_Name: StarHighlightRoot
   m_TagString: Untagged
@@ -983,6 +965,26 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 1, y: 0}
+--- !u!114 &8152064515156987422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5457385240372885525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6729ec40b2867b4380fa223382abd23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialStarHighlightView
+  root: {fileID: 5457385240372885525}
+  starImage: {fileID: 34814624189857998}
+  outlineHighlightImage: {fileID: 1789688729734994622}
+  pulseHighlight: 1
+  highlightColor: {r: 1, g: 1, b: 1, a: 1}
+  minHighlightAlpha: 0.25
+  maxHighlightAlpha: 0.85
+  pulseSpeed: 2.5
 --- !u!1 &5486148436310871192
 GameObject:
   m_ObjectHideFlags: 0
@@ -1078,7 +1080,7 @@ MonoBehaviour:
   guidePanel: {fileID: 7366463009150220736}
   guideText: {fileID: 8292756946080133771}
   rymoPortraitImage: {fileID: 0}
-  starHighlightRoot: {fileID: 5457385240372885525}
+  starHighlightView: {fileID: 8152064515156987422}
   attackJudgeLineHighlightRoot: {fileID: 459034375490138378}
   defenseJudgeLineHighlightRoot: {fileID: 2127101742047259074}
   highBitHighlightRoot: {fileID: 8882994646997380364}

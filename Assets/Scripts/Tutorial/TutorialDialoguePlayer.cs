@@ -18,7 +18,9 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [SerializeField] private Image rymoPortraitImage;
 
     [Header("Highlight UI")]
-    [SerializeField] private GameObject starHighlightRoot;
+    //[SerializeField] private GameObject starHighlightRoot;
+    [SerializeField] private TutorialStarHighlightView starHighlightView;
+    
     [SerializeField] private GameObject attackJudgeLineHighlightRoot;
     [SerializeField] private GameObject defenseJudgeLineHighlightRoot;
     [SerializeField] private GameObject highBitHighlightRoot;
@@ -157,23 +159,22 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
     public void Hide()
     {
-        if (temporaryMessageCoroutine != null)
-        {
-            StopCoroutine(temporaryMessageCoroutine);
-            temporaryMessageCoroutine = null;
-        }
-
         if (typewriterText != null)
         {
             typewriterText.Stop();
         }
 
-        ClearHighlights();
+        if (guideText != null)
+        {
+            guideText.text = string.Empty;
+        }
 
         if (guidePanel != null)
         {
             guidePanel.SetActive(false);
         }
+
+        ClearHighlights();
     }
 
     /// <summary>
@@ -321,16 +322,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
     private void ApplyLineVisual(TutorialGuideLineData line)
     {
-        ClearHighlights();
-
         if (line == null)
         {
+            ClearHighlights();
             return;
         }
 
         SetRymoPortrait(line.rymoPortrait);
 
-        SetActiveSafe(starHighlightRoot, line.highlightStars);
+        SetStarHighlight(line.highlightStars);
         SetActiveSafe(attackJudgeLineHighlightRoot, line.highlightAttackJudgeLine);
         SetActiveSafe(defenseJudgeLineHighlightRoot, line.highlightDefenseJudgeLine);
         SetActiveSafe(highBitHighlightRoot, line.highlightHighBit);
@@ -339,7 +339,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
     public void ClearHighlights()
     {
-        SetActiveSafe(starHighlightRoot, false);
+        SetStarHighlight(false);
         SetActiveSafe(attackJudgeLineHighlightRoot, false);
         SetActiveSafe(defenseJudgeLineHighlightRoot, false);
         SetActiveSafe(highBitHighlightRoot, false);
@@ -353,6 +353,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
             target.SetActive(active);
         }
     }
+
+    private void SetStarHighlight(bool active)
+    {
+        if (starHighlightView != null)
+        {
+            starHighlightView.SetVisible(active);
+        }
+    }
+    
 
     public void ShowReactionForBeats(string text, int beats, bool hideWhenFinished = true)
     {
