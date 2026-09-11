@@ -137,10 +137,10 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private Color lowKeyHintColor = new Color(0.35f, 1f, 0.45f);
     
     [Header("Intro Star Demo")]
-    [SerializeField] private bool showIntroStarDemo = true;
+    //[SerializeField] private bool showIntroStarDemo = true;
 
-    [Tooltip("인트로 설명 몇 번째 문장에서 별 UI를 보여줄지 설정한다. 1부터 시작한다.")]
-    [SerializeField, Min(1)] private int introStarDemoLineNumber = 3;
+    //[Tooltip("인트로 설명 몇 번째 문장에서 별 UI를 보여줄지 설정한다. 1부터 시작한다.")]
+    //[SerializeField, Min(1)] private int introStarDemoLineNumber = 3;
 
     [Tooltip("인트로에서 예시로 보여줄 목표 별 개수.")]
     [SerializeField, Min(1)] private int introStarDemoCount = 3;
