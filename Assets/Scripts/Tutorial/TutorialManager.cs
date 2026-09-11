@@ -430,7 +430,7 @@ public class TutorialManager : MonoBehaviour
             {
                 if (!feedbackVisible)
                 {
-                    dialoguePlayer?.Show("F / J 키를 눌러 공격을 보내자모!");
+                    dialoguePlayer?.Show("<b><color=#FF66BF>F</color></b> / <b><color=#59FF73>J</color></b> 키를 눌러 공격을 보내자모!");
                     feedbackVisible = true;
                 }
 
@@ -1331,7 +1331,7 @@ public class TutorialManager : MonoBehaviour
             case 0:
                 return "괜찮다모. 지금은 타이밍을 익히는 단계다모!";
             case 1:
-                return "고주파는 F, 저주파는 J를 기억하라모!";
+                return "<b><color=#FF66BF>고주파는</color></b>는 <b><color=#FF66BF>F</color></b>, <b><color=#59FF73>저주파</color></b>는 <b><color=#59FF73>J</color></b>를 기억해모!";
             default:
                 return "연습은 실전에서도 이어진다모!";
         }

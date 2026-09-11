@@ -156,8 +156,8 @@ MonoBehaviour:
     highlightLowBit: 0
     playHighThenLowDemo: 0
   attackGuideLines:
-  - text: "\uACF5\uACA9 \uD134\uC740 <b>F / J \uD0A4</b>\uB85C \uBE44\uD2B8\uB97C
-      \uBCF4\uB0BC \uC218 \uC788\uBAA8."
+  - text: "\uACF5\uACA9 \uD134\uC740 <b><color=#FF66BF>F</color> / <color=#59FF73>J</color></b>
+      \uD0A4\uB85C \uBE44\uD2B8\uB97C \uBCF4\uB0BC \uC218 \uC788\uBAA8."
     rymoPortrait: {fileID: 7152930139536384079, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
     highlightStars: 0
     highlightAttackJudgeLine: 0
@@ -165,9 +165,9 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 1
-  - text: "<b><color=#FF66BF>F</color></b>\uB294 \uBD84\uD64D\uC0C9 \uACE0\uC8FC\uD30C,
-      <b><color=#59FF73>J</color></b>\uB294 \uCD08\uB85D\uC0C9 \uC800\uC8FC\uD30C
-      \uBE44\uD2B8\uB2E4\uBAA8."
+  - text: "<b><color=#FF66BF>F</color></b>\uB294 <b><color=#FF66BF>\uBD84\uD64D\uC0C9
+      \uACE0\uC8FC\uD30C</color></b>, <b><color=#59FF73>J</color></b>\uB294 <b><color=#59FF73>\uCD08\uB85D\uC0C9
+      \uC800\uC8FC\uD30C</color></b> \uBE44\uD2B8\uB2E4\uBAA8."
     rymoPortrait: {fileID: 7152930139536384079, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
     highlightStars: 0
     highlightAttackJudgeLine: 0
@@ -193,8 +193,8 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
-  - text: "\uBC29 \uC0DD\uC131\uC790\uB294 \uBD84\uD64D\uC0C9, \uBC29 \uCC38\uAC00\uC790\uB294
-      \uCD08\uB85D\uC0C9\uC774\uB2E4\uBAA8."
+  - text: "\uBC29 \uC0DD\uC131\uC790\uB294 <b><color=#FF66BF>\uBD84\uD64D\uC0C9</color></b>,
+      \uBC29 \uCC38\uAC00\uC790\uB294 <b><color=#59FF73>\uCD08\uB85D\uC0C9</color></b>\uC774\uB2E4\uBAA8."
     rymoPortrait: {fileID: 7152930139536384079, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
     highlightStars: 0
     highlightAttackJudgeLine: 0
@@ -202,7 +202,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
-  - text: "\uC9C0\uAE08 \uC5F0\uC2B5\uD560 \uB550 \uBD84\uD64D\uC0C9\uC774\uB2E4\uBAA8!
+  - text: "\uC9C0\uAE08 \uC5F0\uC2B5\uD560 \uB550 <b><color=#FF66BF>\uBD84\uD64D\uC0C9</color></b>\uC774\uB2E4\uBAA8!
       \uACF5\uACA9 \uC2DC\uC791\uC774\uB2E4\uBAA8!"
     rymoPortrait: {fileID: -8090365562718305141, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
     highlightStars: 0
@@ -230,7 +230,7 @@ MonoBehaviour:
     highlightLowBit: 0
     playHighThenLowDemo: 0
   - text: "\uBE44\uD2B8\uAC00 \uD310\uC815\uC120\uC5D0 \uB2E4\uAC00\uC62C \uB54C
-      F / J \uD0A4\uB97C \uB20C\uB7EC\uBAA8!"
+      <b><color=#FF66BF>F</color> / <color=#59FF73>J</color></b> \uD0A4\uB97C \uB20C\uB7EC\uBAA8!"
     rymoPortrait: {fileID: -8401692288953904933, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
     highlightStars: 0
     highlightAttackJudgeLine: 0
