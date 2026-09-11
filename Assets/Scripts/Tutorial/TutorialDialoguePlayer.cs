@@ -14,13 +14,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [SerializeField] private GameObject guidePanel;
     [SerializeField] private TMP_Text guideText;
 
-    [Tooltip("리모 프로필로 사용할 Image. 기존 플레이어 패널의 프로필 Image를 연결한다.")]
+    [Tooltip("리모 프로필로 사용할 Image. HUD 패널의 프로필 Image를 연결한다.")]
     [SerializeField] private Image rymoPortraitImage;
 
     [Header("Highlight UI")]
-    //[SerializeField] private GameObject starHighlightRoot;
     [SerializeField] private TutorialStarHighlightView starHighlightView;
-    
     [SerializeField] private GameObject attackJudgeLineHighlightRoot;
     [SerializeField] private GameObject defenseJudgeLineHighlightRoot;
     [SerializeField] private GameObject highBitHighlightRoot;
@@ -33,7 +31,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [Tooltip("문장 타이핑이 끝난 뒤 다음 문장으로 넘어가기 전에 유지할 시간.")]
     [SerializeField, Min(0f)] private float holdSecondsAfterTyping = 0.6f;
 
-    [Tooltip("문장이 너무 길어도 최소한 이 시간 이상은 타이핑에 사용한다.")]
+    [Tooltip("문장이 너무 짧아도 최소한 이 시간 이상은 타이핑에 사용한다.")]
     [SerializeField, Min(0.01f)] private float minimumTypingSeconds = 0.15f;
 
     [Header("Timing")]
@@ -45,9 +43,6 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
     [Tooltip("다음 문장으로 넘어가기 직전 깜빡이는 시간. 0.08~0.15초 추천.")]
     [SerializeField, Min(0f)] private float blinkSecondsBetweenLines = 0.1f;
-
-    [Tooltip("깜빡임 동안 패널 전체를 숨길지 여부. 꺼두면 글자만 사라진다.")]
-    [SerializeField] private bool hidePanelDuringBlink = false;
 
     [Header("Dialogue Timing")]
     [SerializeField, Min(0f)] private float dialogueVisualLeadSeconds = 0.04f;
@@ -64,11 +59,12 @@ public class TutorialDialoguePlayer : MonoBehaviour
             typewriterText = guideText.GetComponent<TypewriterText>();
         }
 
+        ClearGuideText();
         ClearHighlights();
 
         if (hideOnAwake)
         {
-            Hide();
+            SetGuidePanelVisible(false);
         }
     }
 
@@ -85,6 +81,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
     /// <summary>
     /// 리모 프로필 이미지를 즉시 변경한다.
+    /// 리모 프로필은 HUD에 있으므로 대사 패널 활성/비활성과 별도로 유지된다.
     /// </summary>
     public void SetRymoPortrait(Sprite portrait)
     {
@@ -96,14 +93,37 @@ public class TutorialDialoguePlayer : MonoBehaviour
         rymoPortraitImage.sprite = portrait;
     }
 
+    /// <summary>
+    /// 일반 대사/문구를 표시한다.
+    /// 텍스트가 비어 있으면 대사 패널을 끈다.
+    /// </summary>
     public void Show(string text)
     {
-        ClearHighlights();
-        ShowInstant(text);
+        StopTemporaryMessage();
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
+            return;
+        }
+
+        ShowTyped(text, CalculateTypingSeconds(GetBeatSeconds(), blinkSeconds: 0f));
     }
 
+    /// <summary>
+    /// 대사를 즉시 표시한다.
+    /// 텍스트가 비어 있으면 대사 패널을 끈다.
+    /// </summary>
     private void ShowInstant(string text)
     {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
+            return;
+        }
+
         if (guidePanel == null)
         {
             Debug.LogWarning("TutorialDialoguePlayer: guidePanel이 연결되지 않음.");
@@ -116,8 +136,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
             return;
         }
 
-        guidePanel.SetActive(true);
-        guideText.gameObject.SetActive(true);
+        SetGuidePanelVisible(true);
 
         if (typewriterText != null)
         {
@@ -130,8 +149,19 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 대사를 타자 효과로 표시한다.
+    /// 텍스트가 비어 있으면 대사 패널을 끈다.
+    /// </summary>
     private void ShowTyped(string text, float durationSeconds)
     {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
+            return;
+        }
+
         if (guidePanel == null)
         {
             Debug.LogWarning("TutorialDialoguePlayer: guidePanel이 연결되지 않음.");
@@ -144,8 +174,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
             return;
         }
 
-        guidePanel.SetActive(true);
-        guideText.gameObject.SetActive(true);
+        SetGuidePanelVisible(true);
 
         if (useTypewriter && typewriterText != null)
         {
@@ -157,23 +186,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 대사 구간을 완전히 숨긴다.
+    /// 패널과 하이라이트를 모두 정리한다.
+    /// </summary>
     public void Hide()
     {
-        if (typewriterText != null)
-        {
-            typewriterText.Stop();
-        }
-
-        if (guideText != null)
-        {
-            guideText.text = string.Empty;
-        }
-
-        if (guidePanel != null)
-        {
-            guidePanel.SetActive(false);
-        }
-
+        StopTemporaryMessage();
+        ClearGuideText();
+        SetGuidePanelVisible(false);
         ClearHighlights();
     }
 
@@ -190,6 +211,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
     {
         if (lines == null || lines.Length == 0)
         {
+            if (hideWhenFinished)
+            {
+                Hide();
+            }
+
             yield break;
         }
 
@@ -203,10 +229,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         for (int i = 0; i < lines.Length; i++)
         {
-            if (string.IsNullOrWhiteSpace(lines[i]))
-            {
-                continue;
-            }
+            string lineText = lines[i];
 
             double lineStartDspTime = dialogueStartDspTime + i * lineSeconds;
             double nextLineStartDspTime = dialogueStartDspTime + (i + 1) * lineSeconds;
@@ -224,8 +247,17 @@ public class TutorialDialoguePlayer : MonoBehaviour
             yield return WaitUntilDspTime(visualShowDspTime);
 
             ClearHighlights();
-            ShowTyped(lines[i], typingSeconds);
-            onLineStarted?.Invoke(i, lines[i]);
+
+            if (string.IsNullOrWhiteSpace(lineText))
+            {
+                ClearGuideText();
+                SetGuidePanelVisible(false);
+            }
+            else
+            {
+                ShowTyped(lineText, typingSeconds);
+                onLineStarted?.Invoke(i, lineText);
+            }
 
             double blinkStartDspTime = nextLineStartDspTime - blinkSeconds;
 
@@ -239,11 +271,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
             yield return WaitUntilDspTime(nextLineStartDspTime);
         }
 
-        ClearHighlights();
-
         if (hideWhenFinished)
         {
             Hide();
+        }
+        else
+        {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
+            ClearHighlights();
         }
     }
 
@@ -261,6 +297,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
     {
         if (lines == null || lines.Length == 0)
         {
+            if (hideWhenFinished)
+            {
+                Hide();
+            }
+
             yield break;
         }
 
@@ -275,11 +316,6 @@ public class TutorialDialoguePlayer : MonoBehaviour
         for (int i = 0; i < lines.Length; i++)
         {
             TutorialGuideLineData line = lines[i];
-
-            if (line == null || string.IsNullOrWhiteSpace(line.text))
-            {
-                continue;
-            }
 
             double lineStartDspTime = dialogueStartDspTime + i * lineSeconds;
             double nextLineStartDspTime = dialogueStartDspTime + (i + 1) * lineSeconds;
@@ -296,9 +332,18 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
             yield return WaitUntilDspTime(visualShowDspTime);
 
-            ApplyLineVisual(line);
-            ShowTyped(line.text, typingSeconds);
-            onLineStarted?.Invoke(i, line);
+            if (line == null || string.IsNullOrWhiteSpace(line.text))
+            {
+                ClearGuideText();
+                SetGuidePanelVisible(false);
+                ClearHighlights();
+            }
+            else
+            {
+                ApplyLineVisual(line);
+                ShowTyped(line.text, typingSeconds);
+                onLineStarted?.Invoke(i, line);
+            }
 
             double blinkStartDspTime = nextLineStartDspTime - blinkSeconds;
 
@@ -312,14 +357,22 @@ public class TutorialDialoguePlayer : MonoBehaviour
             yield return WaitUntilDspTime(nextLineStartDspTime);
         }
 
-        ClearHighlights();
-
         if (hideWhenFinished)
         {
             Hide();
         }
+        else
+        {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
+            ClearHighlights();
+        }
     }
 
+    /// <summary>
+    /// 현재 대사 줄에 맞는 프로필과 하이라이트를 적용한다.
+    /// 연속된 대사에서 같은 하이라이트가 true면 중간에 깜빡이지 않는다.
+    /// </summary>
     private void ApplyLineVisual(TutorialGuideLineData line)
     {
         if (line == null)
@@ -337,6 +390,10 @@ public class TutorialDialoguePlayer : MonoBehaviour
         SetActiveSafe(lowBitHighlightRoot, line.highlightLowBit);
     }
 
+    /// <summary>
+    /// 모든 튜토리얼 하이라이트를 끈다.
+    /// 대사 사이 깜빡임에서는 호출하지 않는다.
+    /// </summary>
     public void ClearHighlights()
     {
         SetStarHighlight(false);
@@ -346,27 +403,12 @@ public class TutorialDialoguePlayer : MonoBehaviour
         SetActiveSafe(lowBitHighlightRoot, false);
     }
 
-    private void SetActiveSafe(GameObject target, bool active)
-    {
-        if (target != null)
-        {
-            target.SetActive(active);
-        }
-    }
-
-    private void SetStarHighlight(bool active)
-    {
-        if (starHighlightView != null)
-        {
-            starHighlightView.SetVisible(active);
-        }
-    }
-    
-
     public void ShowReactionForBeats(string text, int beats, bool hideWhenFinished = true)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
             return;
         }
 
@@ -378,6 +420,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(text))
         {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
             return;
         }
 
@@ -403,10 +447,12 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         if (hideWhenFinished)
         {
-            if (guidePanel != null)
-            {
-                guidePanel.SetActive(false);
-            }
+            Hide();
+        }
+        else
+        {
+            ClearGuideText();
+            SetGuidePanelVisible(false);
         }
 
         temporaryMessageCoroutine = null;
@@ -454,6 +500,10 @@ public class TutorialDialoguePlayer : MonoBehaviour
         );
     }
 
+    /// <summary>
+    /// 대사 사이의 빈 타이밍 처리.
+    /// 패널만 끄고, 하이라이트는 유지한다.
+    /// </summary>
     private void ShowBlinkBlank()
     {
         if (typewriterText != null)
@@ -461,29 +511,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
             typewriterText.Stop();
         }
 
-        ClearHighlights();
-
-        if (hidePanelDuringBlink)
-        {
-            if (guidePanel != null)
-            {
-                guidePanel.SetActive(false);
-            }
-
-            return;
-        }
-
-        if (guidePanel != null)
-        {
-            guidePanel.SetActive(true);
-        }
-
-        if (guideText != null)
-        {
-            guideText.text = string.Empty;
-            guideText.maxVisibleCharacters = 0;
-            guideText.gameObject.SetActive(false);
-        }
+        ClearGuideText();
+        SetGuidePanelVisible(false);
     }
 
     private IEnumerator WaitUntilDspTime(double targetDspTime)
@@ -491,6 +520,52 @@ public class TutorialDialoguePlayer : MonoBehaviour
         while (AudioSettings.dspTime < targetDspTime)
         {
             yield return null;
+        }
+    }
+
+    /// <summary>
+    /// 대사 패널만 켜거나 끈다.
+    /// 리모 프로필과 하이라이트는 건드리지 않는다.
+    /// </summary>
+    private void SetGuidePanelVisible(bool visible)
+    {
+        if (guidePanel != null)
+        {
+            guidePanel.SetActive(visible);
+        }
+
+        if (guideText != null)
+        {
+            guideText.gameObject.SetActive(visible);
+        }
+    }
+
+    /// <summary>
+    /// 대사 텍스트만 비운다.
+    /// 패널 활성 상태와 하이라이트는 건드리지 않는다.
+    /// </summary>
+    private void ClearGuideText()
+    {
+        if (guideText != null)
+        {
+            guideText.text = string.Empty;
+            guideText.maxVisibleCharacters = 0;
+        }
+    }
+
+    private void SetStarHighlight(bool active)
+    {
+        if (starHighlightView != null)
+        {
+            starHighlightView.SetVisible(active);
+        }
+    }
+
+    private void SetActiveSafe(GameObject target, bool active)
+    {
+        if (target != null)
+        {
+            target.SetActive(active);
         }
     }
 }
