@@ -32,6 +32,7 @@ public class AttackTurnRenderer : MonoBehaviour
 
     private struct NoteEntry { public Transform rect; public int noteId; public float initialX; public double judgeTime; }
     private readonly List<NoteEntry> spawnedNotes = new();
+    private readonly List<NoteEntry> spawnedGhostNotes = new();
 
     private bool isTransferring;
     private float transferJudgeLineX;
@@ -97,6 +98,91 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
+    /// EVT_DEF_01 유령 신호 노트를 표시한다.
+    /// 일반 노트와 같은 경로/속도로 이동하지만, 일반 판정 노트 목록과는 분리된다.
+    /// </summary>
+    public void SpawnGhostNote(
+        GhostNoteData ghostNote,
+        double duration,
+        float attackStartX,
+        float attackEndX,
+        float alpha
+    )
+    {
+        if (ghostNote == null)
+        {
+            return;
+        }
+
+        if (NoteRenderer.Instance == null)
+        {
+            Debug.LogWarning("NoteRenderer.Instance가 없습니다.");
+            return;
+        }
+
+        Transform t = NoteRenderer.Instance.AcquireGhostNote(
+            ghostNote.noteId,
+            ghostNote.noteType,
+            alpha
+        );
+
+        if (t == null)
+        {
+            return;
+        }
+
+        if (attackNoteContainer != null)
+        {
+            t.SetParent(attackNoteContainer, false);
+        }
+
+        double safeDuration = System.Math.Max(0.01, duration);
+        float ratio = Mathf.Clamp01((float)(ghostNote.noteRelativeTime / safeDuration));
+        float x = Mathf.Lerp(attackStartX, attackEndX, ratio);
+
+        t.localPosition = new Vector3(x, 0f, 0f);
+
+        spawnedGhostNotes.Add(new NoteEntry
+        {
+            rect = t,
+            noteId = ghostNote.noteId,
+            initialX = x,
+            judgeTime = ghostNote.judgeTime
+        });
+    }
+
+    /// <summary>
+    /// noteId에 해당하는 유령 노트를 제거한다.
+    /// </summary>
+    public void RemoveGhostNote(int noteId)
+    {
+        for (int i = spawnedGhostNotes.Count - 1; i >= 0; i--)
+        {
+            if (spawnedGhostNotes[i].noteId != noteId)
+            {
+                continue;
+            }
+
+            NoteRenderer.Instance?.ReleaseNote(noteId);
+            spawnedGhostNotes.RemoveAt(i);
+            return;
+        }
+    }
+
+    /// <summary>
+    /// 모든 유령 노트를 제거한다.
+    /// </summary>
+    public void ClearGhostNotes()
+    {
+        for (int i = spawnedGhostNotes.Count - 1; i >= 0; i--)
+        {
+            NoteRenderer.Instance?.ReleaseNote(spawnedGhostNotes[i].noteId);
+        }
+
+        spawnedGhostNotes.Clear();
+    }
+
+    /// <summary>
     /// EVT_ATK_01 첫 탭 시 호출. 그리드 위치에 반쪽 노트 인디케이터를 표시한다.
     /// P1(오른쪽→왼쪽 이동)은 flipX=false, P2(왼쪽→오른쪽)는 flipX=true.
     /// </summary>
@@ -149,6 +235,8 @@ public class AttackTurnRenderer : MonoBehaviour
         foreach (NoteEntry entry in spawnedNotes)
             NoteRenderer.Instance?.ReleaseNote(entry.noteId);
         spawnedNotes.Clear();
+
+        ClearGhostNotes();
         ClearHalfNote();
     }
 
@@ -240,16 +328,28 @@ public class AttackTurnRenderer : MonoBehaviour
 
     private void UpdateTransferMovement()
     {
+        UpdateTransferMovementFor(spawnedNotes);
+        UpdateTransferMovementFor(spawnedGhostNotes);
+    }
+
+    private void UpdateTransferMovementFor(List<NoteEntry> noteEntries)
+    {
         double now = AudioSettings.dspTime;
 
-        for (int i = spawnedNotes.Count - 1; i >= 0; i--)
+        for (int i = noteEntries.Count - 1; i >= 0; i--)
         {
-            NoteEntry entry = spawnedNotes[i];
-            if (entry.rect == null) { spawnedNotes.RemoveAt(i); continue; }
+            NoteEntry entry = noteEntries[i];
+
+            if (entry.rect == null)
+            {
+                noteEntries.RemoveAt(i);
+                continue;
+            }
 
             double travelTime = transferSpeed > 0f
                 ? Mathf.Abs(transferJudgeLineX - entry.initialX) / transferSpeed
                 : 0.0;
+
             double departureTime = entry.judgeTime - travelTime;
             float elapsed = (float)System.Math.Max(0.0, now - departureTime);
 

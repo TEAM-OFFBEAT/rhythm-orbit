@@ -136,6 +136,9 @@ public class AttackTurn : MonoBehaviour
     
     public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
 
+    public IReadOnlyList<NoteData> CurrentCreatedNotes => createdNotes;
+    public AttackSide CurrentSide => currentSide;   
+    
     /// <summary>
     /// 현재 BPM 기준 1스텝(1/subdivisions 박) 길이를 반환.
     /// RhythmClock이 연결되지 않았을 경우 기본 BPM 120 기준으로 계산한다.
