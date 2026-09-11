@@ -25,6 +25,28 @@ public class DefenseTurn : MonoBehaviour
     /// </summary>
     public event System.Action<NoteType, bool> OnDefenseInputResolved;
 
+    /// <summary>
+    /// EVT_DEF_01 유령 노트를 플레이어가 타격했을 때 발행한다.
+    /// 일반 Judgment에는 포함하지 않는다.
+    /// </summary>
+    public event System.Action<GhostNoteData> OnGhostNoteHit;
+
+    /// <summary>
+    /// EVT_DEF_01 유령 노트가 판정선을 지나 자동 소멸했을 때 발행한다.
+    /// </summary>
+    public event System.Action<GhostNoteData> OnGhostNotePassed;
+
+    /// <summary>
+    /// 방어 턴이 실제로 시작되어 pendingNotes와 transfer 정보가 준비되면 발행한다.
+    /// DEF_01 유령 신호처럼 방어 시작 직후 추가 처리가 필요한 이벤트가 구독한다.
+    /// </summary>
+    public event System.Action OnDefenseBegan;
+
+    /// <summary>
+    /// 현재 방어 턴이 진행 중인지 외부에서 읽기 위한 값.
+    /// </summary>
+    public bool IsRunning => isRunning;
+    
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private double fallbackMissTimeoutMs = 100.0;
     [SerializeField] private float fallbackTransferSpeed = 5f;
@@ -35,6 +57,20 @@ public class DefenseTurn : MonoBehaviour
 
     private readonly List<NoteData> pendingNotes = new();
     private readonly List<NoteData> receivedNotes = new();
+
+    private readonly List<GhostNoteData> ghostNotes = new();
+
+    [Header("EVT_DEF_01 Ghost Signal")]
+    [SerializeField, Min(1)] private int ghostNoteIdBase = 700000;
+    [SerializeField, Min(0f)] private double ghostPassDisappearDelayMs = 80.0;
+
+    private int nextGhostNoteId;
+    private double currentDefenseStartDspTime;
+    private float currentJudgeLineX;
+    private float currentAttackStartX;
+    private float currentAttackEndX;
+    private double currentAttackDuration;
+
     private NetworkManager networkManager;
     private readonly List<Judgment> judgments = new();
     private bool isRunning;
@@ -72,6 +108,7 @@ public class DefenseTurn : MonoBehaviour
             }
         }
 
+        UpdateGhostNotes(now);
         if (isRunning && pendingNotes.Count == 0 && now >= defenseEndDspTime) EndDefense();
     }
 
@@ -117,6 +154,15 @@ public class DefenseTurn : MonoBehaviour
             defenseStartDspTime = AudioSettings.dspTime;
         defenseEndDspTime = defenseStartDspTime + attackDuration;
 
+        currentDefenseStartDspTime = defenseStartDspTime;
+        currentJudgeLineX = judgeLineX;
+        currentAttackStartX = attackStartX;
+        currentAttackEndX = attackEndX;
+        currentAttackDuration = attackDuration;
+        nextGhostNoteId = ghostNoteIdBase;
+
+        ghostNotes.Clear();
+
         foreach (var note in notes)
         {
             note.judgeTime = defenseStartDspTime + note.noteRelativeTime;
@@ -125,6 +171,7 @@ public class DefenseTurn : MonoBehaviour
         }
 
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
+        OnDefenseBegan?.Invoke();
     }
 
     /// <summary>
@@ -181,6 +228,15 @@ public class DefenseTurn : MonoBehaviour
         isRunning       = true;
         defenseEndDspTime = defenseStartDspTime + attackDuration;
 
+        currentDefenseStartDspTime = defenseStartDspTime;
+        currentJudgeLineX = judgeLineX;
+        currentAttackStartX = attackStartX;
+        currentAttackEndX = attackEndX;
+        currentAttackDuration = attackDuration;
+        nextGhostNoteId = ghostNoteIdBase;
+
+        ghostNotes.Clear();
+
         if (receivedNotes.Count == 0)
         {
             receivedNotes.Clear();
@@ -203,30 +259,41 @@ public class DefenseTurn : MonoBehaviour
 
         receivedNotes.Clear();
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
+        OnDefenseBegan?.Invoke();
     }
 
     /// <summary>
     /// 방어 턴 입력을 처리한다.
     /// 시간상 가장 가까운 활성 노트를 먼저 찾고, 키가 맞으면 JudgeSystem에 타이밍 판정을 위임한다.
     /// 키가 틀리면 즉시 MISS로 처리한다.
+    /// 또한 유령 노트까지 입력 후보로 보되,
+    /// 유령 노트가 선택되면 일반 Judgement에는 포함하지 않고 별도 처리한다.
     /// </summary>
+    /// <summary>
     public void OnTap(NoteType inputNoteType)
     {
         if (!isRunning || isAiDefense) return;
 
         double inputTime = AudioSettings.dspTime;
 
-        NoteData target = GetNearestNoteByTime(inputTime);
+        NoteData normalTarget = GetNearestNoteByTime(inputTime);
+        GhostNoteData ghostTarget = GetNearestGhostNoteByTime(inputTime);
+
+        if (ghostTarget != null && ShouldUseGhostTarget(inputTime, normalTarget, ghostTarget))
+        {
+            ResolveGhostNoteHit(ghostTarget);
+            return;
+        }
 
         // 방어할 활성 노트가 없는데 누른 경우.
         // 게임 로직상 추가 감점은 하지 않고 사운드만 Miss로 처리한다.
-        if (target == null)
+        if (normalTarget == null)
         {
             OnDefenseInputResolved?.Invoke(inputNoteType, false);
             return;
         }
 
-        bool isKeySuccess = inputNoteType == target.noteType;
+        bool isKeySuccess = inputNoteType == normalTarget.noteType;
 
         Judgment result;
 
@@ -241,11 +308,11 @@ public class DefenseTurn : MonoBehaviour
                 : fallbackMissTimeoutMs / 1000.0 / defenseTimingWindowRatio;
 
             result = JudgeSystem.Instance != null
-                ? JudgeSystem.Instance.Judge(inputTime, target.judgeTime, noteDuration)
+                ? JudgeSystem.Instance.Judge(inputTime, normalTarget.judgeTime, noteDuration)
                 : Judgment.GOOD;
         }
 
-        ResolveDefenseNote(target, result);
+        ResolveDefenseNote(normalTarget, result);
     }
 
     /// <summary>
@@ -341,6 +408,311 @@ public class DefenseTurn : MonoBehaviour
     }
 
     /// <summary>
+    /// EVT_DEF_01 유령 신호를 활성화하고 현재 방어 턴의 빈 박자에 유령 노트를 생성한다.
+    /// </summary>
+    public void ActivateGhostSignal(int ghostCount, float ghostAlpha)
+    {
+        if (!isRunning || isAiDefense)
+        {
+            return;
+        }
+
+        if (attackTurnRenderer == null)
+        {
+            Debug.LogWarning("DefenseTurn: AttackTurnRenderer가 없어 유령 노트를 생성할 수 없음.");
+            return;
+        }
+
+        ClearGhostNotesInternal();
+
+        List<int> candidateSteps = BuildGhostCandidateGridSteps();
+
+        if (candidateSteps.Count == 0)
+        {
+            Debug.Log("DefenseTurn: 유령 노트를 생성할 빈 박자가 없음.");
+            return;
+        }
+
+        Shuffle(candidateSteps);
+
+        int spawnCount = Mathf.Min(Mathf.Max(0, ghostCount), candidateSteps.Count);
+        double noteDuration = GetCurrentNoteDurationSeconds();
+
+        for (int i = 0; i < spawnCount; i++)
+        {
+            int step = candidateSteps[i];
+            double relativeTime = step * noteDuration;
+
+            GhostNoteData ghostNote = new GhostNoteData
+            {
+                noteId = nextGhostNoteId++,
+                noteType = Random.value < 0.5f ? NoteType.HIGH : NoteType.LOW,
+                noteRelativeTime = relativeTime,
+                judgeTime = currentDefenseStartDspTime + relativeTime
+            };
+
+            ghostNotes.Add(ghostNote);
+
+            attackTurnRenderer.SpawnGhostNote(
+                ghostNote,
+                currentAttackDuration,
+                currentAttackStartX,
+                currentAttackEndX,
+                ghostAlpha
+            );
+
+            Debug.Log(
+                $"DefenseTurn: Ghost note 생성 / " +
+                $"id:{ghostNote.noteId}, type:{ghostNote.noteType}, step:{step}, rel:{relativeTime:0.000}"
+            );
+        }
+    }
+
+    /// <summary>
+    /// EVT_DEF_01 유령 신호를 종료하고 남은 유령 노트를 제거한다.
+    /// </summary>
+    public void DeactivateGhostSignal()
+    {
+        ClearGhostNotesInternal();
+    }
+
+    /// <summary>
+    /// DEF_01 진입 단계에서 미리 생성된 유령 노트를
+    /// 방어 턴 입력 후보로 등록한다.
+    /// 시각 오브젝트는 이미 AttackTurnRenderer에 생성되어 있으므로 여기서는 새로 Spawn하지 않는다.
+    /// </summary>
+    public void SetGhostSignalNotes(IReadOnlyList<GhostNoteData> preparedNotes)
+    {
+        ghostNotes.Clear();
+
+        if (!isRunning || isAiDefense)
+        {
+            return;
+        }
+
+        if (preparedNotes == null)
+        {
+            return;
+        }
+
+        foreach (GhostNoteData ghostNote in preparedNotes)
+        {
+            if (ghostNote == null)
+            {
+                continue;
+            }
+
+            ghostNotes.Add(ghostNote);
+        }
+
+        Debug.Log($"DefenseTurn: Ghost signal input 등록 / count:{ghostNotes.Count}");
+    }
+
+    /// <summary>
+    /// 실제 노트와 겹치지 않는 빈 grid step 목록을 만든다.
+    /// </summary>
+    private List<int> BuildGhostCandidateGridSteps()
+    {
+        List<int> candidates = new List<int>();
+        HashSet<int> occupiedSteps = new HashSet<int>();
+
+        double noteDuration = GetCurrentNoteDurationSeconds();
+
+        if (noteDuration <= 0.0 || currentAttackDuration <= 0.0)
+        {
+            return candidates;
+        }
+
+        foreach (NoteData note in pendingNotes)
+        {
+            if (note == null)
+            {
+                continue;
+            }
+
+            int step = GetNearestGridStep(note.noteRelativeTime, noteDuration);
+            occupiedSteps.Add(step);
+        }
+
+        int maxStep = Mathf.FloorToInt((float)(currentAttackDuration / noteDuration));
+
+        // 0번째 칸과 마지막 칸은 시작/끝 경계라 제외.
+        for (int step = 1; step < maxStep; step++)
+        {
+            if (occupiedSteps.Contains(step))
+            {
+                continue;
+            }
+
+            candidates.Add(step);
+        }
+
+        return candidates;
+    }
+
+    private GhostNoteData GetNearestGhostNoteByTime(double inputTime)
+    {
+        GhostNoteData nearest = null;
+        double minDist = double.MaxValue;
+        double hitWindow = GetDefenseTimingWindowSeconds();
+
+        foreach (GhostNoteData ghostNote in ghostNotes)
+        {
+            if (ghostNote == null)
+            {
+                continue;
+            }
+
+            if (inputTime < ghostNote.judgeTime - noteActivationLeadTimeMs / 1000.0)
+            {
+                continue;
+            }
+
+            if (inputTime > ghostNote.judgeTime + hitWindow)
+            {
+                continue;
+            }
+
+            double dist = System.Math.Abs(ghostNote.judgeTime - inputTime);
+
+            if (dist >= minDist)
+            {
+                continue;
+            }
+
+            minDist = dist;
+            nearest = ghostNote;
+        }
+
+        return nearest;
+    }
+
+    /// <summary>
+    /// 실제 노트와 유령 노트가 둘 다 입력 후보일 때 어느 쪽으로 처리할지 결정한다.
+    /// 더 가까운 쪽을 우선한다.
+    /// </summary>
+    private bool ShouldUseGhostTarget(double inputTime, NoteData normalTarget, GhostNoteData ghostTarget)
+    {
+        if (ghostTarget == null)
+        {
+            return false;
+        }
+
+        if (normalTarget == null)
+        {
+            return true;
+        }
+
+        double normalDist = System.Math.Abs(normalTarget.judgeTime - inputTime);
+        double ghostDist = System.Math.Abs(ghostTarget.judgeTime - inputTime);
+
+        return ghostDist <= normalDist;
+    }
+
+    /// <summary>
+    /// 유령 노트를 타격했을 때 처리한다.
+    /// 실제 방어 Judgment에는 포함하지 않는다.
+    /// </summary>
+    private void ResolveGhostNoteHit(GhostNoteData ghostNote)
+    {
+        if (ghostNote == null)
+        {
+            return;
+        }
+
+        RemoveGhostNoteInternal(ghostNote);
+        OnGhostNoteHit?.Invoke(ghostNote);
+
+        Debug.Log($"DefenseTurn: Ghost note hit / id:{ghostNote.noteId}, type:{ghostNote.noteType}");
+    }
+
+    /// <summary>
+    /// 유령 노트가 판정선을 지난 뒤 자동 소멸하는 처리.
+    /// 패널티는 적용하지 않는다.
+    /// </summary>
+    private void ResolveGhostNotePassed(GhostNoteData ghostNote)
+    {
+        if (ghostNote == null)
+        {
+            return;
+        }
+
+        RemoveGhostNoteInternal(ghostNote);
+        OnGhostNotePassed?.Invoke(ghostNote);
+
+        Debug.Log($"DefenseTurn: Ghost note passed / id:{ghostNote.noteId}");
+    }
+
+    private void UpdateGhostNotes(double now)
+    {
+        double disappearDelaySeconds = ghostPassDisappearDelayMs / 1000.0;
+
+        for (int i = ghostNotes.Count - 1; i >= 0; i--)
+        {
+            GhostNoteData ghostNote = ghostNotes[i];
+
+            if (ghostNote == null)
+            {
+                ghostNotes.RemoveAt(i);
+                continue;
+            }
+
+            if (now < ghostNote.judgeTime + disappearDelaySeconds)
+            {
+                continue;
+            }
+
+            ResolveGhostNotePassed(ghostNote);
+        }
+    }
+
+    private void RemoveGhostNoteInternal(GhostNoteData ghostNote)
+    {
+        if (ghostNote == null)
+        {
+            return;
+        }
+
+        attackTurnRenderer?.RemoveGhostNote(ghostNote.noteId);
+        ghostNotes.Remove(ghostNote);
+    }
+
+    private void ClearGhostNotesInternal()
+    {
+        attackTurnRenderer?.ClearGhostNotes();
+        ghostNotes.Clear();
+    }
+
+    private double GetCurrentNoteDurationSeconds()
+    {
+        if (RhythmClock.Instance != null)
+        {
+            return RhythmClock.Instance.GetNoteDuration(subdivisions);
+        }
+
+        return fallbackMissTimeoutMs / 1000.0 / defenseTimingWindowRatio;
+    }
+
+    private int GetNearestGridStep(double relativeTime, double noteDuration)
+    {
+        if (noteDuration <= 0.0)
+        {
+            return 0;
+        }
+
+        return Mathf.RoundToInt((float)(relativeTime / noteDuration));
+    }
+
+    private void Shuffle(List<int> values)
+    {
+        for (int i = 0; i < values.Count; i++)
+        {
+            int randomIndex = Random.Range(i, values.Count);
+            (values[i], values[randomIndex]) = (values[randomIndex], values[i]);
+        }
+    }
+
+    /// <summary>
     /// 재시작 또는 씬 이동을 위해 진행 중인 방어 턴을 강제로 정리한다.
     /// OnDefenseEnded는 호출하지 않는다.
     /// </summary>
@@ -352,6 +724,8 @@ public class DefenseTurn : MonoBehaviour
         pendingNotes.Clear();
         receivedNotes.Clear();
         judgments.Clear();
+
+        ClearGhostNotesInternal();
 
         networkManager = null;
         defenseEndDspTime = 0.0;

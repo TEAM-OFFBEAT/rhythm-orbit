@@ -1289,6 +1289,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 96396667480907577, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: defenseTurn
+      value: 
+      objectReference: {fileID: 1859392733}
+    - target: {fileID: 96396667480907577, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: sanitySystem
+      value: 
+      objectReference: {fileID: 918494131}
     - target: {fileID: 1063807245556227319, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: m_Name
       value: SurpriseEventManager

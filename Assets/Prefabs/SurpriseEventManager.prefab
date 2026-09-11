@@ -167,7 +167,7 @@ MonoBehaviour:
   eventToastRoot: {fileID: 0}
   eventStateDebugText: {fileID: 0}
   showEventStateDebugText: 1
-  forceEventForTest: 0
+  forceEventForTest: 1
   logEventFlow: 1
 --- !u!1 &1820934327485186545
 GameObject:
@@ -179,6 +179,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6763775942642450850}
   - component: {fileID: 8245992197782695875}
+  - component: {fileID: 96396667480907577}
   m_Layer: 0
   m_Name: Debug_DEF_01
   m_TagString: Untagged
@@ -208,12 +209,34 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1820934327485186545}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa4c9a7e9dbfc3547bc97a099531d538, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugSurpriseEventHandler
   eventId: 3
+--- !u!114 &96396667480907577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1820934327485186545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96e13ff5740f07448b8cc5ccb6b5c304, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Def01SurpriseEventHandler
+  defenseTurn: {fileID: 0}
+  sanitySystem: {fileID: 0}
+  ghostNoteCount: 2
+  ghostNoteAlpha: 0.7
+  ghostHitPenalty: 5
+  playSfxOnEnter: 1
+  playSfxOnGhostHit: 1
+  ghostSignalSfx: {fileID: 0}
+  ghostHitSfx: {fileID: 0}
+  sfxVolume: 1
 --- !u!1 &5334492164624232687
 GameObject:
   m_ObjectHideFlags: 0
