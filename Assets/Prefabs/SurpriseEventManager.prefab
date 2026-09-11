@@ -153,7 +153,7 @@ MonoBehaviour:
   - eventId: 3
     displayName: "\uC720\uB839 \uC2E0\uD638"
     applicablePhase: 2
-    entrySfx: {fileID: 0}
+    entrySfx: {fileID: 8300000, guid: 6eafc7c325aaf864e9c9350108b41d81, type: 3}
     enabled: 1
   - eventId: 4
     displayName: "\uC74C\uD5A5 \uC218\uC2E0"
@@ -227,10 +227,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96e13ff5740f07448b8cc5ccb6b5c304, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Def01SurpriseEventHandler
+  attackTurn: {fileID: 0}
+  attackTurnRenderer: {fileID: 0}
   defenseTurn: {fileID: 0}
   sanitySystem: {fileID: 0}
   ghostNoteCount: 2
+  ghostNoteIdBase: 700000
   ghostNoteAlpha: 0.7
+  ghostFadeInSeconds: 0.45
+  appearAfterLinePassSeconds: 0.05
+  ghostStaggerSeconds: 0.12
+  removeGhostIfRealNoteAppearsOnSameStep: 1
   ghostHitPenalty: 5
   playSfxOnEnter: 1
   playSfxOnGhostHit: 1
