@@ -306,6 +306,19 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
+    /// 일반 공격/방어 노트의 알파값을 변경한다.
+    /// DEF_02 음향 수신 이벤트에서 방어 노트를 숨기거나 복구할 때 사용한다.
+    /// 유령 노트는 spawnedGhostNotes로 분리되어 있으므로 여기서는 건드리지 않는다.
+    /// </summary>
+    public void SetNormalNotesAlpha(float alpha)
+    {
+        foreach (NoteEntry entry in spawnedNotes)
+        {
+            NoteRenderer.Instance?.SetNoteAlpha(entry.noteId, alpha);
+        }
+    }
+
+    /// <summary>
     /// 공격 구간 시작 X 좌표를 절대 좌표로 반환한다.
     /// </summary>
     public float GetStartX(AttackSide side) => side == AttackSide.P1 ? p1StartX : p2StartX;

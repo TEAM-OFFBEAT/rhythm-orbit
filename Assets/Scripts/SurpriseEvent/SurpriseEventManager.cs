@@ -70,6 +70,12 @@ public class SurpriseEventManager : MonoBehaviour
     // 다음 페이즈에 적용하기로 미리 뽑아둔 이벤트.
     private SurpriseEventContext preparedEvent;
 
+    // preparedEvent가 실제로 진입 페이즈에 들어갔는지 여부.
+    private bool preparedEventPreludeBegun; 
+    
+    // preparedEvent가 실제로 적용 페이즈에 들어갔는지 여부.
+    private bool preparedEventCounted;
+
     // 지금 실제로 적용 중인 이벤트.
     private SurpriseEventContext activeEvent;
 
@@ -94,6 +100,15 @@ public class SurpriseEventManager : MonoBehaviour
     /// 현재 적용 중인 이벤트가 있는지 여부.
     /// </summary>
     public bool HasActiveEvent => activeEvent != null && activeEvent.IsValid;
+
+    public bool HasPreparedEvent => preparedEvent != null && preparedEvent.IsValid;
+
+    public bool HasPreparedEventFor(SurpriseEventPhase phase, double phaseStartDspTime)
+    {
+        return HasPreparedEvent &&
+            preparedEvent.phase == phase &&
+            System.Math.Abs(preparedEvent.phaseStartDspTime - phaseStartDspTime) < 0.001;
+    }
 
     // ─────────────────────────────────────────────────────────
     // Unity 생명주기
@@ -154,11 +169,6 @@ public class SurpriseEventManager : MonoBehaviour
     /// 
     /// 이렇게 해두면 나중에 개별 이벤트 스크립트를 자식으로 붙이기만 해도
     /// Manager가 자동으로 찾아 쓸 수 있다.
-    /// 
-    /// 세빈: ㄴ 라고하네요. 
-    ///      기습 이벤트 매니저가 (게임 매니저처럼) 너무 길어지는 것보다 
-    ///      핸들러 구현하는 스크립트를 따로 분리해서 작성하면 좋을 것 같아요!
-    ///      길이에 따라 모아놓거나 네 개 다 분리하거나...
     /// </summary>
     private void RegisterHandlersInChildren()
     {
@@ -203,13 +213,26 @@ public class SurpriseEventManager : MonoBehaviour
     )
     {
         // 이미 진입했거나 적용 중인 이벤트가 있으면 새 이벤트를 준비하지 않는다.
+        if (HasActiveEvent || HasPreparedEvent)
+        {
+            return false;
+        }
+
+        CancelPreparedEventPrelude();
+        preparedEvent = null;
+        
         if (HasActiveEvent)
         {
             return false;
         }
 
-        // 이전에 준비된 이벤트가 남아 있으면 지운다.
-        preparedEvent = null;
+        if (HasPreparedEvent)
+        {
+            return true;
+        }
+
+        preparedEventPreludeBegun = false;
+        preparedEventCounted = false;
 
         // 첫 공격/첫 방어, 라운드 전환, 게임 종료 구간 등은 제외.
         if (isExcludedTransition)
@@ -264,13 +287,9 @@ public class SurpriseEventManager : MonoBehaviour
             phaseStartDspTime = nextPhaseStartDspTime
         };
 
-        // 이벤트 선정 시점에 누적 횟수를 증가시킨다.
-        totalEventCount++;
-
         Log(
-            $"이벤트 선정 / id:{preparedEvent.eventId}, " +
-            $"phase:{preparedEvent.phase}, target:{preparedEvent.targetPlayerId}, " +
-            $"count:{totalEventCount}"
+            $"이벤트 예약 / id:{preparedEvent.eventId}, " +
+            $"phase:{preparedEvent.phase}, target:{preparedEvent.targetPlayerId}"
         );
 
         return true;
@@ -347,6 +366,53 @@ public class SurpriseEventManager : MonoBehaviour
     // ─────────────────────────────────────────────────────────
 
     /// <summary>
+    /// 준비된 이벤트가 선행 연출을 지원하면 공식 진입 전에 선행 연출만 시작한다.
+    /// DEF_02처럼 직전 페이즈부터 연출이 필요한 경우 사용한다.
+    /// </summary>
+    public void BeginPreparedEventPrelude()
+    {
+        if (!HasPreparedEvent)
+        {
+            return;
+        }
+
+        if (preparedEventPreludeBegun)
+        {
+            return;
+        }
+
+        preparedEventPreludeBegun = true;
+
+        if (handlerMap.TryGetValue(preparedEvent.eventId, out ISurpriseEventHandler handler) &&
+            handler is ISurpriseEventPreludeHandler preludeHandler)
+        {
+            preludeHandler.BeginPrelude(preparedEvent);
+            Log($"이벤트 선행 연출 시작 / id:{preparedEvent.eventId}");
+        }
+    }
+
+    /// <summary>
+    /// 준비된 이벤트가 공식 진입 전에 취소될 때 선행 연출을 해제한다.
+    /// </summary>
+    private void CancelPreparedEventPrelude()
+    {
+        if (!preparedEventPreludeBegun)
+        {
+            return;
+        }
+
+        if (preparedEvent != null &&
+            preparedEvent.IsValid &&
+            handlerMap.TryGetValue(preparedEvent.eventId, out ISurpriseEventHandler handler) &&
+            handler is ISurpriseEventPreludeHandler preludeHandler)
+        {
+            preludeHandler.EndPrelude(preparedEvent);
+        }
+
+        preparedEventPreludeBegun = false;
+    }    
+
+    /// <summary>
     /// 준비된 이벤트를 실제 활성 이벤트로 전환한다.
     /// 
     /// 진입 단계에서는:
@@ -362,8 +428,16 @@ public class SurpriseEventManager : MonoBehaviour
             return;
         }
 
+        if (!preparedEventCounted)
+        {
+            totalEventCount++;
+            preparedEventCounted = true;
+        }
+
         activeEvent = preparedEvent;
         preparedEvent = null;
+        preparedEventPreludeBegun = false;
+        preparedEventCounted = false;
         activeEventPhaseBegun = false;
 
         ShowEventToast();
@@ -524,8 +598,18 @@ public class SurpriseEventManager : MonoBehaviour
     /// </summary>
     public void ResetForNewGame()
     {
+        CancelPreparedEventPrelude();
+
+        if (HasActiveEvent &&
+            handlerMap.TryGetValue(activeEvent.eventId, out ISurpriseEventHandler handler))
+        {
+            handler.EndEvent(activeEvent);
+        }
+        
         preparedEvent = null;
         activeEvent = null;
+        preparedEventPreludeBegun = false;
+        preparedEventCounted = false;
         activeEventPhaseBegun = false;
         totalEventCount = 0;
 

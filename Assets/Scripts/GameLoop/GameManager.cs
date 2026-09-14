@@ -470,6 +470,8 @@ public class GameManager : MonoBehaviour
         hud?.SetTurnOwner(attackerPlayerId);
         gameCamera?.SetAttackView(attackerSide);
 
+        TryPrepareDefensePreludeForCurrentAttack(phaseStartDspTime, attackPhaseIdx);
+
         var rng = GetSharedRng(attackPhaseIdx);
         RoundSetting setting = GetRoundSettingByAttackPhase(attackPhaseIdx);
 
@@ -549,6 +551,47 @@ public class GameManager : MonoBehaviour
         else
         {
             BeginLocalDefense();  // lastLocalAttackResult이 이미 세팅돼 있으면 즉시 시작, 아니면 HandleAttackEnded 쪽이 처리
+        }
+
+    }
+
+    /// <summary>
+    /// DEF_02처럼 방어 페이즈 전에 선행 연출이 필요한 이벤트를 위해,
+    /// 현재 공격 페이즈 시작 시점에 다음 방어 이벤트를 미리 예약한다.
+    /// 공식 진입 토스트와 적용은 기존 TryEnterSurpriseEventBeforeNextPhase / BeginActiveEventPhase 흐름을 따른다.
+    /// </summary>
+    private void TryPrepareDefensePreludeForCurrentAttack(double attackPhaseStartDspTime, int attackPhaseIdx)
+    {
+        if (surpriseEventManager == null)
+        {
+            return;
+        }
+
+        if (surpriseEventManager.HasActiveEvent || surpriseEventManager.HasPreparedEvent)
+        {
+            return;
+        }
+
+        double defensePhaseStartDspTime = attackPhaseStartDspTime + currentTurnDuration;
+        int defenderPlayerId = GetOtherPlayerId(attackerPlayerId);
+
+        bool isExcludedTransition =
+            IsSurpriseEventExcludedTransition(isAttackPhase: false, attackPhaseIdx);
+
+        int remainingValidTransitions =
+            CountRemainingValidTransitionsIncludingCurrent(phaseIndex + 1);
+
+        bool prepared = surpriseEventManager.TryPrepareEvent(
+            SurpriseEventPhase.Defense,
+            defenderPlayerId,
+            defensePhaseStartDspTime,
+            isExcludedTransition,
+            remainingValidTransitions
+        );
+
+        if (prepared)
+        {
+            surpriseEventManager.BeginPreparedEventPrelude();
         }
     }
 
@@ -1405,6 +1448,12 @@ public class GameManager : MonoBehaviour
         int targetPlayerId = nextIsAttackPhase
             ? nextAttackerPlayerId
             : GetOtherPlayerId(nextAttackerPlayerId);
+
+        if (surpriseEventManager.HasPreparedEventFor(nextPhase, nextPhaseDspTime))
+        {
+            surpriseEventManager.EnterPreparedEvent();
+            return;
+        }
 
         bool isExcludedTransition =
             IsSurpriseEventExcludedTransition(nextIsAttackPhase, nextAttackPhaseIdx);
