@@ -273,6 +273,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72e33dcd4dc8a4e4ebd4e5bb60b1b151, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialManager
+--- !u!1001 &320759298
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6429964208359308808, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: m_Name
+      value: HitEffectSpawner
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
 --- !u!1001 &365816198
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2615,3 +2672,4 @@ SceneRoots:
   - {fileID: 5872880317697721940}
   - {fileID: 6902552827044142595}
   - {fileID: 2304142749664638018}
+  - {fileID: 320759298}
