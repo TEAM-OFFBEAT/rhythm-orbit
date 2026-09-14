@@ -896,10 +896,10 @@ public class TutorialManager : MonoBehaviour
         int limit = Mathf.Min(chars.Length, judgments?.Length ?? 0);
         for (int i = 0; i < limit; i++)
         {
-            if (judgments[i] == Judgment.MISS) { chars[i] = '▨'; allSuccess = false; }
+            if (judgments[i] == Judgment.MISS) { chars[i] = RandomMessageProvider.RandomNoteChar(); allSuccess = false; }
         }
         for (int i = limit; i < chars.Length; i++)
-            chars[i] = '▨';
+            chars[i] = RandomMessageProvider.RandomNoteChar();
         return new string(chars) + (allSuccess ? "!" : "?");
     }
 

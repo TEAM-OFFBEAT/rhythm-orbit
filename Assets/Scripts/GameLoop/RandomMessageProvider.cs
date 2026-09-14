@@ -88,7 +88,7 @@ public class RandomMessageProvider : MonoBehaviour
         return new string(chars) + suffix;
     }
 
-    private static char RandomNoteChar() => (char)Random.Range(0x2669, 0x266D);
+    public static char RandomNoteChar() => (char)Random.Range(0x2669, 0x266D);
 
     private string CreateFallbackMessage(int characterCount)
     {
