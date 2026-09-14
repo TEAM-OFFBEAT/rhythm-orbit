@@ -254,6 +254,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5645667847875303937}
   - component: {fileID: 1541338691298703956}
+  - component: {fileID: 3880634021817634473}
   m_Layer: 0
   m_Name: Debug_DEF_02
   m_TagString: Untagged
@@ -283,12 +284,35 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5334492164624232687}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa4c9a7e9dbfc3547bc97a099531d538, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugSurpriseEventHandler
   eventId: 4
+--- !u!114 &3880634021817634473
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5334492164624232687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cdeda23d85bfc74bb64426bbb18758e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Def02SurpriseEventHandler
+  defenseTurn: {fileID: 0}
+  attackTurnRenderer: {fileID: 0}
+  blackoutRoot: {fileID: 0}
+  vignetteImage: {fileID: 0}
+  solidBlackImage: {fileID: 0}
+  vignetteMaxAlpha: 1
+  solidFadeStartRatio: 0.75
+  defenseBlackAlpha: 1
+  fadeOutSeconds: 0.25
+  hideNormalNotesDuringDefense: 0
+  applyOnlyToTargetPlayerInNetwork: 1
 --- !u!1 &5946820036640528480
 GameObject:
   m_ObjectHideFlags: 0
