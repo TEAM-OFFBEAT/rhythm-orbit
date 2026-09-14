@@ -336,6 +336,14 @@ public class DefenseTurn : MonoBehaviour
 
         OnJudgment?.Invoke(judgment);
 
+        if (judgment != Judgment.MISS)
+        {
+            Vector3 effectPos = attackTurnRenderer != null
+                ? attackTurnRenderer.GetTransferJudgeLineWorldPos()
+                : Vector3.zero;
+            HitEffectSpawner.Instance?.Play(note.noteType, effectPos);
+        }
+
         attackTurnRenderer.RemoveNote(note.noteId);
         pendingNotes.Remove(note);
 

@@ -447,8 +447,9 @@ public class AttackTurn : MonoBehaviour
         }
         createdGridSteps.Add(GetNearestPlayableGridStep(noteRelativeTime, NoteDuration));
         OnAttackProgressChanged?.Invoke(createdNotes.Count, targetTapCount);
-        if (attackTurnRenderer != null)
-            attackTurnRenderer.SpawnAttackNote(currentSide, note, attackDuration);
+        Vector3? spawnPos = attackTurnRenderer?.SpawnAttackNote(currentSide, note, attackDuration);
+        if (spawnPos.HasValue)
+            HitEffectSpawner.Instance?.Play(noteType, spawnPos.Value);
 
         OnAttackInputResolved?.Invoke(noteType, isInputSuccessForSfx);
         

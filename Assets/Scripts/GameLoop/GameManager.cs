@@ -57,6 +57,9 @@ public class GameManager : MonoBehaviour
     [Header("Result UI")]
     [SerializeField] private ResultPanelUI resultPanelUI;
 
+    [Header("Intro Dialogue")]
+    [SerializeField] private IntroDialogueController introDialogueController;
+
     [Header("Round Settings")]
     [SerializeField] private RoundSetting[] roundSettings =
     {
@@ -303,6 +306,7 @@ public class GameManager : MonoBehaviour
             SoundManager.Instance?.PlaySfxScheduled(startSetting.roundUpSfx, nextPhaseDspTime);
         if (introDuration > 0.0)
         {
+            introDialogueController?.StartIntro(nextPhaseDspTime);
             gameCamera?.SetCenterView();
             nextPhaseDspTime += introDuration;
         }

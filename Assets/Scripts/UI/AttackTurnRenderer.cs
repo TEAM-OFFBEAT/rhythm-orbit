@@ -77,16 +77,16 @@ public class AttackTurnRenderer : MonoBehaviour
     /// <summary>
     /// AttackTurn에서 공격 노트 생성 시 호출. noteRelativeTime 위치에 노트를 표시한다.
     /// </summary>
-    public void SpawnAttackNote(AttackSide side, NoteData note, double duration)
+    public Vector3? SpawnAttackNote(AttackSide side, NoteData note, double duration)
     {
         if (NoteRenderer.Instance == null)
         {
             Debug.LogWarning("NoteRenderer.Instance가 없습니다.");
-            return;
+            return null;
         }
 
         Transform t = NoteRenderer.Instance.AcquireNote(note.noteId, note.noteType);
-        if (t == null) return;
+        if (t == null) return null;
         if (attackNoteContainer != null) t.SetParent(attackNoteContainer, false);
 
         double safeDuration = System.Math.Max(0.01, duration);
@@ -95,6 +95,7 @@ public class AttackTurnRenderer : MonoBehaviour
 
         t.localPosition = new Vector3(x, 0f, 0f);
         spawnedNotes.Add(new NoteEntry { rect = t, noteId = note.noteId, initialX = x });
+        return t.position;
     }
 
     /// <summary>
@@ -324,6 +325,18 @@ public class AttackTurnRenderer : MonoBehaviour
         if (line != null) return line.position.x;
         Debug.LogWarning($"AttackTurnRenderer: DefenseLine이 연결되지 않았습니다.");
         return attackerSide == AttackSide.P1 ? 15f : -15f;
+    }
+
+    /// <summary>
+    /// 현재 전송 중인 판정선의 월드 좌표를 반환한다.
+    /// X는 transferJudgeLineX, Y/Z는 실제 DefenseLine 트랜스폼 기준.
+    /// </summary>
+    public Vector3 GetTransferJudgeLineWorldPos()
+    {
+        Transform line = p1DefenseLine != null ? p1DefenseLine : p2DefenseLine;
+        float y = line != null ? line.position.y : 0f;
+        float z = line != null ? line.position.z : 0f;
+        return new Vector3(transferJudgeLineX, y, z);
     }
 
     private void UpdateTransferMovement()
