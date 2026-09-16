@@ -100,7 +100,9 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     {
         activeContext = context;
         ghostSignalActivated = false;
- 
+
+        if (!ShouldApplyToThisScreen(context)) return;
+
         eventEnteredDspTime = AudioSettings.dspTime;
         ghostFadeStartTimes.Clear();
 
@@ -123,6 +125,8 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     public void BeginEventPhase(SurpriseEventContext context)
     {
         activeContext = context;
+
+        if (!ShouldApplyToThisScreen(context)) return;
 
         Subscribe();
         TryActivateGhostSignal();
@@ -447,6 +451,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         if (ghostHitPenalty > 0 && sanitySystem != null)
         {
             sanitySystem.ApplyDirect(activeContext.targetPlayerId, ghostHitPenalty);
+            NetworkManager.Instance?.Send(w => PacketSerializer.WriteSanityChange(w, (byte)activeContext.targetPlayerId, ghostHitPenalty));
         }
 
         if (playSfxOnGhostHit)
@@ -459,6 +464,13 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             $"DEF_01 Ghost hit penalty / " +
             $"target:P{activeContext.targetPlayerId}, penalty:{ghostHitPenalty}, noteId:{ghostNote?.noteId}"
         );
+    }
+
+    private bool ShouldApplyToThisScreen(SurpriseEventContext context)
+    {
+        NetworkManager nm = NetworkManager.Instance;
+        if (nm == null) return true;
+        return nm.LocalPlayerId == context.targetPlayerId;
     }
 
     private double GetNoteDurationSeconds()

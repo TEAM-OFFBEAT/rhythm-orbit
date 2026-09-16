@@ -282,7 +282,7 @@ public class GameManager : MonoBehaviour
         phaseIndex = 0;
         currentRoundIndex = 0;
         lastSurpriseEventPreparePhaseIndex = -1;
-        surpriseEventManager?.ResetForNewGame();
+        surpriseEventManager?.ResetForNewGame(NetworkManager.Instance?.SharedSeed ?? 0);
 
         ApplyCurrentBpm(scheduleBgm: false);
         currentTurnDuration = GetCurrentTurnDuration();
@@ -1036,7 +1036,7 @@ public class GameManager : MonoBehaviour
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
 
-        surpriseEventManager?.ResetForNewGame();
+        surpriseEventManager?.ResetForNewGame(NetworkManager.Instance?.SharedSeed ?? 0);
         resultPanelUI?.HideAll();
 
         SoundManager.Instance?.StopBgm();

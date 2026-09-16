@@ -34,6 +34,7 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     public void BeginEventPhase(SurpriseEventContext context)
     {
         activeContext = context;
+        if (!ShouldApplyToThisScreen(context)) return;
         attackTurn.OnHalfNoteIncomplete += ApplyIncompletePenalty;
         attackTurn.ActivateDoubleTapMode();
     }
@@ -43,8 +44,11 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     /// </summary>
     public void EndEvent(SurpriseEventContext context)
     {
-        attackTurn.DeactivateDoubleTapMode();
-        attackTurn.OnHalfNoteIncomplete -= ApplyIncompletePenalty;
+        if (ShouldApplyToThisScreen(context))
+        {
+            attackTurn.DeactivateDoubleTapMode();
+            attackTurn.OnHalfNoteIncomplete -= ApplyIncompletePenalty;
+        }
         activeContext = null;
     }
 
@@ -52,5 +56,13 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     {
         if (activeContext == null) return;
         sanitySystem.ApplyDirect(activeContext.targetPlayerId, incompletePenalty);
+        NetworkManager.Instance?.Send(w => PacketSerializer.WriteSanityChange(w, (byte)activeContext.targetPlayerId, incompletePenalty));
+    }
+
+    private bool ShouldApplyToThisScreen(SurpriseEventContext context)
+    {
+        NetworkManager nm = NetworkManager.Instance;
+        if (nm == null) return true;
+        return nm.LocalPlayerId == context.targetPlayerId;
     }
 }
