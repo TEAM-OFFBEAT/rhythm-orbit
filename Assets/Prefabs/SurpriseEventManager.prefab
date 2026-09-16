@@ -167,7 +167,7 @@ MonoBehaviour:
   eventToastRoot: {fileID: 0}
   eventStateDebugText: {fileID: 0}
   showEventStateDebugText: 1
-  forceEventForTest: 1
+  forceEventForTest: 0
   logEventFlow: 1
 --- !u!1 &1820934327485186545
 GameObject:
