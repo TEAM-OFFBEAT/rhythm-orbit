@@ -202,8 +202,10 @@ public class DefenseTurn : MonoBehaviour
         receivedNotes.Add(note);
         if (attackTurnRenderer != null)
         {
-            attackTurnRenderer.SpawnAttackNote(pendingAttackSide, note, pendingAttackDuration);
+            Vector3? spawnPos = attackTurnRenderer.SpawnAttackNote(pendingAttackSide, note, pendingAttackDuration);
             attackTurnRenderer.SetNoteJudgeTime(note.noteId, note.judgeTime);
+            if (spawnPos.HasValue)
+                HitEffectSpawner.Instance?.Play(note.noteType, spawnPos.Value);
         }
     }
 

@@ -839,6 +839,12 @@ public class GameManager : MonoBehaviour
         attackTurnRenderer?.RemoveNote(packet.noteId);  // 공격자 관찰 뷰에서 판정된 노트 제거
         hud?.ShowJudgment(judgment, attackerSide);
         GetDefenseLabel(GetDefenderPlayerId())?.ShowJudgment(judgment);
+
+        if (judgment != Judgment.MISS && attackTurnRenderer != null
+            && noteTypeByNoteId.TryGetValue(packet.noteId, out NoteType hitNoteType))
+        {
+            HitEffectSpawner.Instance?.Play(hitNoteType, attackTurnRenderer.GetTransferJudgeLineWorldPos());
+        }
     }
 
     /// <summary>
