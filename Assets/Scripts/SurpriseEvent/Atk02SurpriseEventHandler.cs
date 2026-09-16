@@ -44,6 +44,7 @@ public class Atk02SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     /// </summary>
     public void BeginEventPhase(SurpriseEventContext context)
     {
+        if (!ShouldApplyToThisScreen(context)) return;
         entryWaveCoroutine = StartCoroutine(AnimateSingleWave(activeSide));
         waveLoopCoroutine = StartCoroutine(WaveLoop(activeSide));
     }
@@ -67,6 +68,13 @@ public class Atk02SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
         if (waveRenderer != null)
             waveRenderer.gameObject.SetActive(false);
+    }
+
+    private bool ShouldApplyToThisScreen(SurpriseEventContext context)
+    {
+        NetworkManager nm = NetworkManager.Instance;
+        if (nm == null) return true;
+        return nm.LocalPlayerId == context.targetPlayerId;
     }
 
     private IEnumerator WaveLoop(AttackSide side)

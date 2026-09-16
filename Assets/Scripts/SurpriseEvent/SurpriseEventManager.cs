@@ -85,6 +85,9 @@ public class SurpriseEventManager : MonoBehaviour
     // 게임 전체에서 지금까지 이벤트가 몇 번 선정됐는지.
     private int totalEventCount;
 
+    // Shared Seed 기반 결정론적 RNG. 네트워크 모드에서 양측이 동일한 시퀀스를 가진다.
+    private System.Random rng = new System.Random();
+
     /// <summary>
     /// GameManager가 진입 타이밍 계산에 사용할 리드타임.
     /// </summary>
@@ -277,7 +280,7 @@ public class SurpriseEventManager : MonoBehaviour
         }
 
         // 후보 중 하나를 같은 확률로 랜덤 선정한다.
-        SurpriseEventDefinition selected = candidates[Random.Range(0, candidates.Count)];
+        SurpriseEventDefinition selected = candidates[rng.Next(0, candidates.Count)];
 
         preparedEvent = new SurpriseEventContext
         {
@@ -358,7 +361,7 @@ public class SurpriseEventManager : MonoBehaviour
             return true;
         }
 
-        return Random.value < baseTriggerChance;
+        return (float)rng.NextDouble() < baseTriggerChance;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -596,8 +599,9 @@ public class SurpriseEventManager : MonoBehaviour
     /// <summary>
     /// 새 게임 시작 시 호출해 이벤트 상태를 초기화한다.
     /// </summary>
-    public void ResetForNewGame()
+    public void ResetForNewGame(int sharedSeed = 0)
     {
+        rng = sharedSeed != 0 ? new System.Random(sharedSeed) : new System.Random();
         CancelPreparedEventPrelude();
 
         if (HasActiveEvent &&
