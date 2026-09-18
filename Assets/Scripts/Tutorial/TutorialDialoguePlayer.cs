@@ -862,4 +862,5 @@ public class TutorialDialoguePlayer : MonoBehaviour
             target.SetActive(active);
         }
     }
+    
 }
