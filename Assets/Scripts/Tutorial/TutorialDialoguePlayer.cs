@@ -37,6 +37,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [Header("Manual Advance")]
     [SerializeField] private GameObject manualAdvanceHintRoot;
     [SerializeField] private TMP_Text manualAdvanceHintText;
+    private bool externalManualAdvanceLocked;
     [SerializeField] private string manualAdvanceHintMessage = "(F/J로 대사 넘기기)";
     [Tooltip("연출이 있는 줄에서 별도 시간이 0으로 설정되어 있을 때 사용할 기본 잠금 시간. 박자 단위.")]
     [SerializeField, Min(0f)] private float defaultManualAdvanceLockBeats = 1f;
@@ -102,7 +103,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
     /// TutorialManager가 F/J 입력을 받았을 때 호출한다.
     /// 타이핑 중 스킵이 허용되어 있으면 전체 문장을 즉시 표시하고,
     /// 이미 전체 문장이 보이는 상태면 다음 대사로 진행한다.
-    /// UI 강조/데모 연출 잠금 중이면 입력을 무시한다.
+    /// UI 강조/데모/외부 연출 잠금 중이면 입력을 무시한다.
     /// </summary>
     public bool RequestManualAdvance()
     {
@@ -112,6 +113,11 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
 
         if (!manualAdvanceUnlocked)
+        {
+            return false;
+        }
+
+        if (externalManualAdvanceLocked)
         {
             return false;
         }
@@ -134,6 +140,26 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// 대사 외부에서 실행되는 연출이 끝날 때까지 수동 넘기기를 잠근다.
+    /// 예: 방어턴 설명 중 실제 방어 데모가 재생되는 동안.
+    /// </summary>
+    public void BeginExternalManualAdvanceLock()
+    {
+        externalManualAdvanceLocked = true;
+        RefreshManualAdvanceHint();
+    }
+
+    /// <summary>
+    /// 외부 연출 잠금을 해제한다.
+    /// 현재 대사가 이미 넘길 수 있는 상태라면 힌트를 다시 표시한다.
+    /// </summary>
+    public void EndExternalManualAdvanceLock()
+    {
+        externalManualAdvanceLocked = false;
+        RefreshManualAdvanceHint();
     }
 
     /// <summary>
@@ -434,6 +460,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
     /// 입력 동작:
     /// - allowSkipTypingWithManualAdvance가 true면, 타이핑 중 F/J로 전체 문장 표시
     /// - false면, 타이핑이 끝난 뒤에만 F/J 넘기기 가능
+    /// - 외부 연출 잠금 중이면 F/J 입력을 무시
     /// - 전체 문장 표시 후 F/J: 다음 대사로 진행
     /// </summary>
     private IEnumerator WaitManualLineAdvance(
@@ -442,7 +469,9 @@ public class TutorialDialoguePlayer : MonoBehaviour
         float manualUnlockDelaySeconds
     )
     {
-        ResetManualAdvanceState();
+        // onLineStarted에서 외부 연출 잠금이 걸렸을 수 있으므로
+        // externalManualAdvanceLocked는 유지한다.
+        ResetManualAdvanceState(clearExternalLock: false);
 
         isManualLineActive = true;
         isTypingCurrentLine = useTypewriter && typewriterText != null;
@@ -453,7 +482,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
         float safeUnlockDelaySeconds = Mathf.Max(0f, manualUnlockDelaySeconds);
 
         manualAdvanceUnlocked = false;
-        SetManualAdvanceHintVisible(false);
+        RefreshManualAdvanceHint();
 
         while (isTypingCurrentLine && elapsed < safeTypingSeconds)
         {
@@ -462,16 +491,12 @@ public class TutorialDialoguePlayer : MonoBehaviour
             if (!manualAdvanceUnlocked && elapsed >= safeUnlockDelaySeconds)
             {
                 manualAdvanceUnlocked = true;
-
-                // 타이핑 중 스킵이 허용된 경우에만 타이핑 중에도 힌트를 보여준다.
-                if (allowSkipTypingWithManualAdvance)
-                {
-                    SetManualAdvanceHintVisible(true);
-                }
+                RefreshManualAdvanceHint();
             }
 
             if (skipTypingRequested &&
                 manualAdvanceUnlocked &&
+                !externalManualAdvanceLocked &&
                 allowSkipTypingWithManualAdvance)
             {
                 ShowInstant(fullText);
@@ -501,8 +526,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
             yield return null;
         }
 
-        // 전체 문장이 보이고, 잠금도 끝난 뒤에만 다음 대사 힌트를 보여준다.
-        SetManualAdvanceHintVisible(true);
+        RefreshManualAdvanceHint();
 
         while (!nextLineRequested)
         {
@@ -569,13 +593,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
             || line.highlightDefenseJudgeLine
             || line.highlightHighBit
             || line.highlightLowBit
-            || line.playHighThenLowDemo;
+            || line.playHighThenLowDemo
+            || line.playDefenseTurnDemo;
     }
 
     /// <summary>
     /// 수동 넘기기 상태를 초기화하고 힌트를 숨긴다.
+    /// clearExternalLock이 false면 외부 연출 잠금은 유지한다.
     /// </summary>
-    private void ResetManualAdvanceState()
+    private void ResetManualAdvanceState(bool clearExternalLock = true)
     {
         isManualLineActive = false;
         isTypingCurrentLine = false;
@@ -584,8 +610,28 @@ public class TutorialDialoguePlayer : MonoBehaviour
         skipTypingRequested = false;
         nextLineRequested = false;
 
+        if (clearExternalLock)
+        {
+            externalManualAdvanceLocked = false;
+        }
+
         SetManualAdvanceHintVisible(false);
     }
+
+    /// <summary>
+    /// 현재 상태에 맞게 수동 넘기기 힌트를 표시하거나 숨긴다.
+    /// 외부 연출 잠금 중이면 무조건 숨긴다.
+    /// </summary>
+    private void RefreshManualAdvanceHint()
+    {
+        bool canShowHint =
+            isManualLineActive &&
+            manualAdvanceUnlocked &&
+            !externalManualAdvanceLocked &&
+            (!isTypingCurrentLine || allowSkipTypingWithManualAdvance);
+
+        SetManualAdvanceHintVisible(canShowHint);
+}
 
     /// <summary>
     /// "(F/J로 대사 넘기기)" 힌트를 켜거나 끈다.
@@ -614,6 +660,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
     /// <summary>
     /// 현재 대사 줄에 맞는 프로필과 하이라이트를 적용한다.
     /// 연속된 대사에서 같은 하이라이트가 true면 중간에 깜빡이지 않는다.
+    /// 방어 데모 줄에서는 기존 판정선 강조 대신 실제 방어 데모를 사용한다.
     /// </summary>
     private void ApplyLineVisual(TutorialGuideLineData line)
     {
@@ -625,9 +672,12 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         SetRymoPortrait(line.rymoPortrait);
 
+        bool showDefenseJudgeLineHighlight =
+            line.highlightDefenseJudgeLine && !line.playDefenseTurnDemo;
+
         SetStarHighlight(line.highlightStars);
         SetActiveSafe(attackJudgeLineHighlightRoot, line.highlightAttackJudgeLine);
-        SetActiveSafe(defenseJudgeLineHighlightRoot, line.highlightDefenseJudgeLine);
+        SetActiveSafe(defenseJudgeLineHighlightRoot, showDefenseJudgeLineHighlight);
         SetActiveSafe(highBitHighlightRoot, line.highlightHighBit);
         SetActiveSafe(lowBitHighlightRoot, line.highlightLowBit);
     }
