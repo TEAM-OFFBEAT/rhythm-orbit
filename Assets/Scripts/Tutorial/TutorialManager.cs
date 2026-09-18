@@ -69,6 +69,18 @@ public class TutorialManager : MonoBehaviour
     [Header("Defense Reaction")]
     [SerializeField] private int defenseReactionBeats = 4;
 
+    [Header("Defense Dialogue Demo")]
+    [Tooltip("방어 설명 중 playDefenseTurnDemo가 켜진 줄에서 사용할 상대 공격 데모 패턴.")]
+    [SerializeField] private TutorialDefensePattern defenseDialogueDemoPattern =
+        new TutorialDefensePattern(
+            "응",
+            new[] { NoteType.HIGH, NoteType.LOW },
+            showKeyHints: false,
+            gridSteps: new[] { 3, 5 }
+        );
+
+    private Coroutine defenseDialogueDemoCoroutine;
+
     [Header("Tutorial Sound")]
     [SerializeField] private bool playTutorialBgmOnStart = false;
     [SerializeField] private AudioClip tutorialBgmClip;
@@ -121,7 +133,6 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("공격 설명 몇 번째 대사 시작 때 F/J 데모 노트를 제거할지 설정한다. 1부터 시작한다.")]
     [SerializeField, Min(1)] private int beatDemoClearLineNumber = 3;
     private Coroutine attackBeatDemoCoroutine;
-    private Coroutine defenseDialogueDemoCoroutine;
     private readonly List<int> activeBeatDemoNoteIds = new List<int>();
 
     [Tooltip("고주파 노트가 공격 라인에서 생성될 위치 비율.0.5가 중앙이다.")]
@@ -665,69 +676,15 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 기존 AttackTurn.StartOpponentAttackDemo를 사용해 상대 데모 공격을 재생하고,
-    /// 이어서 방어 턴을 시작한다.
-    /// </summary>
-    private IEnumerator RunOpponentDemoAttackThenDefense(
-        TutorialDefensePattern pattern,
-        TutorialStep defenseInputStep,
-        double? forcedAttackStartDspTime = null,
-        bool useDefenseViewDelay = true
-    )
-    {
-        AttackSide attackerSide = GetOpponentSide(playerSide);
-
-        currentStep = TutorialStep.None;
-        currentHudAttackerSide = attackerSide;
-        showCurrentDefenseKeyHints = pattern.showKeyHints;
-
-        PrepareAttackWaitState();
-
-        attackTurnRenderer.ClearAll();
-        hud?.ClearAttackProgress();
-        hud?.ClearJudgments();
-        gameCamera?.SetAttackView(attackerSide);
-        hud?.SetTurnOwner(GetPlayerId(attackerSide));
-
-        double attackStartDspTime = forcedAttackStartDspTime
-            ?? AudioSettings.dspTime;
-
-        attackTurn.StartOpponentAttackDemo(
-            pattern.message,
-            pattern.notes,
-            pattern.gridSteps,
-            attackStartDspTime
-        );
-
-        yield return WaitAttackEnd();
-
-        showCurrentDefenseKeyHints = false;
-
-        if (lastAttackNotes.Count == 0)
-        {
-            Debug.LogWarning("TutorialManager: 상대 데모 공격에서 생성된 노트가 없음.");
-            yield break;
-        }
-
-        yield return RunDefenseTurnForExistingNotes(
-            attackerSide,
-            isAiDefense: false,
-            inputStep: defenseInputStep,
-            useViewTransitionDelay: useDefenseViewDelay
-        );
-    }
-
-    /// <summary>
     /// 이미 AttackTurn이 생성한 노트를 기존 DefenseTurn.Begin으로 넘겨 방어 턴을 재생한다.
     /// TutorialManager가 직접 노트 이동/스폰을 하지 않는다.
     /// 
     /// inputStep이 None이면 현재 튜토리얼 단계를 바꾸지 않는다.
-    /// 예: 방어 설명 대사 중 AI 방어 연출을 동시에 재생할 때,
-    /// currentStep이 DefenseDialogue로 유지되어야 F/J 대사 넘기기가 가능하다.
+    /// 예: 방어 설명 직전의 AI 방어 데모에서는 currentStep을 건드리지 않는다.
     /// 
     /// forcedDefenseStartDspTime이 있으면 해당 DSP 시각을 방어 시작 시각으로 사용한다.
     /// 방어 설명 데모처럼 "지금 보여주는 연출"은 과거 공격 시작 시간이 아니라
-    /// 현재 대사 타이밍 기준으로 방어 시작 시간을 다시 잡아야 한다.
+    /// 현재 시점 기준으로 방어 시작 시간을 다시 잡아야 자연스럽다.
     /// </summary>
     private IEnumerator RunDefenseTurnForExistingNotes(
         AttackSide attackerSide,
@@ -1449,14 +1406,95 @@ public class TutorialManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 일반 튜토리얼 패턴을 상대 데모 공격으로 실행한다.
-    /// 랠리 단계에서는 키 힌트를 표시하지 않는다.
+    /// 기존 AttackTurn.StartOpponentAttackDemo를 사용해 상대 공격 데모를 재생하고,
+    /// 이어서 방어 턴을 시작한다.
+    ///
+    /// defenseInputStep이 None이면 현재 튜토리얼 단계를 바꾸지 않는다.
+    /// 방어 설명 대사 중 데모를 재생할 때 currentStep이 DefenseDialogue로 유지되어야
+    /// 데모 종료 후 F/J 대사 넘기기가 계속 동작한다.
+    ///
+    /// isAiDefense가 true이면 플레이어 입력 없이 AI가 자동 PERFECT로 받아치는 데모가 된다.
     /// </summary>
     private IEnumerator RunOpponentDemoAttackThenDefense(
-    TutorialPatternData pattern,
-    TutorialStep defenseInputStep,
-    double? forcedAttackStartDspTime = null,
-    bool useDefenseViewDelay = false
+        TutorialDefensePattern pattern,
+        TutorialStep defenseInputStep,
+        double? forcedAttackStartDspTime = null,
+        bool useDefenseViewDelay = true,
+        bool isAiDefense = false
+    )
+    {
+        if (pattern == null || pattern.NoteCount <= 0)
+        {
+            Debug.LogWarning("TutorialManager: 상대 공격 데모 패턴이 비어 있음.");
+            yield break;
+        }
+
+        AttackSide attackerSide = GetOpponentSide(playerSide);
+        bool shouldControlInputStep = defenseInputStep != TutorialStep.None;
+
+        // 방어 연습/랠리에서는 상대 공격 중 입력을 막기 위해 None으로 둔다.
+        // 방어 설명 대사 중 데모에서는 currentStep을 DefenseDialogue로 유지해야 한다.
+        if (shouldControlInputStep)
+        {
+            currentStep = TutorialStep.None;
+        }
+
+        currentHudAttackerSide = attackerSide;
+        showCurrentDefenseKeyHints = pattern.showKeyHints;
+
+        PrepareAttackWaitState();
+
+        attackTurnRenderer.ClearAll();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+
+        gameCamera?.SetAttackView(attackerSide);
+        hud?.SetTurnOwner(GetPlayerId(attackerSide));
+
+        double attackStartDspTime = forcedAttackStartDspTime
+            ?? AudioSettings.dspTime;
+
+        attackTurn.StartOpponentAttackDemo(
+            pattern.message,
+            pattern.notes,
+            pattern.gridSteps,
+            attackStartDspTime
+        );
+
+        yield return WaitAttackEnd();
+
+        showCurrentDefenseKeyHints = false;
+
+        if (lastAttackNotes.Count == 0)
+        {
+            Debug.LogWarning("TutorialManager: 상대 데모 공격에서 생성된 노트가 없음.");
+            yield break;
+        }
+
+        // 방어 시작 시각을 명시적으로 계산한다.
+        // 그래야 방어 설명 데모에서도 "상대 공격 4박 → 내 방어 4박" 흐름이 안정적으로 맞는다.
+        double defenseStartDspTime = attackStartDspTime + lastAttackDuration;
+
+        yield return RunDefenseTurnForExistingNotes(
+            attackerSide,
+            isAiDefense: isAiDefense,
+            inputStep: defenseInputStep,
+            useViewTransitionDelay: useDefenseViewDelay,
+            forcedDefenseStartDspTime: defenseStartDspTime
+        );
+    }
+
+    /// <summary>
+    /// 일반 튜토리얼 패턴을 상대 공격 데모 + 방어 턴으로 실행한다.
+    /// TutorialPatternData는 랠리/일반 패턴용이고,
+    /// 내부에서 TutorialDefensePattern으로 변환해 기존 방어 데모 함수를 재사용한다.
+    /// </summary>
+    private IEnumerator RunOpponentDemoAttackThenDefense(
+        TutorialPatternData pattern,
+        TutorialStep defenseInputStep,
+        double? forcedAttackStartDspTime = null,
+        bool useDefenseViewDelay = true,
+        bool isAiDefense = false
     )
     {
         if (pattern == null || pattern.NoteCount <= 0)
@@ -1476,7 +1514,8 @@ public class TutorialManager : MonoBehaviour
             defensePattern,
             defenseInputStep,
             forcedAttackStartDspTime,
-            useDefenseViewDelay
+            useDefenseViewDelay,
+            isAiDefense
         );
     }
 
@@ -1799,9 +1838,12 @@ public class TutorialManager : MonoBehaviour
     
     /// <summary>
     /// 방어턴 설명 대사를 재생한다.
-    /// 기존처럼 설명 시작과 동시에 노트 이동을 자동 재생하지 않고,
-    /// TutorialGuideLineData.playDefenseTurnDemo가 켜진 줄에서만
-    /// 실제 방어턴처럼 카메라 이동 + 노트 이동 + AI 방어 데모를 재생한다.
+    /// 
+    /// 먼저 공격 연습에서 만든 노트가 상대에게 전달되는 모습을 보여준다.
+    /// 그 다음 방어턴 설명 대사를 시작한다.
+    /// 
+    /// 방어 설명 중 playDefenseTurnDemo가 켜진 특정 대사에서는
+    /// 별도로 "상대 공격 → 내 방어 AI 데모"를 재생한다.
     /// </summary>
     private IEnumerator PlayDefenseDialogueWithAttackTransfer()
     {
@@ -1812,23 +1854,13 @@ public class TutorialManager : MonoBehaviour
 
         StopDefenseDialogueDemoCoroutine();
 
-        if (lastAttackNotes.Count == 0)
-        {
-            Debug.LogWarning("TutorialManager: 방어 설명용 공격 노트가 없어 일반 대사만 재생한다.");
+        // 1. 공격 연습에서 만든 노트가 상대에게 전달되는 모습을 먼저 보여준다.
+        yield return RunPlayerAttackTransferShowcase();
 
-            yield return dialoguePlayer.PlayLines(
-                defenseGuideLines,
-                guideBeatsPerLine,
-                hideWhenFinished: true,
-                onLineStarted: HandleDefenseGuideLineStarted,
-                forcedStartDspTime: AudioSettings.dspTime
-            );
+        // 2. 이제 방어 설명 대사를 시작한다.
+        // 설명 대사는 4박 경계를 기다릴 필요 없이 바로 시작한다.
+        currentStep = TutorialStep.DefenseDialogue;
 
-            yield break;
-        }
-
-        // 방어 설명 자체는 즉시 시작한다.
-        // 실제 방어 데모는 playDefenseTurnDemo가 켜진 대사에서 별도로 시작한다.
         yield return dialoguePlayer.PlayLines(
             defenseGuideLines,
             guideBeatsPerLine,
@@ -1837,8 +1869,8 @@ public class TutorialManager : MonoBehaviour
             forcedStartDspTime: AudioSettings.dspTime
         );
 
-        // 정상 흐름에서는 대사가 방어 데모 종료를 기다리므로 이미 null이어야 한다.
-        // 예외적으로 남아 있으면 여기서 마저 기다린다.
+        // 정상적으로는 대사 넘기기 잠금 때문에 데모가 끝난 뒤에만 여기까지 온다.
+        // 그래도 예외적으로 남아 있으면 마저 기다린다.
         if (defenseDialogueDemoCoroutine != null)
         {
             yield return defenseDialogueDemoCoroutine;
@@ -1848,6 +1880,67 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
         hud?.ClearPanelMessages();
+    }
+
+    /// <summary>
+    /// 공격 연습에서 플레이어가 만든 노트가 상대에게 전달되는 모습을 보여준다.
+    /// 
+    /// 흐름:
+    /// - 플레이어가 공격 연습에서 만든 lastAttackNotes를 그대로 사용한다.
+    /// - 별도의 4박 경계 대기 없이 즉시 방어 전달을 시작한다.
+    /// - 카메라 이동과 노트 이동이 동시에 시작된다.
+    /// - AI가 자동 PERFECT로 받아치는 모습을 보여준다.
+    /// </summary>
+    private IEnumerator RunPlayerAttackTransferShowcase()
+    {
+        if (lastAttackNotes.Count == 0)
+        {
+            Debug.LogWarning("TutorialManager: 전달 연출을 보여줄 공격 연습 노트가 없음.");
+            yield break;
+        }
+
+        // 이 연출 중에는 대사 입력이 아니라 관람 구간이므로 입력을 막는다.
+        currentStep = TutorialStep.None;
+
+        // 대사 패널은 잠시 숨기고, 플레이 화면을 보여준다.
+        dialoguePlayer?.Hide();
+
+        hud?.ClearJudgments();
+
+        // 내가 공격한 노트가 상대에게 전달되는 상황.
+        // 따라서 공격자는 playerSide다.
+        AttackSide attackerSide = playerSide;
+
+        // 공격 연습 직후 바로 전달을 시작한다.
+        // 여기서는 4박 경계나 카메라 전환 대기를 기다리지 않는다.
+        double transferStartDspTime = AudioSettings.dspTime;
+
+        if (logTurnFlow)
+        {
+            Debug.Log(
+                $"TutorialManager: 공격 연습 노트 전달 연출 즉시 시작 / " +
+                $"attacker:{attackerSide}, start:{transferStartDspTime:0.000}, notes:{lastAttackNotes.Count}"
+            );
+        }
+
+        yield return RunDefenseTurnForExistingNotes(
+            attackerSide: attackerSide,
+            isAiDefense: true,
+            inputStep: TutorialStep.None,
+            useViewTransitionDelay: false,
+            forcedDefenseStartDspTime: transferStartDspTime
+        );
+
+        // 전달 연출이 끝났으므로 화면을 정리한다.
+        attackTurnRenderer.ClearAll();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+        hud?.ClearPanelMessages();
+
+        if (logTurnFlow)
+        {
+            Debug.Log("TutorialManager: 공격 연습 노트 전달 연출 종료");
+        }
     }
 
     /// <summary>
@@ -1912,7 +2005,7 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 방어 설명 문장 시작 시 호출된다.
-    /// playDefenseTurnDemo가 켜진 줄에서 실제 방어턴 데모를 재생한다.
+    /// playDefenseTurnDemo가 켜진 줄에서 상대 공격 → 내 방어 AI 데모를 재생한다.
     /// </summary>
     private void HandleDefenseGuideLineStarted(int lineIndex, TutorialGuideLineData lineData)
     {
@@ -1932,58 +2025,83 @@ public class TutorialManager : MonoBehaviour
         }
 
         defenseDialogueDemoCoroutine = StartCoroutine(
-            RunDefenseDialogueDemo(lineIndex, lineData)
+            RunPlayerDefenseDialogueDemo(lineIndex, lineData)
         );
     }
 
     /// <summary>
-    /// 방어 설명 중 실제 방어턴처럼 보이는 AI 데모를 재생한다.
-    /// 카메라를 방어 시점으로 이동시키고,
-    /// 공격 연습에서 생성한 노트를 방어 판정선으로 이동시킨 뒤
-    /// AI가 자동 PERFECT 판정으로 받아치는 모습을 보여준다.
+    /// 방어 설명 중 특정 대사에서 실행되는 데모.
+    /// 상대가 공격 노트를 만들고, 그 노트가 내 방어 판정선으로 날아온 뒤,
+    /// AI가 대신 PERFECT로 받아치는 모습을 보여준다.
     /// 
-    /// 데모가 끝나기 전까지 TutorialDialoguePlayer의 F/J 넘기기를 잠근다.
+    /// 데모가 끝나기 전까지 F/J 대사 넘기기를 잠근다.
     /// </summary>
-    private IEnumerator RunDefenseDialogueDemo(int lineIndex, TutorialGuideLineData lineData)
+    private IEnumerator RunPlayerDefenseDialogueDemo(int lineIndex, TutorialGuideLineData lineData)
     {
         dialoguePlayer?.BeginExternalManualAdvanceLock();
 
-        if (lastAttackNotes.Count == 0)
+        TutorialDefensePattern pattern = defenseDialogueDemoPattern;
+
+        if (pattern == null || pattern.NoteCount <= 0)
         {
-            Debug.LogWarning("TutorialManager: 방어 데모를 재생할 lastAttackNotes가 없음.");
+            Debug.LogWarning("TutorialManager: defenseDialogueDemoPattern이 비어 있어 방어 데모를 재생할 수 없음.");
             dialoguePlayer?.EndExternalManualAdvanceLock();
             defenseDialogueDemoCoroutine = null;
             yield break;
         }
 
-        // 기존 판정선 강조 UI 대신 실제 방어턴 데모를 보여준다.
+        // 기존 판정선 강조 UI 대신 실제 데모를 보여준다.
         dialoguePlayer?.ClearHighlights();
 
-        AttackSide attackerSide = playerSide;
+        attackTurnRenderer.ClearAll();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+        hud?.ClearPanelMessages();
 
-        // 카메라 워킹이 먼저 시작되도록 방어 뷰를 미리 요청한다.
-        gameCamera?.SetDefenseView(attackerSide);
+        // 방어 데모는 '상대 공격 → 내 방어' 흐름이다.
+        // 따라서 공격자는 playerSide의 반대편이다.
+        AttackSide opponentSide = GetOpponentSide(playerSide);
 
-        // 카메라가 이동할 약간의 시간을 확보한 뒤 다음 4박 경계에 방어 데모를 맞춘다.
-        double demoStartDspTime =
-            GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime + viewTransitionDelay);
+        gameCamera?.SetAttackView(opponentSide);
 
-        yield return RunDefenseTurnForExistingNotes(
-            attackerSide: attackerSide,
-            isAiDefense: true,
-            inputStep: TutorialStep.None,
-            useViewTransitionDelay: true,
-            forcedDefenseStartDspTime: demoStartDspTime
+        double attackStartDspTime =
+            GetCurrentOrNextGuideBoundaryDspTime(
+                AudioSettings.dspTime + viewTransitionDelay + 0.05
+            );
+
+        // 현재 경계선을 살짝 지난 경우 GetCurrentOrNextGuideBoundaryDspTime이
+        // 과거 경계선을 돌려줄 수 있으므로, 데모 시작 시각은 반드시 현재보다 미래로 보정한다.
+        double intervalSeconds = GetGuideMetronomeIntervalSeconds();
+
+        while (attackStartDspTime < AudioSettings.dspTime + viewTransitionDelay)
+        {
+            attackStartDspTime += intervalSeconds;
+        }
+
+        if (logTurnFlow)
+        {
+            Debug.Log(
+                $"TutorialManager: 방어 설명 데모 시작 / " +
+                $"line:{lineIndex + 1}, attacker:{opponentSide}, start:{attackStartDspTime:0.000}"
+            );
+        }
+
+        yield return RunOpponentDemoAttackThenDefense(
+            pattern,
+            TutorialStep.None,
+            forcedAttackStartDspTime: attackStartDspTime,
+            useDefenseViewDelay: true,
+            isAiDefense: true
         );
 
         dialoguePlayer?.EndExternalManualAdvanceLock();
 
         defenseDialogueDemoCoroutine = null;
 
-        Debug.Log(
-            $"TutorialManager: Defense dialogue demo 완료 / " +
-            $"line:{lineIndex + 1}, start:{demoStartDspTime:0.000}"
-        );
+        if (logTurnFlow)
+        {
+            Debug.Log($"TutorialManager: 방어 설명 데모 종료 / line:{lineIndex + 1}");
+        }
     }
 
     /// <summary>
