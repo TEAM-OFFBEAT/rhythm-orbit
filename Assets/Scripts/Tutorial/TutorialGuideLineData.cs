@@ -22,6 +22,10 @@ public class TutorialGuideLineData
     [Header("Beat Demo")]
     public bool playHighThenLowDemo;
 
+    [Header("Defense Demo")]
+    [Tooltip("이 줄에서 실제 방어턴처럼 카메라 이동 + 노트 이동 + AI 방어 데모를 재생한다.")]
+    public bool playDefenseTurnDemo;
+
     [Header("Manual Advance")]
     [Tooltip("이 줄에서 UI 강조/데모 연출이 끝날 때까지 F/J 넘기기를 잠글지 여부.")]
     public bool lockManualAdvanceUntilVisualCueFinished;
