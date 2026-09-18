@@ -34,6 +34,24 @@ public class TutorialDialoguePlayer : MonoBehaviour
     [Tooltip("문장이 너무 짧아도 최소한 이 시간 이상은 타이핑에 사용한다.")]
     [SerializeField, Min(0.01f)] private float minimumTypingSeconds = 0.15f;
 
+    [Header("Manual Advance")]
+    [SerializeField] private GameObject manualAdvanceHintRoot;
+    [SerializeField] private TMP_Text manualAdvanceHintText;
+    [SerializeField] private string manualAdvanceHintMessage = "(F/J로 대사 넘기기)";
+    [Tooltip("연출이 있는 줄에서 별도 시간이 0으로 설정되어 있을 때 사용할 기본 잠금 시간. 박자 단위.")]
+    [SerializeField, Min(0f)] private float defaultManualAdvanceLockBeats = 1f;
+    [Tooltip("일반 대사도 너무 빨리 넘기지 않도록, 수동 넘기기 힌트를 띄우기 전 최소 대기 시간.")]
+    [SerializeField, Min(0f)] private float minimumManualAdvanceDelaySeconds = 0.5f;
+    [Tooltip("켜면 타이핑 중 F/J로 전체 문장을 즉시 표시한다. 끄면 타이핑이 끝난 뒤에만 다음 대사로 넘길 수 있다.")]
+    [SerializeField] private bool allowSkipTypingWithManualAdvance = true;
+
+    private bool isManualLineActive;
+    private bool isTypingCurrentLine;
+    private bool isCurrentLineFullyVisible;
+    private bool manualAdvanceUnlocked;
+    private bool skipTypingRequested;
+    private bool nextLineRequested;
+
     [Header("Timing")]
     [SerializeField] private float fallbackBpm = 90f;
     [SerializeField] private bool hideOnAwake = true;
@@ -61,6 +79,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         ClearGuideText();
         ClearHighlights();
+        SetManualAdvanceHintVisible(false);
 
         if (hideOnAwake)
         {
@@ -77,6 +96,44 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
 
         currentBpm = bpm;
+    }
+
+    /// <summary>
+    /// TutorialManager가 F/J 입력을 받았을 때 호출한다.
+    /// 타이핑 중 스킵이 허용되어 있으면 전체 문장을 즉시 표시하고,
+    /// 이미 전체 문장이 보이는 상태면 다음 대사로 진행한다.
+    /// UI 강조/데모 연출 잠금 중이면 입력을 무시한다.
+    /// </summary>
+    public bool RequestManualAdvance()
+    {
+        if (!isManualLineActive)
+        {
+            return false;
+        }
+
+        if (!manualAdvanceUnlocked)
+        {
+            return false;
+        }
+
+        if (isTypingCurrentLine)
+        {
+            if (!allowSkipTypingWithManualAdvance)
+            {
+                return false;
+            }
+
+            skipTypingRequested = true;
+            return true;
+        }
+
+        if (isCurrentLineFullyVisible)
+        {
+            nextLineRequested = true;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -193,13 +250,16 @@ public class TutorialDialoguePlayer : MonoBehaviour
     public void Hide()
     {
         StopTemporaryMessage();
+        ResetManualAdvanceState();
+
         ClearGuideText();
         SetGuidePanelVisible(false);
         ClearHighlights();
     }
 
     /// <summary>
-    /// 기존 string[] 대사용. 임시 호환용으로 남겨둔다.
+    /// 기존 string[] 대사용.
+    /// 이제 대사는 자동으로 넘어가지 않고, F/J 입력으로만 진행된다.
     /// </summary>
     public IEnumerator PlayLines(
         string[] lines,
@@ -223,28 +283,19 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         int safeBeats = Mathf.Max(1, beatsPerLine);
         float beatSeconds = GetBeatSeconds();
-        float lineSeconds = beatSeconds * safeBeats;
 
-        double dialogueStartDspTime = forcedStartDspTime ?? AudioSettings.dspTime;
+        double dialogueStartDspTime =
+            forcedStartDspTime ?? AudioSettings.dspTime;
+
+        double visualShowDspTime =
+            dialogueStartDspTime - dialogueVisualLeadSeconds;
+
+        yield return WaitUntilDspTime(visualShowDspTime);
 
         for (int i = 0; i < lines.Length; i++)
         {
             string lineText = lines[i];
-
-            double lineStartDspTime = dialogueStartDspTime + i * lineSeconds;
-            double nextLineStartDspTime = dialogueStartDspTime + (i + 1) * lineSeconds;
-            double visualShowDspTime = lineStartDspTime - dialogueVisualLeadSeconds;
-
             bool hasNextLine = i < lines.Length - 1;
-
-            float blinkSeconds = useBlinkBetweenLines && hasNextLine
-                ? Mathf.Clamp(blinkSecondsBetweenLines, 0f, lineSeconds * 0.5f)
-                : 0f;
-
-            float totalVisibleSeconds = lineSeconds + dialogueVisualLeadSeconds;
-            float typingSeconds = CalculateTypingSeconds(totalVisibleSeconds, blinkSeconds);
-
-            yield return WaitUntilDspTime(visualShowDspTime);
 
             ClearHighlights();
 
@@ -252,23 +303,29 @@ public class TutorialDialoguePlayer : MonoBehaviour
             {
                 ClearGuideText();
                 SetGuidePanelVisible(false);
-            }
-            else
-            {
-                ShowTyped(lineText, typingSeconds);
-                onLineStarted?.Invoke(i, lineText);
+                continue;
             }
 
-            double blinkStartDspTime = nextLineStartDspTime - blinkSeconds;
+            float typingSeconds = CalculateTypingSeconds(
+                beatSeconds * safeBeats + dialogueVisualLeadSeconds,
+                blinkSeconds: 0f
+            );
 
-            yield return WaitUntilDspTime(blinkStartDspTime);
+            ShowTyped(lineText, typingSeconds);
+            onLineStarted?.Invoke(i, lineText);
 
-            if (blinkSeconds > 0f)
+            // string[] 대사는 별도 연출 정보가 없으므로 즉시 수동 넘기기 가능.
+            yield return WaitManualLineAdvance(
+                lineText,
+                typingSeconds,
+                GetMinimumManualAdvanceDelaySeconds()
+            );
+
+            if (useBlinkBetweenLines && hasNextLine && blinkSecondsBetweenLines > 0f)
             {
                 ShowBlinkBlank();
+                yield return new WaitForSecondsRealtime(blinkSecondsBetweenLines);
             }
-
-            yield return WaitUntilDspTime(nextLineStartDspTime);
         }
 
         if (hideWhenFinished)
@@ -280,12 +337,14 @@ public class TutorialDialoguePlayer : MonoBehaviour
             ClearGuideText();
             SetGuidePanelVisible(false);
             ClearHighlights();
+            ResetManualAdvanceState();
         }
     }
 
     /// <summary>
     /// TutorialGuideLineData[] 대사용.
-    /// 대사 텍스트, 리모 프로필, 강조 연출을 줄 단위로 함께 적용한다.
+    /// 대사 텍스트, 리모 프로필, 강조 연출을 줄 단위로 적용한다.
+    /// 이제 대사는 자동으로 넘어가지 않고, F/J 입력으로만 진행된다.
     /// </summary>
     public IEnumerator PlayLines(
         TutorialGuideLineData[] lines,
@@ -309,52 +368,52 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         int safeBeats = Mathf.Max(1, beatsPerLine);
         float beatSeconds = GetBeatSeconds();
-        float lineSeconds = beatSeconds * safeBeats;
 
-        double dialogueStartDspTime = forcedStartDspTime ?? AudioSettings.dspTime;
+        double dialogueStartDspTime =
+            forcedStartDspTime ?? AudioSettings.dspTime;
+
+        double visualShowDspTime =
+            dialogueStartDspTime - dialogueVisualLeadSeconds;
+
+        yield return WaitUntilDspTime(visualShowDspTime);
 
         for (int i = 0; i < lines.Length; i++)
         {
             TutorialGuideLineData line = lines[i];
-
-            double lineStartDspTime = dialogueStartDspTime + i * lineSeconds;
-            double nextLineStartDspTime = dialogueStartDspTime + (i + 1) * lineSeconds;
-            double visualShowDspTime = lineStartDspTime - dialogueVisualLeadSeconds;
-
             bool hasNextLine = i < lines.Length - 1;
-
-            float blinkSeconds = useBlinkBetweenLines && hasNextLine
-                ? Mathf.Clamp(blinkSecondsBetweenLines, 0f, lineSeconds * 0.5f)
-                : 0f;
-
-            float totalVisibleSeconds = lineSeconds + dialogueVisualLeadSeconds;
-            float typingSeconds = CalculateTypingSeconds(totalVisibleSeconds, blinkSeconds);
-
-            yield return WaitUntilDspTime(visualShowDspTime);
 
             if (line == null || string.IsNullOrWhiteSpace(line.text))
             {
                 ClearGuideText();
                 SetGuidePanelVisible(false);
                 ClearHighlights();
-            }
-            else
-            {
-                ApplyLineVisual(line);
-                ShowTyped(line.text, typingSeconds);
-                onLineStarted?.Invoke(i, line);
+                continue;
             }
 
-            double blinkStartDspTime = nextLineStartDspTime - blinkSeconds;
+            ApplyLineVisual(line);
 
-            yield return WaitUntilDspTime(blinkStartDspTime);
+            float typingSeconds = CalculateTypingSeconds(
+                beatSeconds * safeBeats + dialogueVisualLeadSeconds,
+                blinkSeconds: 0f
+            );
 
-            if (blinkSeconds > 0f)
+            ShowTyped(line.text, typingSeconds);
+            onLineStarted?.Invoke(i, line);
+
+            float manualUnlockDelaySeconds =
+                GetManualAdvanceUnlockDelaySeconds(line);
+
+            yield return WaitManualLineAdvance(
+                line.text,
+                typingSeconds,
+                manualUnlockDelaySeconds
+            );
+
+            if (useBlinkBetweenLines && hasNextLine && blinkSecondsBetweenLines > 0f)
             {
                 ShowBlinkBlank();
+                yield return new WaitForSecondsRealtime(blinkSecondsBetweenLines);
             }
-
-            yield return WaitUntilDspTime(nextLineStartDspTime);
         }
 
         if (hideWhenFinished)
@@ -366,6 +425,189 @@ public class TutorialDialoguePlayer : MonoBehaviour
             ClearGuideText();
             SetGuidePanelVisible(false);
             ClearHighlights();
+            ResetManualAdvanceState();
+        }
+    }
+
+    /// <summary>
+    /// 현재 대사 한 줄이 F/J 입력으로 넘어갈 때까지 기다린다.
+    /// 입력 동작:
+    /// - allowSkipTypingWithManualAdvance가 true면, 타이핑 중 F/J로 전체 문장 표시
+    /// - false면, 타이핑이 끝난 뒤에만 F/J 넘기기 가능
+    /// - 전체 문장 표시 후 F/J: 다음 대사로 진행
+    /// </summary>
+    private IEnumerator WaitManualLineAdvance(
+        string fullText,
+        float typingSeconds,
+        float manualUnlockDelaySeconds
+    )
+    {
+        ResetManualAdvanceState();
+
+        isManualLineActive = true;
+        isTypingCurrentLine = useTypewriter && typewriterText != null;
+        isCurrentLineFullyVisible = !isTypingCurrentLine;
+
+        float elapsed = 0f;
+        float safeTypingSeconds = Mathf.Max(0.01f, typingSeconds);
+        float safeUnlockDelaySeconds = Mathf.Max(0f, manualUnlockDelaySeconds);
+
+        manualAdvanceUnlocked = false;
+        SetManualAdvanceHintVisible(false);
+
+        while (isTypingCurrentLine && elapsed < safeTypingSeconds)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            if (!manualAdvanceUnlocked && elapsed >= safeUnlockDelaySeconds)
+            {
+                manualAdvanceUnlocked = true;
+
+                // 타이핑 중 스킵이 허용된 경우에만 타이핑 중에도 힌트를 보여준다.
+                if (allowSkipTypingWithManualAdvance)
+                {
+                    SetManualAdvanceHintVisible(true);
+                }
+            }
+
+            if (skipTypingRequested &&
+                manualAdvanceUnlocked &&
+                allowSkipTypingWithManualAdvance)
+            {
+                ShowInstant(fullText);
+                break;
+            }
+
+            yield return null;
+        }
+
+        // 자연 종료든 스킵이든, 여기부터는 전체 문장이 보이는 상태로 고정한다.
+        ShowInstant(fullText);
+        isTypingCurrentLine = false;
+        isCurrentLineFullyVisible = true;
+        skipTypingRequested = false;
+
+        // 타이핑은 끝났지만 최소 대기/연출 잠금 시간이 아직 남아 있으면 더 기다린다.
+        while (!manualAdvanceUnlocked)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            if (elapsed >= safeUnlockDelaySeconds)
+            {
+                manualAdvanceUnlocked = true;
+                break;
+            }
+
+            yield return null;
+        }
+
+        // 전체 문장이 보이고, 잠금도 끝난 뒤에만 다음 대사 힌트를 보여준다.
+        SetManualAdvanceHintVisible(true);
+
+        while (!nextLineRequested)
+        {
+            yield return null;
+        }
+
+        ResetManualAdvanceState();
+    }
+
+    /// <summary>
+    /// 이 줄에서 수동 넘기기를 잠글 시간을 초 단위로 계산한다.
+    /// 일반 대사도 최소 0.5초는 기다린 뒤 넘길 수 있게 하고,
+    /// UI 강조나 F/J 데모 같은 연출이 있는 줄은 더 긴 잠금 시간을 적용한다.
+    /// </summary>
+    private float GetManualAdvanceUnlockDelaySeconds(TutorialGuideLineData line)
+    {
+        float minimumDelaySeconds = GetMinimumManualAdvanceDelaySeconds();
+
+        if (!ShouldLockManualAdvance(line))
+        {
+            return minimumDelaySeconds;
+        }
+
+        float lockBeats = line.manualAdvanceUnlockDelayBeats;
+
+        if (lockBeats <= 0f)
+        {
+            lockBeats = defaultManualAdvanceLockBeats;
+        }
+
+        float visualLockSeconds = GetBeatSeconds() * Mathf.Max(0f, lockBeats);
+
+        // 일반 최소 딜레이보다 연출 잠금이 짧으면 의미가 없으므로 더 긴 쪽을 사용한다.
+        return Mathf.Max(minimumDelaySeconds, visualLockSeconds);
+    }
+
+    /// <summary>
+    /// 모든 대사에 공통으로 적용할 최소 수동 넘기기 대기 시간.
+    /// 너무 빠른 연타로 대사가 즉시 넘어가는 것을 막는다.
+    /// </summary>
+    private float GetMinimumManualAdvanceDelaySeconds()
+    {
+        return Mathf.Max(0f, minimumManualAdvanceDelaySeconds);
+    }
+
+    /// <summary>
+    /// 수동 넘기기를 잠가야 하는 줄인지 확인한다.
+    /// 인스펙터에서 직접 잠금을 켰거나, 하이라이트/데모 연출이 있으면 잠금 대상으로 본다.
+    /// </summary>
+    private bool ShouldLockManualAdvance(TutorialGuideLineData line)
+    {
+        if (line == null)
+        {
+            return false;
+        }
+
+        if (line.lockManualAdvanceUntilVisualCueFinished)
+        {
+            return true;
+        }
+
+        return line.highlightStars
+            || line.highlightAttackJudgeLine
+            || line.highlightDefenseJudgeLine
+            || line.highlightHighBit
+            || line.highlightLowBit
+            || line.playHighThenLowDemo;
+    }
+
+    /// <summary>
+    /// 수동 넘기기 상태를 초기화하고 힌트를 숨긴다.
+    /// </summary>
+    private void ResetManualAdvanceState()
+    {
+        isManualLineActive = false;
+        isTypingCurrentLine = false;
+        isCurrentLineFullyVisible = false;
+        manualAdvanceUnlocked = false;
+        skipTypingRequested = false;
+        nextLineRequested = false;
+
+        SetManualAdvanceHintVisible(false);
+    }
+
+    /// <summary>
+    /// "(F/J로 대사 넘기기)" 힌트를 켜거나 끈다.
+    /// Root가 연결되어 있으면 Root를 우선 제어하고,
+    /// Root가 없으면 TMP_Text 오브젝트를 직접 제어한다.
+    /// </summary>
+    private void SetManualAdvanceHintVisible(bool visible)
+    {
+        if (manualAdvanceHintText != null)
+        {
+            manualAdvanceHintText.text = manualAdvanceHintMessage;
+        }
+
+        if (manualAdvanceHintRoot != null)
+        {
+            manualAdvanceHintRoot.SetActive(visible);
+            return;
+        }
+
+        if (manualAdvanceHintText != null)
+        {
+            manualAdvanceHintText.gameObject.SetActive(visible);
         }
     }
 
@@ -470,6 +712,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
         {
             typewriterText.Stop();
         }
+
+        ResetManualAdvanceState();
     }
 
     private float GetBeatSeconds()
