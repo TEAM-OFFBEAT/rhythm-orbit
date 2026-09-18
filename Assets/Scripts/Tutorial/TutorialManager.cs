@@ -360,12 +360,28 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// TutorialInputRouter 또는 UI 버튼에서 호출한다.
+    /// 대사 단계에서는 F/J를 대사 넘기기로 사용하고,
+    /// 연습 단계에서는 기존 공격/방어 입력으로 사용한다.
     /// </summary>
     public void HandleTap(NoteType noteType)
     {
         if (logInputRouting)
         {
             Debug.Log($"TutorialManager HandleTap / step:{currentStep}, note:{noteType}");
+        }
+
+        // 대사 단계에서는 F/J가 노트 입력이 아니라 대사 진행 입력이다.
+        if (IsDialogueStep(currentStep))
+        {
+            bool consumed = dialoguePlayer != null &&
+                dialoguePlayer.RequestManualAdvance();
+
+            if (!consumed && logInputRouting)
+            {
+                Debug.Log("TutorialManager: 현재 대사는 아직 수동 넘기기 불가 상태.");
+            }
+
+            return;
         }
 
         switch (currentStep)
@@ -384,6 +400,18 @@ public class TutorialManager : MonoBehaviour
                 Debug.Log($"TutorialManager: 현재 단계({currentStep})에서는 입력을 무시함.");
                 break;
         }
+    }
+
+    /// <summary>
+    /// 현재 단계가 대사 진행 단계인지 확인한다.
+    /// 이 단계에서는 F/J 입력을 공격/방어 입력이 아니라 대사 넘기기로 사용한다.
+    /// </summary>
+    private bool IsDialogueStep(TutorialStep step)
+    {
+        return step == TutorialStep.IntroDialogue
+            || step == TutorialStep.AttackDialogue
+            || step == TutorialStep.DefenseDialogue
+            || step == TutorialStep.RallyDialogue;
     }
 
     private IEnumerator RunAttackPractice()
@@ -690,12 +718,16 @@ public class TutorialManager : MonoBehaviour
     /// <summary>
     /// 이미 AttackTurn이 생성한 노트를 기존 DefenseTurn.Begin으로 넘겨 방어 턴을 재생한다.
     /// TutorialManager가 직접 노트 이동/스폰을 하지 않는다.
+    /// 
+    /// inputStep이 None이면 현재 튜토리얼 단계를 바꾸지 않는다.
+    /// 예: 방어 설명 대사 중 AI 방어 연출을 동시에 재생할 때,
+    /// currentStep이 DefenseDialogue로 유지되어야 F/J 대사 넘기기가 가능하다.
     /// </summary>
     private IEnumerator RunDefenseTurnForExistingNotes(
-    AttackSide attackerSide,
-    bool isAiDefense,
-    TutorialStep inputStep,
-    bool useViewTransitionDelay = true
+        AttackSide attackerSide,
+        bool isAiDefense,
+        TutorialStep inputStep,
+        bool useViewTransitionDelay = true
     )
     {
         if (lastAttackNotes.Count == 0)
@@ -703,19 +735,26 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
-        currentStep = inputStep;
+        bool shouldControlInputStep = inputStep != TutorialStep.None;
+
+        if (shouldControlInputStep)
+        {
+            currentStep = inputStep;
+        }
+
         currentDefenseAttackerSide = attackerSide;
         currentDefenseJudgmentIndex = 0;
         showDefenseJudgmentUi = true;
         currentDefenseIsAiDefense = isAiDefense;
         defenseEnded = false;
-        
+
         if (!isAiDefense)
         {
             latestDefenseResultAvailable = false;
             latestDefenseTotalCount = 0;
             latestDefenseMissCount = 0;
         }
+
         gameCamera?.SetDefenseView(attackerSide);
         hud?.SetTurnOwner(GetPlayerId(GetOpponentSide(attackerSide)));
 
@@ -727,11 +766,17 @@ public class TutorialManager : MonoBehaviour
         float judgeLineX = attackTurnRenderer.GetJudgeLineX(attackerSide);
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
         float attackEndX = attackTurnRenderer.GetEndX(attackerSide);
+
         GetDefenseLabel(attackerSide)?.SetWorldX(judgeLineX);
 
         if (logTurnFlow)
         {
-            Debug.Log($"TutorialManager: Defense Begin / attacker:{attackerSide}, notes:{lastAttackNotes.Count}, ai:{isAiDefense}, duration:{lastAttackDuration:0.000}, attackStart:{lastAttackStartDspTime:0.000}");
+            Debug.Log(
+                $"TutorialManager: Defense Begin / " +
+                $"attacker:{attackerSide}, notes:{lastAttackNotes.Count}, " +
+                $"ai:{isAiDefense}, duration:{lastAttackDuration:0.000}, " +
+                $"attackStart:{lastAttackStartDspTime:0.000}"
+            );
         }
 
         defenseTurn.Begin(
@@ -760,7 +805,11 @@ public class TutorialManager : MonoBehaviour
         }
 
         showDefenseJudgmentUi = false;
-        currentStep = TutorialStep.None;
+
+        if (shouldControlInputStep)
+        {
+            currentStep = TutorialStep.None;
+        }
     }
 
     private void PrepareAttackWaitState()
@@ -967,7 +1016,11 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 공격턴 설명 대사를 재생한다.
-    /// TutorialGuideLineData에 설정된 줄에서 F/J 비트 데모와 강조 연출을 실행한다.
+    /// 인트로 설명 직후 불필요한 공백을 줄이기 위해
+    /// 공격 설명은 4박 경계를 기다리지 않고 즉시 시작한다.
+    /// 
+    /// 실제 공격 연습 시작은 RunAttackPractice()에서
+    /// 별도로 4박 경계에 맞추므로 여기서는 박자 정렬을 하지 않는다.
     /// </summary>
     private IEnumerator PlayAttackDialogue()
     {
@@ -987,7 +1040,9 @@ public class TutorialManager : MonoBehaviour
 
         ClearBeatDemoNotes();
 
-        double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
+        // 설명 대사는 박자 경계를 기다릴 필요가 없다.
+        // forcedStartDspTime을 현재 DSP 시간으로 주면 바로 다음 프레임부터 표시된다.
+        double startDspTime = AudioSettings.dspTime;
 
         yield return dialoguePlayer.PlayLines(
             attackGuideLines,
