@@ -336,11 +336,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SimpleGlowPulse
   playOnAwake: 1
-  minScale: 1.05
-  maxScale: 1.2
+  minScale: 1
+  maxScale: 1.15
   minAlpha: 0.15
   maxAlpha: 0.45
-  pulseSpeed: 2.5
+  pulseSpeed: 5
 --- !u!1 &3509575597323177662
 GameObject:
   m_ObjectHideFlags: 0
@@ -430,11 +430,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SimpleGlowPulse
   playOnAwake: 1
-  minScale: 1.05
-  maxScale: 1.2
+  minScale: 1
+  maxScale: 1.15
   minAlpha: 0.15
   maxAlpha: 0.45
-  pulseSpeed: 2.5
+  pulseSpeed: 5
 --- !u!1 &3738829521927711145
 GameObject:
   m_ObjectHideFlags: 0
@@ -624,7 +624,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -99, y: 96}
-  m_SizeDelta: {x: 186, y: 102}
+  m_SizeDelta: {x: 249, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2122622708766211929
 CanvasRenderer:
@@ -654,7 +654,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 2368100552483185636, guid: 638fe8aaab5f66742a6ba7ab0ae06b52, type: 3}
+  m_Sprite: {fileID: 7573194615174785382, guid: ac7c9d9ec3d48db43b46bbf4e059d583, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -699,7 +699,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -99, y: 96}
-  m_SizeDelta: {x: 160, y: 77}
+  m_SizeDelta: {x: 161, y: 77}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7521271412944660895
 CanvasRenderer:
@@ -729,7 +729,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -3989300262440939440, guid: 638fe8aaab5f66742a6ba7ab0ae06b52, type: 3}
+  m_Sprite: {fileID: 1034530176241677583, guid: ac7c9d9ec3d48db43b46bbf4e059d583, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1119,9 +1119,9 @@ MonoBehaviour:
   outlineHighlightImage: {fileID: 1789688729734994622}
   pulseHighlight: 1
   highlightColor: {r: 1, g: 1, b: 1, a: 1}
-  minHighlightAlpha: 0.25
+  minHighlightAlpha: 0.1
   maxHighlightAlpha: 0.85
-  pulseSpeed: 2.5
+  pulseSpeed: 6
 --- !u!1 &5486148436310871192
 GameObject:
   m_ObjectHideFlags: 0
