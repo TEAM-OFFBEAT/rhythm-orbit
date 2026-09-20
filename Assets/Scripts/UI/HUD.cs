@@ -30,6 +30,7 @@ public class HUD : MonoBehaviour
 
     private Coroutine p1PanelHideCoroutine;
     private Coroutine p2PanelHideCoroutine;
+    private bool panelMessagesVisible = true;
 
     private float currentBpm;
     private Coroutine bpmTextCoroutine;
@@ -215,15 +216,47 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void ShowP1PanelMessage(string message)
     {
-        if (p1PanelHideCoroutine != null) { StopCoroutine(p1PanelHideCoroutine); p1PanelHideCoroutine = null; }
-
-        if (string.IsNullOrEmpty(message))
+        if (p1PanelHideCoroutine != null)
         {
-            if (p1PanelMessageLabel != null) p1PanelMessageLabel.text = defaultBubbleMessage;
+            StopCoroutine(p1PanelHideCoroutine);
+            p1PanelHideCoroutine = null;
+        }
+
+        if (!panelMessagesVisible)
+        {
+            if (p1PanelMessageLabel != null)
+            {
+                p1PanelMessageLabel.text = defaultBubbleMessage;
+            }
+
+            if (p1PanelBubble != null)
+            {
+                p1PanelBubble.SetActive(false);
+            }
+
             return;
         }
 
-        if (p1PanelMessageLabel != null) p1PanelMessageLabel.text = message;
+        if (p1PanelBubble != null)
+        {
+            p1PanelBubble.SetActive(true);
+        }
+
+        if (string.IsNullOrEmpty(message))
+        {
+            if (p1PanelMessageLabel != null)
+            {
+                p1PanelMessageLabel.text = defaultBubbleMessage;
+            }
+
+            return;
+        }
+
+        if (p1PanelMessageLabel != null)
+        {
+            p1PanelMessageLabel.text = message;
+        }
+
         p1PanelHideCoroutine = StartCoroutine(RevertP1PanelToDefault());
     }
 
@@ -232,15 +265,47 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void ShowP2PanelMessage(string message)
     {
-        if (p2PanelHideCoroutine != null) { StopCoroutine(p2PanelHideCoroutine); p2PanelHideCoroutine = null; }
-
-        if (string.IsNullOrEmpty(message))
+        if (p2PanelHideCoroutine != null)
         {
-            if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = defaultBubbleMessage;
+            StopCoroutine(p2PanelHideCoroutine);
+            p2PanelHideCoroutine = null;
+        }
+
+        if (!panelMessagesVisible)
+        {
+            if (p2PanelMessageLabel != null)
+            {
+                p2PanelMessageLabel.text = defaultBubbleMessage;
+            }
+
+            if (p2PanelBubble != null)
+            {
+                p2PanelBubble.SetActive(false);
+            }
+
             return;
         }
 
-        if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = message;
+        if (p2PanelBubble != null)
+        {
+            p2PanelBubble.SetActive(true);
+        }
+
+        if (string.IsNullOrEmpty(message))
+        {
+            if (p2PanelMessageLabel != null)
+            {
+                p2PanelMessageLabel.text = defaultBubbleMessage;
+            }
+
+            return;
+        }
+
+        if (p2PanelMessageLabel != null)
+        {
+            p2PanelMessageLabel.text = message;
+        }
+
         p2PanelHideCoroutine = StartCoroutine(RevertP2PanelToDefault());
     }
 
@@ -316,4 +381,43 @@ public class HUD : MonoBehaviour
     {
         comboUI?.Reset();
     }
+
+    /// <summary>
+    /// P1/P2 랜덤 메시지 말풍선 표시 여부를 설정한다.
+    /// 튜토리얼에서는 대사 구간에 숨기고, 공격/방어/랠리 연습 구간에 다시 표시할 때 사용한다.
+    /// </summary>
+    public void SetPanelMessagesVisible(bool visible)
+    {
+        if (p1PanelHideCoroutine != null)
+        {
+            StopCoroutine(p1PanelHideCoroutine);
+            p1PanelHideCoroutine = null;
+        }
+
+        if (p2PanelHideCoroutine != null)
+        {
+            StopCoroutine(p2PanelHideCoroutine);
+            p2PanelHideCoroutine = null;
+        }
+
+        if (p1PanelMessageLabel != null)
+        {
+            p1PanelMessageLabel.text = defaultBubbleMessage;
+        }
+
+        if (p2PanelMessageLabel != null)
+        {
+            p2PanelMessageLabel.text = defaultBubbleMessage;
+        }
+
+        if (p1PanelBubble != null)
+        {
+            p1PanelBubble.SetActive(visible);
+        }
+
+        if (p2PanelBubble != null)
+        {
+            p2PanelBubble.SetActive(visible);
+        }
+    }   
 }

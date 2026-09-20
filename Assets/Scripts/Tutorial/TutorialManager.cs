@@ -323,6 +323,7 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
         hud?.ClearPanelMessages();
+        HidePanelMessages();
 
         ResetTutorialSanity();
         SetSanityVisible(false);
@@ -416,6 +417,46 @@ public class TutorialManager : MonoBehaviour
             || step == TutorialStep.RallyDialogue;
     }
 
+    /// <summary>
+    /// 랜덤 메시지 말풍선이 보여야 하는 튜토리얼 연습 단계인지 확인한다.
+    /// </summary>
+    private bool IsPracticeStep(TutorialStep step)
+    {
+        return step == TutorialStep.AttackPractice
+            || step == TutorialStep.DefensePractice
+            || step == TutorialStep.RallyAttack
+            || step == TutorialStep.RallyDefense;
+    }
+
+    /// <summary>
+    /// 튜토리얼 대사/설명 구간에서는 랜덤 메시지 말풍선을 숨긴다.
+    /// </summary>
+    private void HidePanelMessages()
+    {
+        hud?.SetPanelMessagesVisible(false);
+    }
+
+    /// <summary>
+    /// 공격/방어/랠리 연습 구간에서는 랜덤 메시지 말풍선을 표시한다.
+    /// </summary>
+    private void ShowPanelMessagesForPractice()
+    {
+        hud?.SetPanelMessagesVisible(true);
+    }
+
+    /// <summary>
+    /// 특정 튜토리얼 단계가 연습 단계일 때만 말풍선을 표시한다.
+    /// </summary>
+    private void ShowPanelMessagesIfPracticeStep(TutorialStep step)
+    {
+        if (!IsPracticeStep(step))
+        {
+            return;
+        }
+
+        ShowPanelMessagesForPractice();
+    }
+
     private IEnumerator RunAttackPractice()
     {
         if (logTurnFlow)
@@ -423,7 +464,7 @@ public class TutorialManager : MonoBehaviour
             Debug.Log("TutorialManager: AttackPractice 시작");
         }
 
-        //ClearBeatDemoNotes();
+        ShowPanelMessagesForPractice();
 
         ShowPracticeStartMessage(attackPracticeStartMessage);
 
@@ -486,6 +527,8 @@ public class TutorialManager : MonoBehaviour
             Debug.Log("TutorialManager: DefensePractice 시작");
         }
 
+        ShowPanelMessagesForPractice();
+
         ShowPracticeStartMessage(defensePracticeStartMessage);
 
         double fourBeatSeconds = GetGuideMetronomeIntervalSeconds();
@@ -534,6 +577,8 @@ public class TutorialManager : MonoBehaviour
         {
             Debug.Log("TutorialManager: RallyPractice 시작");
         }
+
+        ShowPanelMessagesForPractice();
 
         ShowPracticeStartMessage(rallyPracticeStartMessage);
 
@@ -640,6 +685,7 @@ public class TutorialManager : MonoBehaviour
         currentStep = inputStep;
         currentHudAttackerSide = playerSide;
         PrepareAttackWaitState();
+        ShowPanelMessagesIfPracticeStep(inputStep);
 
         // 공격 설명에서 보여준 F/J 데모 노트를 실제 공격 턴 시작 직전에 같이 제거한다.
         ClearBeatDemoNotes();
@@ -680,6 +726,7 @@ public class TutorialManager : MonoBehaviour
         currentStep = TutorialStep.None;
         currentHudAttackerSide = attackerSide;
         showCurrentDefenseKeyHints = pattern.showKeyHints;
+        ShowPanelMessagesIfPracticeStep(defenseInputStep);
 
         PrepareAttackWaitState();
 
@@ -747,6 +794,7 @@ public class TutorialManager : MonoBehaviour
         if (shouldControlInputStep)
         {
             currentStep = inputStep;
+            ShowPanelMessagesIfPracticeStep(inputStep);
         }
 
         currentDefenseAttackerSide = attackerSide;
@@ -975,6 +1023,8 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
+        HidePanelMessages();
+
         double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
 
         yield return dialoguePlayer.PlayLines(
@@ -1013,6 +1063,8 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
+        HidePanelMessages();
+
         double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
 
         yield return dialoguePlayer.PlayLines(
@@ -1041,6 +1093,8 @@ public class TutorialManager : MonoBehaviour
         {
             yield break;
         }
+
+        HidePanelMessages();
 
         attackHighBeatDemoStarted = false;
         attackLowBeatDemoStarted = false;
@@ -1260,6 +1314,7 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearAttackProgress();
         hud?.ClearJudgments();
         hud?.ClearPanelMessages();
+        HidePanelMessages();
 
         if (lobbyButtonRoot != null)
         {
@@ -1809,6 +1864,8 @@ public class TutorialManager : MonoBehaviour
         {
             yield break;
         }
+
+        HidePanelMessages();
 
         StopDefenseDialogueDemoCoroutine();
 
