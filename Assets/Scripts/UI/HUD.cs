@@ -384,31 +384,12 @@ public class HUD : MonoBehaviour
 
     /// <summary>
     /// P1/P2 랜덤 메시지 말풍선 표시 여부를 설정한다.
-    /// 튜토리얼에서는 대사 구간에 숨기고, 공격/방어/랠리 연습 구간에 다시 표시할 때 사용한다.
+    /// visible=false일 때만 메시지를 기본값으로 초기화한다.
+    /// visible=true일 때는 기존 해석 메시지를 지우지 않고 말풍선만 다시 켠다.
     /// </summary>
     public void SetPanelMessagesVisible(bool visible)
     {
-        if (p1PanelHideCoroutine != null)
-        {
-            StopCoroutine(p1PanelHideCoroutine);
-            p1PanelHideCoroutine = null;
-        }
-
-        if (p2PanelHideCoroutine != null)
-        {
-            StopCoroutine(p2PanelHideCoroutine);
-            p2PanelHideCoroutine = null;
-        }
-
-        if (p1PanelMessageLabel != null)
-        {
-            p1PanelMessageLabel.text = defaultBubbleMessage;
-        }
-
-        if (p2PanelMessageLabel != null)
-        {
-            p2PanelMessageLabel.text = defaultBubbleMessage;
-        }
+        panelMessagesVisible = visible;
 
         if (p1PanelBubble != null)
         {
@@ -418,6 +399,33 @@ public class HUD : MonoBehaviour
         if (p2PanelBubble != null)
         {
             p2PanelBubble.SetActive(visible);
+        }
+
+        // 숨길 때만 진행 중인 복귀 코루틴과 텍스트를 초기화한다.
+        // 켤 때마다 초기화하면 방어 해석 메시지가 바로 "..."으로 바뀌는 문제가 생긴다.
+        if (!visible)
+        {
+            if (p1PanelHideCoroutine != null)
+            {
+                StopCoroutine(p1PanelHideCoroutine);
+                p1PanelHideCoroutine = null;
+            }
+
+            if (p2PanelHideCoroutine != null)
+            {
+                StopCoroutine(p2PanelHideCoroutine);
+                p2PanelHideCoroutine = null;
+            }
+
+            if (p1PanelMessageLabel != null)
+            {
+                p1PanelMessageLabel.text = defaultBubbleMessage;
+            }
+
+            if (p2PanelMessageLabel != null)
+            {
+                p2PanelMessageLabel.text = defaultBubbleMessage;
+            }
         }
     }   
 }
