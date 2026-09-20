@@ -1230,8 +1230,8 @@ MonoBehaviour:
   manualAdvanceHintText: {fileID: 5375459300349098612}
   manualAdvanceHintMessage: "F/J\uB85C \uB118\uAE30\uAE30"
   defaultManualAdvanceLockBeats: 1
-  minimumManualAdvanceDelaySeconds: 0.5
-  allowSkipTypingWithManualAdvance: 0
+  minimumManualAdvanceDelaySeconds: 0.15
+  allowSkipTypingWithManualAdvance: 1
   fallbackBpm: 90
   hideOnAwake: 1
   useBlinkBetweenLines: 1
