@@ -1399,9 +1399,7 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 방어 연습용 패턴을 반환한다.
-    /// 1회차: F 1개, 키 힌트 표시
-    /// 2회차: J 1개, 키 힌트 표시
-    /// 3회차: 짧은 패턴, 키 힌트 숨김
+    /// 방어 연습에서는 노트 위 F/J 키 힌트를 표시하지 않는다.
     /// </summary>
     private TutorialDefensePattern GetDefensePracticePattern(int index)
     {
@@ -1411,7 +1409,7 @@ public class TutorialManager : MonoBehaviour
                 return new TutorialDefensePattern(
                     "응",
                     new[] { NoteType.HIGH },
-                    showKeyHints: true,
+                    showKeyHints: false,
                     gridSteps: new[] { 4 }
                 );
 
@@ -1419,7 +1417,7 @@ public class TutorialManager : MonoBehaviour
                 return new TutorialDefensePattern(
                     "나",
                     new[] { NoteType.LOW },
-                    showKeyHints: true,
+                    showKeyHints: false,
                     gridSteps: new[] { 4 }
                 );
 
