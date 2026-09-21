@@ -505,6 +505,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+--- !u!114 &399637770 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8460358692341138137, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+  m_PrefabInstance: {fileID: 942637795}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75b4cc834a20b4a419f2ea686bd5feba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfileSlotUI
 --- !u!114 &447390053 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1571970324033980177, guid: 5aa30ca698ca4da45acb08f600132a87, type: 3}
@@ -1131,6 +1142,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1526079757209200041, guid: 2bcc914ba9c67344cb0e64b1c3ad8ec6, type: 3}
+      propertyPath: p1Slot
+      value: 
+      objectReference: {fileID: 399637770}
+    - target: {fileID: 1526079757209200041, guid: 2bcc914ba9c67344cb0e64b1c3ad8ec6, type: 3}
+      propertyPath: p2Slot
+      value: 
+      objectReference: {fileID: 1885785253}
     - target: {fileID: 1549251834048446401, guid: 2bcc914ba9c67344cb0e64b1c3ad8ec6, type: 3}
       propertyPath: guideText
       value: 
@@ -1454,6 +1473,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97d1e4a42eb393b4f8bd60b8da532478, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DefenseTurn
+--- !u!114 &1885785253 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8057561938852359967, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+  m_PrefabInstance: {fileID: 942637795}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75b4cc834a20b4a419f2ea686bd5feba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfileSlotUI
 --- !u!1001 &1898389456
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2072,9 +2102,25 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 181996208}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: forceEventForTest
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventStateDebugText
       value: 
       objectReference: {fileID: 275423500}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[1].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[2].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[3].enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
