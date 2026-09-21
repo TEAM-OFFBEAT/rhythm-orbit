@@ -3,13 +3,22 @@
     "name": "New Actions",
     "maps": [
         {
-            "name": "HUD",
+            "name": "UI",
             "id": "8c876dda-aa2c-4fb0-9f22-378dc43787ab",
             "actions": [
                 {
                     "name": "ToggleSettings",
                     "type": "Button",
                     "id": "c0d9cc6a-84f0-4d8f-834a-6b2755438b8b",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleEscape",
+                    "type": "Button",
+                    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -25,6 +34,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleSettings",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleEscape",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
