@@ -12,9 +12,18 @@ public class MainLoopControlUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameManager gameManager;
 
+    [Header("Exit Panel")]
+    [SerializeField] private GameObject exitPanel;
+    [SerializeField] private Button exitYesButton;
+    [SerializeField] private Button exitNoButton;
+
+    [Header("Log Panel")]
+    [SerializeField] private GameObject logPanel;
+    [SerializeField] private Button logReturnButton;
+
     [Header("Buttons")]
     [SerializeField] private Button restartButton;
-    [SerializeField] private Button quitToLobbyButton;
+    // [SerializeField] private Button quitToLobbyButton; // ExitPanel의 "예" 버튼으로 대체됨
 
     [Header("Status UI")]
     [SerializeField] private GameObject statusRoot;
@@ -54,28 +63,20 @@ public class MainLoopControlUI : MonoBehaviour
 
     private void RegisterButtons()
     {
-        if (restartButton != null)
-        {
-            restartButton.onClick.AddListener(RequestRestart);
-        }
-
-        if (quitToLobbyButton != null)
-        {
-            quitToLobbyButton.onClick.AddListener(QuitToLobby);
-        }
+        restartButton?.onClick.AddListener(RequestRestart);
+        // quitToLobbyButton?.onClick.AddListener(QuitToLobby);
+        exitYesButton?.onClick.AddListener(QuitToLobby);
+        exitNoButton?.onClick.AddListener(OnToggleEscape);
+        logReturnButton?.onClick.AddListener(QuitToLobby);
     }
 
     private void UnregisterButtons()
     {
-        if (restartButton != null)
-        {
-            restartButton.onClick.RemoveListener(RequestRestart);
-        }
-
-        if (quitToLobbyButton != null)
-        {
-            quitToLobbyButton.onClick.RemoveListener(QuitToLobby);
-        }
+        restartButton?.onClick.RemoveListener(RequestRestart);
+        // quitToLobbyButton?.onClick.RemoveListener(QuitToLobby);
+        exitYesButton?.onClick.RemoveListener(QuitToLobby);
+        exitNoButton?.onClick.RemoveListener(OnToggleEscape);
+        logReturnButton?.onClick.RemoveListener(QuitToLobby);
     }
 
     private void SubscribeNetworkEvents()
@@ -104,6 +105,15 @@ public class MainLoopControlUI : MonoBehaviour
         net.OnReplayRequest -= HandleReplayRequest;
         net.OnGameStart -= HandleNetworkGameStart;
         net.OnDisconnected -= HandleNetworkDisconnected;
+    }
+
+    /// <summary>
+    /// PlayerInput SendMessages — ESC 입력 또는 외부 호출로 ExitPanel을 토글한다.
+    /// </summary>
+    public void OnToggleEscape()
+    {
+        if (exitPanel == null) return;
+        exitPanel.SetActive(!exitPanel.activeSelf);
     }
 
     /// <summary>
@@ -322,12 +332,13 @@ public class MainLoopControlUI : MonoBehaviour
         isOpponentDisconnected = true;
         remoteRestartRequested = false;
 
-        SetStatus(opponentDisconnectedMessage);
-
         if (restartButton != null)
         {
             restartButton.interactable = false;
         }
+
+        Time.timeScale = 0f;
+        logPanel?.SetActive(true);
 
         Debug.Log("MainLoopControlUI: 상대 연결 종료 감지.");
     }
