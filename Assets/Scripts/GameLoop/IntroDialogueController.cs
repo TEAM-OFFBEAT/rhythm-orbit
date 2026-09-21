@@ -62,7 +62,8 @@ public class IntroDialogueController : MonoBehaviour
             beatsPerLine,
             hideWhenFinished: true,
             onLineStarted: HandleLineStarted,
-            forcedStartDspTime: startDspTime
+            forcedStartDspTime: startDspTime,
+            autoAdvance: true
         );
 
         ResetPanelGlow();

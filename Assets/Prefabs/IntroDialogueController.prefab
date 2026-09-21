@@ -57,6 +57,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
@@ -69,6 +72,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
@@ -81,6 +87,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 1
     highlightP2Panel: 0
   - dialogue:
@@ -94,6 +103,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
@@ -106,6 +118,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
@@ -118,6 +133,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 1
   - dialogue:
@@ -129,6 +147,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
@@ -141,6 +162,9 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   beatsPerLine: 4
@@ -170,6 +194,12 @@ MonoBehaviour:
   useTypewriter: 1
   holdSecondsAfterTyping: 1.5
   minimumTypingSeconds: 0.15
+  manualAdvanceHintRoot: {fileID: 0}
+  manualAdvanceHintText: {fileID: 0}
+  manualAdvanceHintMessage: "(F/J\uB85C \uB300\uC0AC \uB118\uAE30\uAE30)"
+  defaultManualAdvanceLockBeats: 1
+  minimumManualAdvanceDelaySeconds: 0.5
+  allowSkipTypingWithManualAdvance: 1
   fallbackBpm: 90
   hideOnAwake: 1
   useBlinkBetweenLines: 1

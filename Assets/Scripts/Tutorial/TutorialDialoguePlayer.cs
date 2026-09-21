@@ -370,14 +370,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
     /// <summary>
     /// TutorialGuideLineData[] 대사용.
     /// 대사 텍스트, 리모 프로필, 강조 연출을 줄 단위로 적용한다.
-    /// 이제 대사는 자동으로 넘어가지 않고, F/J 입력으로만 진행된다.
+    /// autoAdvance가 true면 박자 타이밍으로 자동 진행하고, false면 F/J 입력으로만 진행된다.
     /// </summary>
     public IEnumerator PlayLines(
         TutorialGuideLineData[] lines,
         int beatsPerLine,
         bool hideWhenFinished = true,
         Action<int, TutorialGuideLineData> onLineStarted = null,
-        double? forcedStartDspTime = null
+        double? forcedStartDspTime = null,
+        bool autoAdvance = false
     )
     {
         if (lines == null || lines.Length == 0)
@@ -426,14 +427,15 @@ public class TutorialDialoguePlayer : MonoBehaviour
             ShowTyped(line.text, typingSeconds);
             onLineStarted?.Invoke(i, line);
 
-            float manualUnlockDelaySeconds =
-                GetManualAdvanceUnlockDelaySeconds(line);
-
-            yield return WaitManualLineAdvance(
-                line.text,
-                typingSeconds,
-                manualUnlockDelaySeconds
-            );
+            if (autoAdvance)
+            {
+                yield return new WaitForSecondsRealtime(beatSeconds * safeBeats);
+            }
+            else
+            {
+                float manualUnlockDelaySeconds = GetManualAdvanceUnlockDelaySeconds(line);
+                yield return WaitManualLineAdvance(line.text, typingSeconds, manualUnlockDelaySeconds);
+            }
 
             if (useBlinkBetweenLines && hasNextLine && blinkSecondsBetweenLines > 0f)
             {
