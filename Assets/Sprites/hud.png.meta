@@ -133,7 +133,7 @@ TextureImporter:
       name: hud_0
       rect:
         serializedVersion: 2
-        x: 205
+        x: 244
         y: 605
         width: 126
         height: 211
@@ -331,7 +331,7 @@ TextureImporter:
       name: hud_0_half
       rect:
         serializedVersion: 2
-        x: 205
+        x: 244
         y: 605
         width: 63
         height: 211
