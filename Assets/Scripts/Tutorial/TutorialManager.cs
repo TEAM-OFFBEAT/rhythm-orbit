@@ -2193,8 +2193,8 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 공격 설명 중 실제 공격턴처럼 보이는 데모를 재생한다.
-    /// 첫 번째 데모가 끝난 뒤에는 F/J 넘기기를 허용한다.
-    /// 이후 반복 데모 중에도 F/J를 누르면 데모를 즉시 멈추고 다음 대사로 넘어간다.
+    /// 첫 번째 데모가 끝난 뒤에는 Space 넘기기를 허용한다.
+    /// 사용자가 넘기지 않으면 4박 경계마다 공격 데모를 반복 재생한다.
     /// </summary>
     private IEnumerator RunAttackDialogueDemo(int lineIndex, TutorialGuideLineData lineData)
     {
@@ -2216,12 +2216,27 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
+        AttackSide attackerSide = playerSide;
+        double fourBeatSeconds = GetGuideMetronomeIntervalSeconds();
+
+        // 첫 데모 시작 시각을 4박 경계에 맞춘다.
+        double nextDemoStartDspTime =
+            GetCurrentOrNextGuideBoundaryDspTime(
+                AudioSettings.dspTime + attackDialogueDemoLeadSeconds
+            );
+
+        // 너무 가까운 과거/현재 경계를 잡았으면 다음 4박 경계로 넘긴다.
+        while (nextDemoStartDspTime < AudioSettings.dspTime + attackDialogueDemoLeadSeconds)
+        {
+            nextDemoStartDspTime += fourBeatSeconds;
+        }
+
         bool isFirstPlayback = true;
 
         while (!attackDialogueDemoAdvanceRequested)
         {
-            // 첫 번째 데모에서만 넘기기를 잠근다.
-            // 두 번째 데모부터는 데모가 재생 중이어도 F/J로 바로 넘길 수 있어야 한다.
+            // 첫 번째 데모에서만 대사 넘기기를 잠근다.
+            // 두 번째 데모부터는 재생 중이어도 Space로 즉시 넘길 수 있다.
             if (isFirstPlayback)
             {
                 dialoguePlayer?.BeginExternalManualAdvanceLock();
@@ -2232,7 +2247,6 @@ public class TutorialManager : MonoBehaviour
             hud?.ClearAttackProgress();
             hud?.ClearJudgments();
 
-            AttackSide attackerSide = playerSide;
             currentHudAttackerSide = attackerSide;
             showCurrentDefenseKeyHints = false;
 
@@ -2241,23 +2255,13 @@ public class TutorialManager : MonoBehaviour
             gameCamera?.SetAttackView(attackerSide);
             hud?.SetTurnOwner(GetPlayerId(attackerSide));
 
-            double attackStartDspTime =
-                GetCurrentOrNextGuideBoundaryDspTime(
-                    AudioSettings.dspTime + attackDialogueDemoLeadSeconds
-                );
-
-            double intervalSeconds = GetGuideMetronomeIntervalSeconds();
-
-            while (attackStartDspTime < AudioSettings.dspTime + attackDialogueDemoLeadSeconds)
-            {
-                attackStartDspTime += intervalSeconds;
-            }
-
             if (logTurnFlow)
             {
                 Debug.Log(
                     $"TutorialManager: 공격 설명 데모 시작 / " +
-                    $"line:{lineIndex + 1}, side:{attackerSide}, start:{attackStartDspTime:0.000}, notes:{pattern.NoteCount}, first:{isFirstPlayback}"
+                    $"line:{lineIndex + 1}, side:{attackerSide}, " +
+                    $"start:{nextDemoStartDspTime:0.000}, notes:{pattern.NoteCount}, " +
+                    $"first:{isFirstPlayback}"
                 );
             }
 
@@ -2266,25 +2270,10 @@ public class TutorialManager : MonoBehaviour
                 pattern.message,
                 pattern.notes,
                 pattern.gridSteps,
-                attackStartDspTime
+                nextDemoStartDspTime
             );
 
-            // 데모 도중 F/J로 넘기기 요청이 들어오면 즉시 빠져나온다.
             yield return WaitAttackDemoEndOrAdvance();
-
-            if (attackDialogueDemoAdvanceRequested)
-            {
-                break;
-            }
-
-            float holdSeconds = GetTutorialBeatSeconds() * Mathf.Max(0f, attackDialogueDemoHoldBeats);
-
-            float holdElapsed = 0f;
-            while (holdElapsed < holdSeconds && !attackDialogueDemoAdvanceRequested)
-            {
-                holdElapsed += Time.unscaledDeltaTime;
-                yield return null;
-            }
 
             if (attackDialogueDemoAdvanceRequested)
             {
@@ -2298,9 +2287,6 @@ public class TutorialManager : MonoBehaviour
             if (isFirstPlayback)
             {
                 isFirstPlayback = false;
-
-                // 여기서부터 F/J 힌트가 계속 떠 있어야 한다.
-                // 반복 데모가 다시 시작돼도 다시 잠그지 않는다.
                 dialoguePlayer?.EndExternalManualAdvanceLock();
             }
 
@@ -2309,13 +2295,20 @@ public class TutorialManager : MonoBehaviour
                 break;
             }
 
-            float repeatDelaySeconds =
-                GetTutorialBeatSeconds() * Mathf.Max(0f, attackDialogueDemoRepeatDelayBeats);
+            nextDemoStartDspTime += fourBeatSeconds;
 
-            float repeatElapsed = 0f;
-            while (repeatElapsed < repeatDelaySeconds && !attackDialogueDemoAdvanceRequested)
+            // 반복 재생에서는 leadSeconds를 적용하지 않는다.
+            // 데모가 끝난 직후 4박 경계를 아주 살짝 지난 정도라면,
+            // 그 경계를 그대로 사용해서 바로 다음 데모를 시작한다.
+            while (nextDemoStartDspTime < AudioSettings.dspTime - guideBoundaryLateGraceSeconds)
             {
-                repeatElapsed += Time.unscaledDeltaTime;
+                nextDemoStartDspTime += fourBeatSeconds;
+            }
+
+            // 아직 다음 4박 경계 전이면 기다린다.
+            // 이미 경계를 아주 살짝 지난 상태면 기다리지 않고 바로 다음 루프로 들어간다.
+            while (AudioSettings.dspTime < nextDemoStartDspTime && !attackDialogueDemoAdvanceRequested)
+            {
                 yield return null;
             }
         }
