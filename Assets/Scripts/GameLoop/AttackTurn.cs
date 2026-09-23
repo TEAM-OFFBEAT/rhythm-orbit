@@ -301,6 +301,68 @@ public class AttackTurn : MonoBehaviour
     }
 
     /// <summary>
+    /// 튜토리얼 공격 설명용 데모를 시작한다.
+    /// 지정한 공격자 방향에서 판정선을 이동시키고, 정해진 gridSteps에 맞춰 노트를 자동 생성한다.
+    /// </summary>
+    public void StartTutorialAttackDemo(
+        AttackSide attackerSide,
+        string attackMessage,
+        NoteType[] demoPattern,
+        int[] gridSteps,
+        double startDspTime
+    )
+    {
+        if (demoPattern == null || demoPattern.Length == 0)
+        {
+            Debug.LogWarning("AttackTurn: 공격 설명 데모 패턴이 비어 있음.");
+            return;
+        }
+
+        StartAttack(
+            attackerSide,
+            false,
+            demoPattern.Length,
+            attackMessage,
+            startDspTime
+        );
+
+        opponentDemoRelativeTimes.Clear();
+
+        double noteDuration = NoteDuration;
+
+        for (int i = 0; i < demoPattern.Length; i++)
+        {
+            int step;
+
+            if (gridSteps != null && i < gridSteps.Length)
+            {
+                step = Mathf.Max(FirstPlayableGridStep, gridSteps[i]);
+            }
+            else
+            {
+                step = 2 + i * 2;
+            }
+
+            double relativeTime = step * noteDuration;
+
+            if (relativeTime <= attackDuration)
+            {
+                opponentDemoRelativeTimes.Add((relativeTime, demoPattern[i]));
+            }
+        }
+
+        targetTapCount = opponentDemoRelativeTimes.Count;
+        nextOpponentDemoIndex = 0;
+
+        OnAttackProgressChanged?.Invoke(0, targetTapCount);
+
+        Debug.Log(
+            $"AttackTurn: Tutorial attack demo started / " +
+            $"side:{attackerSide}, notes:{targetTapCount}, start:{startDspTime:0.000}"
+        );
+    }
+
+    /// <summary>
     /// 공격 턴 입력을 처리한다.
     /// 공격 시간 안의 입력은 가장 가까운 박자선에 스냅한다.
     /// 박자 어긋남은 감점 카운트에 기록하되, 스냅된 노트는 생성한다.

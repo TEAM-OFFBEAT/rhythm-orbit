@@ -136,5 +136,17 @@ public class TutorialPatternProvider : MonoBehaviour
         }
     }
 
-    
+    public TutorialPatternData GetAttackDialogueDemoPattern()
+    {
+        return new TutorialPatternData(
+            "안녕",
+            new[]
+            {
+                NoteType.HIGH,
+                NoteType.LOW,
+                NoteType.HIGH
+            },
+            new[] { 2, 4, 6 }
+        );
+    }
 }

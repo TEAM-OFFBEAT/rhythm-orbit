@@ -596,6 +596,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
             || line.highlightHighBit
             || line.highlightLowBit
             || line.playHighThenLowDemo
+            || line.playAttackTurnDemo
             || line.playDefenseTurnDemo;
     }
 

@@ -89,12 +89,15 @@ MonoBehaviour:
   defensePracticeStartMessage: 
   rallyPracticeStartMessage: 
   practiceStartMessageBeats: 2
+  highNoteExampleView: {fileID: 0}
+  lowNoteExampleView: {fileID: 0}
+  attackDialogueDemoLeadSeconds: 0.15
+  attackDialogueDemoHoldBeats: 1
   playAttackBeatDemo: 1
   beatDemoIntervalBeats: 1
   beatDemoClearLineNumber: 3
   demoHighNotePositionRatio: 0.63
   demoLowNotePositionRatio: 0.37
-  beatDemoDuration: 2
   demoFirstNoteId: 900000
   highKeyHintColor: {r: 1, g: 0.35, b: 0.75, a: 1}
   lowKeyHintColor: {r: 0.35, g: 1, b: 0.45, a: 1}
@@ -109,6 +112,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -121,6 +125,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -133,6 +138,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 1
     manualAdvanceUnlockDelayBeats: 2
@@ -145,6 +151,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 1
     manualAdvanceUnlockDelayBeats: 2
@@ -157,6 +164,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -168,6 +176,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -181,6 +190,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 1
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 1
     manualAdvanceUnlockDelayBeats: 2
@@ -194,6 +204,7 @@ MonoBehaviour:
     highlightHighBit: 1
     highlightLowBit: 1
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 1
     manualAdvanceUnlockDelayBeats: 2
@@ -206,6 +217,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -213,11 +225,12 @@ MonoBehaviour:
       \uB54C \uBE44\uD2B8\uB97C \uC785\uB825\uD574\uBAA8."
     rymoPortrait: {fileID: -8401692288953904933, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
     highlightStars: 0
-    highlightAttackJudgeLine: 1
+    highlightAttackJudgeLine: 0
     highlightDefenseJudgeLine: 0
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 1
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -230,6 +243,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -242,6 +256,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -255,6 +270,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -266,6 +282,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -278,6 +295,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -290,6 +308,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -303,6 +322,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -315,6 +335,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
@@ -327,6 +348,7 @@ MonoBehaviour:
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
+    playAttackTurnDemo: 0
     playDefenseTurnDemo: 0
     lockManualAdvanceUntilVisualCueFinished: 0
     manualAdvanceUnlockDelayBeats: 1
