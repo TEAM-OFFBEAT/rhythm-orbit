@@ -1644,6 +1644,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4426ec3e7f988974a9d4bdedf4cc9b21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialGuideUI
+--- !u!114 &1679452383 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 669587950531138441, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
+  m_PrefabInstance: {fileID: 1679452379}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7072f7becbed5fc4d89428a8118c8f2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialNoteExampleView
+--- !u!114 &1679452384 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 984215252938563112, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
+  m_PrefabInstance: {fileID: 1679452379}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7072f7becbed5fc4d89428a8118c8f2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialNoteExampleView
 --- !u!1 &1784959264 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8365410940559154053, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
@@ -1880,6 +1902,14 @@ PrefabInstance:
       propertyPath: attackTurnRenderer
       value: 
       objectReference: {fileID: 4572499397756924744}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: lowNoteExampleView
+      value: 
+      objectReference: {fileID: 1679452383}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: highNoteExampleView
+      value: 
+      objectReference: {fileID: 1679452384}
     - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
       propertyPath: opponentSanityUiRoot
       value: 
