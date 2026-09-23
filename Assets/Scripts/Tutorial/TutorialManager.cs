@@ -112,6 +112,10 @@ public class TutorialManager : MonoBehaviour
 
     [SerializeField, Min(0)] private int practiceStartMessageBeats = 1;
 
+    [Header("Attack Note UI Demo")]
+    [SerializeField] private TutorialNoteExampleView highNoteExampleView;
+    [SerializeField] private TutorialNoteExampleView lowNoteExampleView;
+
     [Header("Attack Beat Demo")]
     [SerializeField] private bool playAttackBeatDemo = true;
     
@@ -130,7 +134,7 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("저주파 노트가 공격 라인에서 생성될 위치 비율. 0.5가 중앙이다.")]
     [SerializeField, Range(0f, 1f)] private float demoLowNotePositionRatio = 0.53f;
 
-    [SerializeField] private double beatDemoDuration = 2.0;
+    //[SerializeField] private double beatDemoDuration = 2.0;
     [SerializeField] private int demoFirstNoteId = 900000;
 
     [Header("Tutorial Key Hint Colors")]
@@ -1128,64 +1132,61 @@ public class TutorialManager : MonoBehaviour
 
 
     /// <summary>
-    /// 비트 소개용 노트를 공격 라인의 지정 비율 위치에 생성한다.
-    /// positionRatio 0.5가 중앙이다.
+    /// 공격 설명용 노트 예시를 월드 노트가 아니라 UI 이미지로 표시한다.
+    /// positionRatio는 기존 호출부 호환용으로만 유지한다.
     /// </summary>
     private void SpawnBeatDemoNote(NoteType noteType, float positionRatio)
     {
-        if (attackTurnRenderer == null)
+        if (noteType == NoteType.HIGH)
         {
-            return;
+            if (highNoteExampleView == null)
+            {
+                Debug.LogWarning("TutorialManager: highNoteExampleView가 연결되지 않음.");
+                return;
+            }
+
+            highNoteExampleView.ShowNote();
+        }
+        else
+        {
+            if (lowNoteExampleView == null)
+            {
+                Debug.LogWarning("TutorialManager: lowNoteExampleView가 연결되지 않음.");
+                return;
+            }
+
+            lowNoteExampleView.ShowNote();
         }
 
-        gameCamera?.SetAttackView(playerSide);
-
-        double safeDuration = System.Math.Max(0.01, beatDemoDuration);
-        double relativeTime = Mathf.Clamp01(positionRatio) * safeDuration;
-
-        NoteData note = new NoteData
-        {
-            noteId = nextDemoNoteId++,
-            noteType = noteType,
-            noteRelativeTime = relativeTime
-        };
-
-        attackTurnRenderer.SpawnAttackNote(
-            playerSide,
-            note,
-            safeDuration
-        );
-
-        ShowBeatDemoKeyHint(note);
-
-        activeBeatDemoNoteIds.Add(note.noteId);
-
-        Debug.Log(
-            $"TutorialManager: Beat demo note 생성 / " +
-            $"id:{note.noteId}, type:{note.noteType}, ratio:{positionRatio:0.00}"
-        );
+        Debug.Log($"TutorialManager: 공격 설명용 UI 노트 예시 표시 / type:{noteType}");
     }
 
     /// <summary>
-    /// 남아 있는 공격 설명용 F/J 데모 노트를 모두 제거한다.
-    /// AttackTurnRenderer 목록에서 못 찾는 경우를 대비해 NoteRenderer에서도 직접 Release한다.
+    /// 공격 설명용 UI 노트 예시를 숨긴다.
     /// </summary>
     private void ClearBeatDemoNotes()
     {
-        if (activeBeatDemoNoteIds.Count == 0)
+        highNoteExampleView?.Hide();
+        lowNoteExampleView?.Hide();
+    }
+
+    /// <summary>
+    /// 공격 설명용 UI 노트 예시의 Glow를 동시에 켠다.
+    /// High/Low가 같은 시간 기준으로 반짝이도록 startTime을 공유한다.
+    /// </summary>
+    private void ShowBeatDemoGlow(bool high, bool low)
+    {
+        float startTime = Time.unscaledTime;
+
+        if (high)
         {
-            return;
+            highNoteExampleView?.ShowGlowSynced(startTime);
         }
 
-        for (int i = activeBeatDemoNoteIds.Count - 1; i >= 0; i--)
+        if (low)
         {
-            int noteId = activeBeatDemoNoteIds[i];
-
-            attackTurnRenderer?.RemoveNote(noteId);
-            NoteRenderer.Instance?.ReleaseNote(noteId);
+            lowNoteExampleView?.ShowGlowSynced(startTime);
         }
-
-        activeBeatDemoNoteIds.Clear();
     }
 
     /// <summary>
@@ -1930,13 +1931,39 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 공격턴 설명 문장 시작 시 호출된다.
-    /// playHighThenLowDemo가 켜진 줄에서 F → J 비트 소개 노트를 시간차로 표시한다.
-    /// 설정한 대사 번호에 도달하면 F/J 데모 노트를 제거한다.
+    /// playHighThenLowDemo가 켜진 줄에서 F → J 노트 예시를 시간차로 표시한다.
+    /// highlightHighBit / highlightLowBit이 켜진 줄에서는 이미 표시된 노트의 Glow를 동시에 켠다.
+    /// 설정한 대사 번호에 도달하면 F/J 예시 노트를 제거한다.
     /// </summary>
     private void HandleAttackGuideLineStarted(int lineIndex, TutorialGuideLineData lineData)
     {
         if (lineData == null)
         {
+            return;
+        }
+
+        bool shouldStartBeatDemo = playAttackBeatDemo && lineData.playHighThenLowDemo;
+        bool shouldShowGlow = lineData.highlightHighBit || lineData.highlightLowBit;
+
+        if (shouldStartBeatDemo)
+        {
+            StopAttackBeatDemoCoroutine();
+            ClearBeatDemoNotes();
+
+            attackBeatDemoCoroutine = StartCoroutine(
+                PlayAttackBeatDemoSequence(lineIndex, lineData)
+            );
+
+            return;
+        }
+
+        if (shouldShowGlow)
+        {
+            ShowBeatDemoGlow(
+                high: lineData.highlightHighBit,
+                low: lineData.highlightLowBit
+            );
+
             return;
         }
 
@@ -1947,22 +1974,6 @@ public class TutorialManager : MonoBehaviour
             StopAttackBeatDemoCoroutine();
             ClearBeatDemoNotes();
         }
-
-        if (!playAttackBeatDemo)
-        {
-            return;
-        }
-
-        if (!lineData.playHighThenLowDemo)
-        {
-            return;
-        }
-
-        StopAttackBeatDemoCoroutine();
-
-        attackBeatDemoCoroutine = StartCoroutine(
-            PlayAttackBeatDemoSequence(lineIndex, lineData)
-        );
     }
 
     /// <summary>
@@ -2046,20 +2057,15 @@ public class TutorialManager : MonoBehaviour
     /// </summary>
     private IEnumerator PlayAttackBeatDemoSequence(int lineIndex, TutorialGuideLineData lineData)
     {
-        if (!attackHighBeatDemoStarted)
-        {
-            attackHighBeatDemoStarted = true;
+        Debug.Log(
+            $"TutorialManager: Attack high beat demo 시작 / " +
+            $"line:{lineIndex + 1}, text:{lineData.text}"
+        );
 
-            Debug.Log(
-                $"TutorialManager: Attack high beat demo 시작 / " +
-                $"line:{lineIndex + 1}, text:{lineData.text}"
-            );
-
-            SpawnBeatDemoNote(
-                NoteType.HIGH,
-                demoHighNotePositionRatio
-            );
-        }
+        SpawnBeatDemoNote(
+            NoteType.HIGH,
+            demoHighNotePositionRatio
+        );
 
         float intervalSeconds = GetTutorialBeatSeconds() * Mathf.Max(0f, beatDemoIntervalBeats);
 
@@ -2068,20 +2074,15 @@ public class TutorialManager : MonoBehaviour
             yield return new WaitForSecondsRealtime(intervalSeconds);
         }
 
-        if (!attackLowBeatDemoStarted)
-        {
-            attackLowBeatDemoStarted = true;
+        Debug.Log(
+            $"TutorialManager: Attack low beat demo 시작 / " +
+            $"line:{lineIndex + 1}, text:{lineData.text}"
+        );
 
-            Debug.Log(
-                $"TutorialManager: Attack low beat demo 시작 / " +
-                $"line:{lineIndex + 1}, text:{lineData.text}"
-            );
-
-            SpawnBeatDemoNote(
-                NoteType.LOW,
-                demoLowNotePositionRatio
-            );
-        }
+        SpawnBeatDemoNote(
+            NoteType.LOW,
+            demoLowNotePositionRatio
+        );
 
         attackBeatDemoCoroutine = null;
     }
