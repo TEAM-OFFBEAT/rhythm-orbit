@@ -116,9 +116,19 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private TutorialNoteExampleView highNoteExampleView;
     [SerializeField] private TutorialNoteExampleView lowNoteExampleView;
 
+    [Header("Attack Turn Dialogue Demo")]
+    [SerializeField, Min(0f)] private float attackDialogueDemoLeadSeconds = 0.15f;
+    [SerializeField, Min(0f)] private float attackDialogueDemoHoldBeats = 1f;
+    private Coroutine attackDialogueDemoCoroutine;
+
+    [SerializeField] private bool repeatAttackDialogueDemoUntilAdvance = true;
+    [SerializeField, Min(0f)] private float attackDialogueDemoRepeatDelayBeats = 1f;
+
+    private bool attackDialogueDemoAdvanceRequested;
+
     [Header("Attack Beat Demo")]
     [SerializeField] private bool playAttackBeatDemo = true;
-    
+
     [Tooltip("F 비트가 나온 뒤 J 비트가 나오기까지의 간격. 박자 단위.")]
     [SerializeField, Min(0f)] private float beatDemoIntervalBeats = 1f;
     
@@ -197,6 +207,7 @@ public class TutorialManager : MonoBehaviour
     private void OnDisable()
     {
         StopAttackBeatDemoCoroutine();
+        StopAttackDialogueDemoCoroutine();
         StopDefenseDialogueDemoCoroutine();
         ClearBeatDemoNotes();
 
@@ -382,6 +393,12 @@ public class TutorialManager : MonoBehaviour
         {
             bool consumed = dialoguePlayer != null &&
                 dialoguePlayer.RequestManualAdvance();
+
+            if (consumed && attackDialogueDemoCoroutine != null)
+            {
+                attackDialogueDemoAdvanceRequested = true;
+                StopAttackDialogueDemoCoroutine();
+            }
 
             if (!consumed && logInputRouting)
             {
@@ -902,6 +919,27 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 공격 데모가 끝나거나, F/J로 대사 넘기기 요청이 들어올 때까지 기다린다.
+    /// 반복 데모 중 F/J를 누르면 즉시 빠져나와 데모를 중단할 수 있게 한다.
+    /// </summary>
+    private IEnumerator WaitAttackDemoEndOrAdvance()
+    {
+        float timeout = 10f;
+        float elapsed = 0f;
+
+        while (!attackEnded && !attackDialogueDemoAdvanceRequested && elapsed < timeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!attackEnded && !attackDialogueDemoAdvanceRequested)
+        {
+            Debug.LogWarning("TutorialManager: 공격 설명 데모 종료 이벤트를 받지 못해 timeout으로 진행.");
+        }
+    }
+
     private void HandleAttackEnded(AttackResult result)
     {
         attackEnded = true;
@@ -1109,10 +1147,10 @@ public class TutorialManager : MonoBehaviour
             attackBeatDemoCoroutine = null;
         }
 
+        StopAttackDialogueDemoCoroutine();
+
         ClearBeatDemoNotes();
 
-        // 설명 대사는 박자 경계를 기다릴 필요가 없다.
-        // forcedStartDspTime을 현재 DSP 시간으로 주면 바로 다음 프레임부터 표시된다.
         double startDspTime = AudioSettings.dspTime;
 
         yield return dialoguePlayer.PlayLines(
@@ -1122,6 +1160,11 @@ public class TutorialManager : MonoBehaviour
             onLineStarted: HandleAttackGuideLineStarted,
             forcedStartDspTime: startDspTime
         );
+
+        if (attackDialogueDemoCoroutine != null)
+        {
+            yield return attackDialogueDemoCoroutine;
+        }
 
         if (attackBeatDemoCoroutine != null)
         {
@@ -1202,6 +1245,31 @@ public class TutorialManager : MonoBehaviour
 
         StopCoroutine(attackBeatDemoCoroutine);
         attackBeatDemoCoroutine = null;
+    }
+
+    /// <summary>
+    /// 공격 설명 중 실행되는 실제 공격턴 데모 코루틴을 중지한다.
+    /// F/J로 다음 대사로 넘어가거나 씬이 꺼질 때 데모 잔여물을 정리한다.
+    /// </summary>
+    private void StopAttackDialogueDemoCoroutine()
+    {
+        if (attackDialogueDemoCoroutine == null)
+        {
+            return;
+        }
+
+        attackDialogueDemoAdvanceRequested = true;
+
+        StopCoroutine(attackDialogueDemoCoroutine);
+        attackDialogueDemoCoroutine = null;
+
+        attackTurn?.CancelAttack();
+        attackTurnRenderer?.ClearAll();
+
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+
+        dialoguePlayer?.EndExternalManualAdvanceLock();
     }
 
     /// <summary>
@@ -1931,9 +1999,7 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// 공격턴 설명 문장 시작 시 호출된다.
-    /// playHighThenLowDemo가 켜진 줄에서 F → J 노트 예시를 시간차로 표시한다.
-    /// highlightHighBit / highlightLowBit이 켜진 줄에서는 이미 표시된 노트의 Glow를 동시에 켠다.
-    /// 설정한 대사 번호에 도달하면 F/J 예시 노트를 제거한다.
+    /// UI 노트 예시, 실제 공격턴 데모, Glow 연출을 대사 줄 설정에 따라 실행한다.
     /// </summary>
     private void HandleAttackGuideLineStarted(int lineIndex, TutorialGuideLineData lineData)
     {
@@ -1942,9 +2008,34 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        if (attackDialogueDemoCoroutine != null)
+        {
+            StopAttackDialogueDemoCoroutine();
+        }
+
         bool shouldStartBeatDemo = playAttackBeatDemo && lineData.playHighThenLowDemo;
+        bool shouldStartAttackTurnDemo = lineData.playAttackTurnDemo;
         bool shouldShowGlow = lineData.highlightHighBit || lineData.highlightLowBit;
 
+        // 1. 실제 공격턴 데모
+        if (shouldStartAttackTurnDemo)
+        {
+            StopAttackBeatDemoCoroutine();
+            ClearBeatDemoNotes();
+
+            if (attackDialogueDemoCoroutine != null)
+            {
+                StopAttackDialogueDemoCoroutine();
+            }
+
+            attackDialogueDemoCoroutine = StartCoroutine(
+                RunAttackDialogueDemo(lineIndex, lineData)
+            );
+
+            return;
+        }
+
+        // 2. F/J UI 노트 예시 등장
         if (shouldStartBeatDemo)
         {
             StopAttackBeatDemoCoroutine();
@@ -1957,6 +2048,7 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        // 3. 이미 떠 있는 F/J UI 노트의 Glow 켜기
         if (shouldShowGlow)
         {
             ShowBeatDemoGlow(
@@ -1967,6 +2059,7 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        // 4. 지정 줄에서 F/J UI 노트 예시 제거
         int clearLineIndex = Mathf.Max(1, beatDemoClearLineNumber) - 1;
 
         if (lineIndex == clearLineIndex)
@@ -2050,6 +2143,150 @@ public class TutorialManager : MonoBehaviour
             $"TutorialManager: Defense dialogue demo 완료 / " +
             $"line:{lineIndex + 1}, start:{demoStartDspTime:0.000}"
         );
+    }
+
+    /// <summary>
+    /// 공격 설명 중 실제 공격턴처럼 보이는 데모를 재생한다.
+    /// 첫 번째 데모가 끝난 뒤에는 F/J 넘기기를 허용한다.
+    /// 이후 반복 데모 중에도 F/J를 누르면 데모를 즉시 멈추고 다음 대사로 넘어간다.
+    /// </summary>
+    private IEnumerator RunAttackDialogueDemo(int lineIndex, TutorialGuideLineData lineData)
+    {
+        attackDialogueDemoAdvanceRequested = false;
+
+        if (patternProvider == null)
+        {
+            Debug.LogWarning("TutorialManager: patternProvider가 없어 공격 데모를 재생할 수 없음.");
+            attackDialogueDemoCoroutine = null;
+            yield break;
+        }
+
+        TutorialPatternData pattern = patternProvider.GetAttackDialogueDemoPattern();
+
+        if (pattern == null || pattern.NoteCount <= 0)
+        {
+            Debug.LogWarning("TutorialManager: 공격 설명 데모 패턴이 비어 있음.");
+            attackDialogueDemoCoroutine = null;
+            yield break;
+        }
+
+        bool isFirstPlayback = true;
+
+        while (!attackDialogueDemoAdvanceRequested)
+        {
+            // 첫 번째 데모에서만 넘기기를 잠근다.
+            // 두 번째 데모부터는 데모가 재생 중이어도 F/J로 바로 넘길 수 있어야 한다.
+            if (isFirstPlayback)
+            {
+                dialoguePlayer?.BeginExternalManualAdvanceLock();
+            }
+
+            ClearBeatDemoNotes();
+            attackTurnRenderer.ClearAll();
+            hud?.ClearAttackProgress();
+            hud?.ClearJudgments();
+
+            AttackSide attackerSide = playerSide;
+            currentHudAttackerSide = attackerSide;
+            showCurrentDefenseKeyHints = false;
+
+            PrepareAttackWaitState();
+
+            gameCamera?.SetAttackView(attackerSide);
+            hud?.SetTurnOwner(GetPlayerId(attackerSide));
+
+            double attackStartDspTime =
+                GetCurrentOrNextGuideBoundaryDspTime(
+                    AudioSettings.dspTime + attackDialogueDemoLeadSeconds
+                );
+
+            double intervalSeconds = GetGuideMetronomeIntervalSeconds();
+
+            while (attackStartDspTime < AudioSettings.dspTime + attackDialogueDemoLeadSeconds)
+            {
+                attackStartDspTime += intervalSeconds;
+            }
+
+            if (logTurnFlow)
+            {
+                Debug.Log(
+                    $"TutorialManager: 공격 설명 데모 시작 / " +
+                    $"line:{lineIndex + 1}, side:{attackerSide}, start:{attackStartDspTime:0.000}, notes:{pattern.NoteCount}, first:{isFirstPlayback}"
+                );
+            }
+
+            attackTurn.StartTutorialAttackDemo(
+                attackerSide,
+                pattern.message,
+                pattern.notes,
+                pattern.gridSteps,
+                attackStartDspTime
+            );
+
+            // 데모 도중 F/J로 넘기기 요청이 들어오면 즉시 빠져나온다.
+            yield return WaitAttackDemoEndOrAdvance();
+
+            if (attackDialogueDemoAdvanceRequested)
+            {
+                break;
+            }
+
+            float holdSeconds = GetTutorialBeatSeconds() * Mathf.Max(0f, attackDialogueDemoHoldBeats);
+
+            float holdElapsed = 0f;
+            while (holdElapsed < holdSeconds && !attackDialogueDemoAdvanceRequested)
+            {
+                holdElapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (attackDialogueDemoAdvanceRequested)
+            {
+                break;
+            }
+
+            attackTurnRenderer.ClearAll();
+            hud?.ClearAttackProgress();
+            hud?.ClearJudgments();
+
+            if (isFirstPlayback)
+            {
+                isFirstPlayback = false;
+
+                // 여기서부터 F/J 힌트가 계속 떠 있어야 한다.
+                // 반복 데모가 다시 시작돼도 다시 잠그지 않는다.
+                dialoguePlayer?.EndExternalManualAdvanceLock();
+            }
+
+            if (!repeatAttackDialogueDemoUntilAdvance)
+            {
+                break;
+            }
+
+            float repeatDelaySeconds =
+                GetTutorialBeatSeconds() * Mathf.Max(0f, attackDialogueDemoRepeatDelayBeats);
+
+            float repeatElapsed = 0f;
+            while (repeatElapsed < repeatDelaySeconds && !attackDialogueDemoAdvanceRequested)
+            {
+                repeatElapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
+
+        attackTurn?.CancelAttack();
+        attackTurnRenderer?.ClearAll();
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+
+        dialoguePlayer?.EndExternalManualAdvanceLock();
+
+        attackDialogueDemoCoroutine = null;
+
+        if (logTurnFlow)
+        {
+            Debug.Log($"TutorialManager: 공격 설명 데모 종료 / line:{lineIndex + 1}");
+        }
     }
 
     /// <summary>

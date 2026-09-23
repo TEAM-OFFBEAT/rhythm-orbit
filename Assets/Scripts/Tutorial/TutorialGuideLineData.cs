@@ -22,6 +22,10 @@ public class TutorialGuideLineData
     [Header("Beat Demo")]
     public bool playHighThenLowDemo;
 
+    [Header("Attack Turn Demo")]
+    [Tooltip("이 줄에서 실제 공격턴처럼 판정선 이동 + 노트 생성 + 타격 이펙트 데모를 재생한다.")]
+    public bool playAttackTurnDemo;
+
     [Header("Defense Demo")]
     [Tooltip("이 줄에서 실제 방어턴처럼 카메라 이동 + 노트 이동 + AI 방어 데모를 재생한다.")]
     public bool playDefenseTurnDemo;
