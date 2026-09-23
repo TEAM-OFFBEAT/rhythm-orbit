@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6427101917554206500}
   - component: {fileID: 2639346494071569757}
   - component: {fileID: 4265392361032758618}
+  - component: {fileID: 5558853389243361315}
   m_Layer: 0
   m_Name: TutorialManager
   m_TagString: Untagged
@@ -93,6 +94,8 @@ MonoBehaviour:
   lowNoteExampleView: {fileID: 0}
   attackDialogueDemoLeadSeconds: 0.15
   attackDialogueDemoHoldBeats: 1
+  repeatAttackDialogueDemoUntilAdvance: 1
+  attackDialogueDemoRepeatDelayBeats: 1
   playAttackBeatDemo: 1
   beatDemoIntervalBeats: 1
   beatDemoClearLineNumber: 3
@@ -291,14 +294,14 @@ MonoBehaviour:
     rymoPortrait: {fileID: -8401692288953904933, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
     highlightStars: 0
     highlightAttackJudgeLine: 0
-    highlightDefenseJudgeLine: 1
+    highlightDefenseJudgeLine: 0
     highlightHighBit: 0
     highlightLowBit: 0
     playHighThenLowDemo: 0
     playAttackTurnDemo: 0
-    playDefenseTurnDemo: 0
-    lockManualAdvanceUntilVisualCueFinished: 0
-    manualAdvanceUnlockDelayBeats: 1
+    playDefenseTurnDemo: 1
+    lockManualAdvanceUntilVisualCueFinished: 1
+    manualAdvanceUnlockDelayBeats: 4
   - text: "<b>\uD0A4</b>, <b>\uD310\uC815 \uD0C0\uC774\uBC0D</b>\uC744 \uC8FC\uC758\uD558\uBA74\uC11C
       <b>\uBC29\uC5B4\uD574 \uBCF4\uC790\uBAA8!</b>"
     rymoPortrait: {fileID: -8090365562718305141, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
@@ -451,3 +454,33 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &5558853389243361315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8508207998096961152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: 
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}

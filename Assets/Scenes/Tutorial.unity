@@ -1922,22 +1922,6 @@ PrefabInstance:
       propertyPath: p2DefenseJudgmentLabel
       value: 
       objectReference: {fileID: 1836838970}
-    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
-      propertyPath: defenseGuideLines.Array.data[2].playDefenseTurnDemo
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
-      propertyPath: defenseGuideLines.Array.data[2].highlightDefenseJudgeLine
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
-      propertyPath: defenseGuideLines.Array.data[2].manualAdvanceUnlockDelayBeats
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
-      propertyPath: defenseGuideLines.Array.data[2].lockManualAdvanceUntilVisualCueFinished
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6427101917554206500, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
       propertyPath: m_LocalPosition.x
       value: 960

@@ -388,21 +388,13 @@ public class TutorialManager : MonoBehaviour
             Debug.Log($"TutorialManager HandleTap / step:{currentStep}, note:{noteType}");
         }
 
-        // 대사 단계에서는 F/J가 노트 입력이 아니라 대사 진행 입력이다.
+        // 대사 단계에서는 F/J를 대사 넘기기로 쓰지 않는다.
+        // 대사 넘기기는 Space 입력의 OnAdvanceDialogue()가 담당한다.
         if (IsDialogueStep(currentStep))
         {
-            bool consumed = dialoguePlayer != null &&
-                dialoguePlayer.RequestManualAdvance();
-
-            if (consumed && attackDialogueDemoCoroutine != null)
+            if (logInputRouting)
             {
-                attackDialogueDemoAdvanceRequested = true;
-                StopAttackDialogueDemoCoroutine();
-            }
-
-            if (!consumed && logInputRouting)
-            {
-                Debug.Log("TutorialManager: 현재 대사는 아직 수동 넘기기 불가 상태.");
+                Debug.Log("TutorialManager: 대사 단계에서는 F/J 노트 입력을 무시함. 대사는 Space로 넘긴다.");
             }
 
             return;
@@ -423,6 +415,60 @@ public class TutorialManager : MonoBehaviour
             default:
                 Debug.Log($"TutorialManager: 현재 단계({currentStep})에서는 입력을 무시함.");
                 break;
+        }
+    }
+
+    /// <summary>
+    /// Space 입력으로 튜토리얼 대사를 넘긴다.
+    /// TutorialInputRouter 또는 PlayerInput SendMessage에서 호출한다.
+    /// </summary>
+    public void OnAdvanceDialogue()
+    {
+        RequestDialogueAdvance();
+    }
+
+    /// <summary>
+    /// Space 입력으로 튜토리얼 대사를 넘긴다.
+    /// Unity New Input System PlayerInput SendMessage용 오버로드다.
+    /// </summary>
+    public void OnAdvanceDialogue(InputValue value)
+    {
+        if (value != null && !value.isPressed)
+        {
+            return;
+        }
+
+        RequestDialogueAdvance();
+    }
+
+    /// <summary>
+    /// 현재 대사 단계에서 수동 넘기기를 요청한다.
+    /// 공격 데모 반복 중이면 데모를 즉시 중단하고 다음 대사로 넘어가게 한다.
+    /// </summary>
+    private void RequestDialogueAdvance()
+    {
+        if (!IsDialogueStep(currentStep))
+        {
+            if (logInputRouting)
+            {
+                Debug.Log($"TutorialManager: 현재 단계({currentStep})에서는 대사 넘기기 입력을 무시함.");
+            }
+
+            return;
+        }
+
+        bool consumed = dialoguePlayer != null &&
+            dialoguePlayer.RequestManualAdvance();
+
+        if (consumed && attackDialogueDemoCoroutine != null)
+        {
+            attackDialogueDemoAdvanceRequested = true;
+            StopAttackDialogueDemoCoroutine();
+        }
+
+        if (!consumed && logInputRouting)
+        {
+            Debug.Log("TutorialManager: 현재 대사는 아직 수동 넘기기 불가 상태.");
         }
     }
 
