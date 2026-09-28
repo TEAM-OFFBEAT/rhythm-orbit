@@ -399,6 +399,12 @@ public class TutorialDialoguePlayer : MonoBehaviour
         double dialogueStartDspTime =
             forcedStartDspTime ?? AudioSettings.dspTime;
 
+        // autoAdvance: DSP 앵커 계산에 double 정밀도 사용 (float 누적 오차 방지)
+        double beatDurationDouble = RhythmClock.Instance != null
+            ? RhythmClock.Instance.GetBeatDuration()
+            : 60.0 / Mathf.Max(1f, currentBpm);
+        double lineDurationDouble = beatDurationDouble * safeBeats;
+
         double visualShowDspTime =
             dialogueStartDspTime - dialogueVisualLeadSeconds;
 
@@ -429,7 +435,8 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
             if (autoAdvance)
             {
-                yield return PauseableWait(beatSeconds * safeBeats);
+                // 각 줄을 dialogueStartDspTime 기준 절대값으로 기다려 프레임 누적 오차를 방지한다.
+                yield return WaitUntilDspTime(dialogueStartDspTime + (double)(i + 1) * lineDurationDouble);
             }
             else
             {
