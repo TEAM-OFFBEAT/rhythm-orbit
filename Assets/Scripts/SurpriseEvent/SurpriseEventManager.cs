@@ -43,12 +43,9 @@ public class SurpriseEventManager : MonoBehaviour
     [SerializeField, Min(0f)] private float eventEntryLeadSeconds = 0.7f;
 
     [Header("UI")]
-    [Tooltip("이벤트 진입 시 양쪽 화면에 보여줄 '이벤트 발생!' 토스트 UI 루트.")]
-    [SerializeField] private GameObject eventToastRoot;
-
-    [Header("Debug UI")]
-    [SerializeField] private TMP_Text eventStateDebugText;
-    [SerializeField] private bool showEventStateDebugText = true;
+    [Tooltip("이벤트 알림을 표시할 텍스트 컴포넌트. GameNoticePanel의 GuideText에 연결한다.")]
+    [SerializeField] private TMP_Text notificationText;
+    [SerializeField] private string toastMessage = "이벤트 발생!";
 
     [Header("Debug")]
     [Tooltip("테스트용. true면 확률과 관계없이 가능한 전환마다 이벤트를 발생시킨다.")]
@@ -122,18 +119,12 @@ public class SurpriseEventManager : MonoBehaviour
         BuildDefinitionMap();
         RegisterHandlersInChildren();
 
-        if (eventToastRoot != null)
-        {
-            eventToastRoot.SetActive(false);
-        }
-
-        ClearEventStateDebugText();
+        ClearNotification();
     }
 
     private void OnDisable()
     {
-        HideEventToast();
-        ClearEventStateDebugText();
+        ClearNotification();
     }
 
     // ─────────────────────────────────────────────────────────
@@ -443,8 +434,7 @@ public class SurpriseEventManager : MonoBehaviour
         preparedEventCounted = false;
         activeEventPhaseBegun = false;
 
-        ShowEventToast();
-        SetEventStateDebugText($"진입\n{activeEvent.phase} / P{activeEvent.targetPlayerId}");
+        SetNotification($"진입\n{activeEvent.phase} / P{activeEvent.targetPlayerId}");
 
         if (definitionMap.TryGetValue(activeEvent.eventId, out SurpriseEventDefinition definition))
         {
@@ -482,7 +472,7 @@ public class SurpriseEventManager : MonoBehaviour
 
         activeEventPhaseBegun = true;
 
-        SetEventStateDebugText($"적용중\n{activeEvent.phase} / P{activeEvent.targetPlayerId}");
+        SetNotification($"적용중\n{activeEvent.phase} / P{activeEvent.targetPlayerId}");
 
         if (handlerMap.TryGetValue(activeEvent.eventId, out ISurpriseEventHandler handler))
         {
@@ -520,8 +510,7 @@ public class SurpriseEventManager : MonoBehaviour
             handler.EndEvent(activeEvent);
         }
 
-        HideEventToast();
-        ClearEventStateDebugText();
+        ClearNotification();
 
         Log($"이벤트 복귀 / id:{activeEvent.eventId}");
 
@@ -560,22 +549,6 @@ public class SurpriseEventManager : MonoBehaviour
     // ─────────────────────────────────────────────────────────
     // UI / 사운드
     // ─────────────────────────────────────────────────────────
-
-    private void ShowEventToast()
-    {
-        if (eventToastRoot != null)
-        {
-            eventToastRoot.SetActive(true);
-        }
-    }
-
-    private void HideEventToast()
-    {
-        if (eventToastRoot != null)
-        {
-            eventToastRoot.SetActive(false);
-        }
-    }
 
     /// <summary>
     /// 이벤트 진입 효과음을 재생한다.
@@ -617,8 +590,7 @@ public class SurpriseEventManager : MonoBehaviour
         activeEventPhaseBegun = false;
         totalEventCount = 0;
 
-        HideEventToast();
-        ClearEventStateDebugText();
+        ClearNotification();
     }
 
     // ─────────────────────────────────────────────────────────
@@ -635,22 +607,20 @@ public class SurpriseEventManager : MonoBehaviour
         Debug.Log($"SurpriseEventManager: {message}");
     }
 
-    private void SetEventStateDebugText(string message)
+    private void SetNotification(string debugLine)
     {
-        if (!showEventStateDebugText || eventStateDebugText == null)
-        {
-            return;
-        }
-
-        eventStateDebugText.gameObject.SetActive(true);
-        eventStateDebugText.text = message;
+        if (notificationText == null) return;
+        notificationText.transform.parent.gameObject.SetActive(true);
+        notificationText.gameObject.SetActive(true);
+        notificationText.text = $"{toastMessage}\n{debugLine}";
+        notificationText.maxVisibleCharacters = int.MaxValue;
     }
 
-    private void ClearEventStateDebugText()
+    private void ClearNotification()
     {
-        if (eventStateDebugText != null)
-        {
-            eventStateDebugText.text = "";
-        }
+        if (notificationText == null) return;
+        notificationText.text = "";
+        notificationText.gameObject.SetActive(false);
+        notificationText.transform.parent.gameObject.SetActive(false);
     }
 }

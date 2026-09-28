@@ -129,22 +129,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1881727008867390408, guid: feb0289c027318244a2c43727103e4bd, type: 3}
   m_PrefabInstance: {fileID: 6226963498876287247}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &181996208 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4836192219187633081, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
-  m_PrefabInstance: {fileID: 942637795}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &275423500 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6513519794188593186, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
-  m_PrefabInstance: {fileID: 942637795}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &280506543
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2100,26 +2084,30 @@ PrefabInstance:
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventToastRoot
       value: 
-      objectReference: {fileID: 181996208}
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: notificationText
+      value: 
+      objectReference: {fileID: 1569432753}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: forceEventForTest
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventStateDebugText
       value: 
-      objectReference: {fileID: 275423500}
+      objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[1].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[2].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[3].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
