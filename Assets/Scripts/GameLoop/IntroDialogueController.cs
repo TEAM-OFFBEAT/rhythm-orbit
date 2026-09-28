@@ -36,6 +36,14 @@ public class IntroDialogueController : MonoBehaviour
     }
 
     /// <summary>
+    /// 진행 중인 인트로 대사 자동 진행을 일시정지한다. 현재 줄 텍스트는 유지된다.
+    /// </summary>
+    public void Pause()
+    {
+        dialoguePlayer?.SetPaused(true);
+    }
+
+    /// <summary>
     /// 진행 중인 인트로 대사와 글로우 효과를 즉시 중단한다.
     /// </summary>
     public void Stop()

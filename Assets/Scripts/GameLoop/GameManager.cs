@@ -888,6 +888,12 @@ public class GameManager : MonoBehaviour
     {
         if (currentState == GameState.END) return;
         currentState = GameState.END;
+
+        introDialogueController?.Pause();
+        attackTurn?.SetPaused(true);
+        defenseTurn?.SetPaused(true);
+        attackTurnRenderer?.SetPaused(true);
+
         Debug.Log("GameManager: 상대방 연결 끊김");
     }
 

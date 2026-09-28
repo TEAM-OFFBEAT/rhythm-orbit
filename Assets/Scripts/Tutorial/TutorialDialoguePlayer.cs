@@ -429,7 +429,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
             if (autoAdvance)
             {
-                yield return new WaitForSecondsRealtime(beatSeconds * safeBeats);
+                yield return PauseableWait(beatSeconds * safeBeats);
             }
             else
             {
@@ -440,7 +440,7 @@ public class TutorialDialoguePlayer : MonoBehaviour
             if (useBlinkBetweenLines && hasNextLine && blinkSecondsBetweenLines > 0f)
             {
                 ShowBlinkBlank();
-                yield return new WaitForSecondsRealtime(blinkSecondsBetweenLines);
+                yield return PauseableWait(blinkSecondsBetweenLines);
             }
         }
 
@@ -810,6 +810,23 @@ public class TutorialDialoguePlayer : MonoBehaviour
 
         ClearGuideText();
         SetGuidePanelVisible(false);
+    }
+
+    private bool isPaused;
+
+    /// <summary>
+    /// 대사 자동 진행 코루틴을 일시정지하거나 재개한다.
+    /// </summary>
+    public void SetPaused(bool value) => isPaused = value;
+
+    private IEnumerator PauseableWait(float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (!isPaused) elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
     }
 
     private IEnumerator WaitUntilDspTime(double targetDspTime)

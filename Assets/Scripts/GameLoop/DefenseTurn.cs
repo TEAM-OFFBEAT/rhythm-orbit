@@ -79,9 +79,17 @@ public class DefenseTurn : MonoBehaviour
     private AttackSide pendingAttackSide;
     private double pendingAttackDuration;
 
+    private bool isPaused;
+
+    /// <summary>
+    /// 방어 턴 Update 루프를 일시정지하거나 재개한다.
+    /// </summary>
+    public void SetPaused(bool value) => isPaused = value;
+
     private void Update()
     {
         if (!isRunning) return;
+        if (isPaused) return;
 
         double now = AudioSettings.dspTime;
 
