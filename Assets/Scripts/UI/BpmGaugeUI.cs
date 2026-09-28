@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// BPM 값을 fill 게이지로 시각화한다.
-/// 라운드 전환 시 8박 ease-out fill 애니메이션을 제공한다.
+/// 라운드 전환 시 ease-out fill 애니메이션을 제공한다.
 /// SetBpm 호출 이후에만 pulse 효과가 활성화된다.
 /// </summary>
 public class BpmGaugeUI : MonoBehaviour
@@ -17,73 +17,69 @@ public class BpmGaugeUI : MonoBehaviour
     [SerializeField] private float maxBpm = 144f;
 
     [Header("Fill Animation")]
-    [SerializeField] private float animBeats = 8f;
+    [SerializeField] private float animDuration = 1f;
 
-    [Header("Pulse Effect")]
-    [SerializeField] private float pulseAmplitude = 2f;
-    [SerializeField] private float pulseFrequency = 5f;
+    [Header("Pulse Effect (끝점 흔들림)")]
+    [SerializeField] private float pulseAmplitude = 0.015f;
+    [SerializeField] private float pulseSpeed = 15f;
 
-    private float currentFill;
-    private float currentBpm;
-    private bool pulseActive;
+    [Header("Arc Fill Settings")]
+    [SerializeField] private float arcStartOffset = 0f;    // Bottom(6시)부터 아크 시작점까지 CCW 비율 (0~1)
+    [SerializeField] private float arcSpan = 0.38f;         // 아크 전체 스팬 비율 (0~1)
+
+    private float currentFill = 0f;
+    private float targetFill = 0f;
+    private bool pulseActive = false;
     private Coroutine animCoroutine;
 
     private void Awake()
     {
-        currentFill = 0f;
         if (fillImage != null)
+        {
+            fillImage.type = Image.Type.Filled;
+            fillImage.fillMethod = Image.FillMethod.Radial360;
             fillImage.fillAmount = 0f;
+        }
     }
 
     private void Update()
     {
         if (fillImage == null) return;
 
-        if (!pulseActive)
-        {
-            fillImage.fillAmount = currentFill;
-            return;
-        }
-
-        float barWidth = fillImage.rectTransform.rect.width;
-        if (barWidth <= 0f) return;
-
-        float pulseOffset = Mathf.Sin(Time.time * pulseFrequency * Mathf.PI * 2f) * (pulseAmplitude / barWidth);
-        fillImage.fillAmount = Mathf.Clamp01(currentFill + pulseOffset);
+        float pulseOffset = pulseActive ? Mathf.Sin(Time.time * pulseSpeed) * pulseAmplitude : 0f;
+        float normalizedFill = Mathf.Clamp01(currentFill + pulseOffset);
+        fillImage.fillAmount = arcStartOffset + normalizedFill * arcSpan;
     }
 
     /// <summary>
-    /// 지정한 BPM에 맞는 fill 값으로 8박 ease-out 애니메이션을 시작한다.
+    /// 지정한 BPM에 맞는 fill 값으로 ease-out 애니메이션을 시작한다.
     /// 처음 호출 시 pulse가 활성화된다.
     /// minBpm 이하면 0, maxBpm 이상이면 1로 클램프된다.
     /// </summary>
     public void SetBpm(float bpm)
     {
-        currentBpm = bpm;
+        targetFill = Mathf.InverseLerp(minBpm, maxBpm, bpm);
         pulseActive = true;
 
-        float target = Mathf.InverseLerp(minBpm, maxBpm, bpm);
         if (animCoroutine != null) StopCoroutine(animCoroutine);
-        if (!gameObject.activeInHierarchy) { currentFill = target; return; }
-        animCoroutine = StartCoroutine(AnimateFill(target));
+        if (!gameObject.activeInHierarchy) { currentFill = targetFill; return; }
+        animCoroutine = StartCoroutine(AnimateFill());
     }
 
-    private IEnumerator AnimateFill(float target)
+    private IEnumerator AnimateFill()
     {
         float start = currentFill;
-        float duration = animBeats * 60f / currentBpm;
         float elapsed = 0f;
 
-        while (elapsed < duration)
+        while (elapsed < animDuration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            float tEased = 1f - Mathf.Pow(1f - t, 3f);
-            currentFill = Mathf.Lerp(start, target, tEased);
+            float t = Mathf.Clamp01(elapsed / animDuration);
+            currentFill = Mathf.Lerp(start, targetFill, 1f - Mathf.Pow(1f - t, 3f));
             yield return null;
         }
 
-        currentFill = target;
+        currentFill = targetFill;
         animCoroutine = null;
     }
 }

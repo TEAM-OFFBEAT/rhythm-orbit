@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -12,7 +13,9 @@ public class HUD : MonoBehaviour
     [SerializeField] private GameManager gameManager;
 
     [Header("Game Status UI")]
-    [SerializeField] private TMP_Text bpmText;
+    [SerializeField] private Image bpmNumberImage;
+    [SerializeField] private Sprite[] bpmNumberSprites;
+    [SerializeField] private float[] bpmStageValues = { 108f, 120f, 144f };
     [SerializeField] private BpmGaugeUI bpmGauge;
     [SerializeField] private StarsRenderer starsRenderer;
     [SerializeField] private ComboUI comboUI;
@@ -31,9 +34,6 @@ public class HUD : MonoBehaviour
     private Coroutine p1PanelHideCoroutine;
     private Coroutine p2PanelHideCoroutine;
     private bool panelMessagesVisible = true;
-
-    private float currentBpm;
-    private Coroutine bpmTextCoroutine;
 
     private void Awake()
     {
@@ -107,27 +107,23 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 BPM 수치를 텍스트와 게이지 바에 동시에 표시한다.
-    /// 첫 호출 시 텍스트를 즉시 설정하고, 이후 BPM 상승 시 애니메이션을 적용한다.
+    /// 현재 BPM에 해당하는 숫자 이미지 스프라이트로 교체하고 게이지를 갱신한다.
     /// BPM 단계 변경 시 GameManager가 호출한다.
     /// </summary>
     public void UpdateBpm(float bpm)
     {
         bpmGauge?.SetBpm(bpm);
 
-        if (bpmText == null) { currentBpm = bpm; return; }
-
-        if (currentBpm <= 0f)
+        if (bpmNumberImage == null || bpmNumberSprites == null) return;
+        int bpmInt = Mathf.RoundToInt(bpm);
+        for (int i = 0; i < bpmStageValues.Length && i < bpmNumberSprites.Length; i++)
         {
-            bpmText.text = $"BPM {bpm:0}";
-            currentBpm = bpm;
-            return;
+            if (Mathf.RoundToInt(bpmStageValues[i]) == bpmInt)
+            {
+                bpmNumberImage.sprite = bpmNumberSprites[i];
+                break;
+            }
         }
-
-        if (bpmTextCoroutine != null) StopCoroutine(bpmTextCoroutine);
-        float from = currentBpm;
-        currentBpm = bpm;
-        bpmTextCoroutine = StartCoroutine(AnimateBpmText(from, bpm));
     }
 
     /// <summary>
@@ -333,24 +329,6 @@ public class HUD : MonoBehaviour
         yield return new WaitForSeconds(GetTwoBeatSeconds());
         if (p2PanelMessageLabel != null) p2PanelMessageLabel.text = defaultBubbleMessage;
         p2PanelHideCoroutine = null;
-    }
-
-    private IEnumerator AnimateBpmText(float from, float to)
-    {
-        float duration = 8f * 60f / to;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            float tEased = 1f - Mathf.Pow(1f - t, 3f);
-            bpmText.text = $"BPM {Mathf.Round(Mathf.Lerp(from, to, tEased)):0}";
-            yield return null;
-        }
-
-        bpmText.text = $"BPM {to:0}";
-        bpmTextCoroutine = null;
     }
 
     // 2박자 = 4반박 = RhythmClock.GetNoteDuration() * 4
