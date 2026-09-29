@@ -17,15 +17,15 @@ public class BpmGaugeUI : MonoBehaviour
     [SerializeField] private float maxBpm = 144f;
 
     [Header("Fill Animation")]
-    [SerializeField] private float animDuration = 1f;
+    [SerializeField] public float animDuration = 1f;
 
     [Header("Pulse Effect (끝점 흔들림)")]
     [SerializeField] private float pulseAmplitude = 0.015f;
     [SerializeField] private float pulseSpeed = 15f;
 
     [Header("Arc Fill Settings")]
-    [SerializeField] private float arcStartOffset = 0f;    // Bottom(6시)부터 아크 시작점까지 CCW 비율 (0~1)
-    [SerializeField] private float arcSpan = 0.38f;         // 아크 전체 스팬 비율 (0~1)
+    [SerializeField] private float arcStartOffset = 0f;    // Left(9시) 기준 아크 시작점까지 CCW 비율 (0~1)
+    [SerializeField] private float arcSpan = 0.38f;        // 아크 전체 스팬 비율 (0~1)
 
     private float currentFill = 0f;
     private float targetFill = 0f;

@@ -13,9 +13,7 @@ public class HUD : MonoBehaviour
     [SerializeField] private GameManager gameManager;
 
     [Header("Game Status UI")]
-    [SerializeField] private Image bpmNumberImage;
-    [SerializeField] private Sprite[] bpmNumberSprites;
-    [SerializeField] private float[] bpmStageValues = { 108f, 120f, 144f };
+    [SerializeField] private BpmNumberUI bpmNumber;
     [SerializeField] private BpmGaugeUI bpmGauge;
     [SerializeField] private StarsRenderer starsRenderer;
     [SerializeField] private ComboUI comboUI;
@@ -107,23 +105,18 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 BPM에 해당하는 숫자 이미지 스프라이트로 교체하고 게이지를 갱신한다.
+    /// BPM 숫자 표시와 게이지를 갱신한다.
     /// BPM 단계 변경 시 GameManager가 호출한다.
     /// </summary>
     public void UpdateBpm(float bpm)
     {
-        bpmGauge?.SetBpm(bpm);
-
-        if (bpmNumberImage == null || bpmNumberSprites == null) return;
-        int bpmInt = Mathf.RoundToInt(bpm);
-        for (int i = 0; i < bpmStageValues.Length && i < bpmNumberSprites.Length; i++)
+        if (bpmGauge != null && bpmNumber != null)
         {
-            if (Mathf.RoundToInt(bpmStageValues[i]) == bpmInt)
-            {
-                bpmNumberImage.sprite = bpmNumberSprites[i];
-                break;
-            }
+            float dur = bpmNumber.GetAnimationDuration(bpm);
+            if (dur > 0f) bpmGauge.animDuration = dur;
         }
+        bpmGauge?.SetBpm(bpm);
+        bpmNumber?.SetBpm(bpm);
     }
 
     /// <summary>

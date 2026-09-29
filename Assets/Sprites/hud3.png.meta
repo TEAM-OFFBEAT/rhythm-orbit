@@ -211,13 +211,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: hud3_3
+      name: bpm1
       rect:
         serializedVersion: 2
-        x: 425
-        y: 996
-        width: 131
-        height: 92
+        x: 400
+        y: 1071
+        width: 96
+        height: 102
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -233,13 +233,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: hud3_4
+      name: bpm2
       rect:
         serializedVersion: 2
-        x: 667
-        y: 997
-        width: 138
-        height: 91
+        x: 512
+        y: 1071
+        width: 96
+        height: 102
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -255,13 +255,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: hud3_5
+      name: bpm3
       rect:
         serializedVersion: 2
-        x: 929
-        y: 990
-        width: 145
-        height: 98
+        x: 624
+        y: 1070
+        width: 96
+        height: 102
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -452,6 +452,160 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: bpm4
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 1066
+        width: 96
+        height: 102
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84830821052a29e90800000000000000
+      internalID: -7020370404325705656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bpm0
+      rect:
+        serializedVersion: 2
+        x: 873
+        y: 1072
+        width: 96
+        height: 102
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 589c74c9bdc1d31e0800000000000000
+      internalID: -2216583712051050107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bpm5
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 926
+        width: 96
+        height: 102
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d42a1bfaffffffff0800000000000000
+      internalID: -1347313075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bpm6
+      rect:
+        serializedVersion: 2
+        x: 503
+        y: 927
+        width: 96
+        height: 102
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f4178dfffffffff0800000000000000
+      internalID: -41478920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bpm7
+      rect:
+        serializedVersion: 2
+        x: 623
+        y: 930
+        width: 96
+        height: 102
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f12b4992000000000800000000000000
+      internalID: 697610783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bpm8
+      rect:
+        serializedVersion: 2
+        x: 748
+        y: 927
+        width: 96
+        height: 102
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2c993b8ffffffff0800000000000000
+      internalID: -1959158741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bpm9
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 927
+        width: 96
+        height: 102
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13b3697bffffffff0800000000000000
+      internalID: -1214891215
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -466,18 +620,23 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
+      bpm0: -2216583712051050107
+      bpm1: 410256335079553799
+      bpm2: 5251385895691365530
+      bpm3: -4559001581344541693
+      bpm4: -7020370404325705656
+      bpm5: -1347313075
+      bpm6: -41478920
+      bpm7: 697610783
+      bpm8: -1959158741
+      bpm9: -1214891215
       hud3_0: -6770405369541753689
       hud3_1: 6749982472831702906
-      hud3_10: -7020370404325705656
       hud3_11: 2785302719531734032
-      hud3_12: -2216583712051050107
       hud3_13: 7437029818268510117
       hud3_14: 5915676583428125513
       hud3_15: -5468849578348532086
       hud3_2: -369603117067999112
-      hud3_3: 410256335079553799
-      hud3_4: 5251385895691365530
-      hud3_5: -4559001581344541693
       hud3_6: -8717179061145372474
       hud3_7: -1080133172283451736
       hud3_8: 386278207431302292
