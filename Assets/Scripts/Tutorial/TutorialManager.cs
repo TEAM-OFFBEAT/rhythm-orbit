@@ -43,6 +43,7 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("랠리 단계에서 처음 표시할 정신력 UI 루트. 비워두면 활성/비활성은 건드리지 않고 HUD 값만 갱신한다.")]
     [SerializeField] private GameObject mySanityUiRoot;
     [SerializeField] private GameObject opponentSanityUiRoot;
+    [SerializeField] private GameObject tutorialFrameImage; 
 
     [Header("Tutorial Settings")]
     [SerializeField] private float tutorialBpm = 90f;
@@ -118,12 +119,9 @@ public class TutorialManager : MonoBehaviour
 
     [Header("Attack Turn Dialogue Demo")]
     [SerializeField, Min(0f)] private float attackDialogueDemoLeadSeconds = 0.15f;
-    [SerializeField, Min(0f)] private float attackDialogueDemoHoldBeats = 1f;
-    private Coroutine attackDialogueDemoCoroutine;
-
     [SerializeField] private bool repeatAttackDialogueDemoUntilAdvance = true;
-    [SerializeField, Min(0f)] private float attackDialogueDemoRepeatDelayBeats = 1f;
 
+    private Coroutine attackDialogueDemoCoroutine;
     private bool attackDialogueDemoAdvanceRequested;
 
     [Header("Attack Beat Demo")]
@@ -136,8 +134,7 @@ public class TutorialManager : MonoBehaviour
     [SerializeField, Min(1)] private int beatDemoClearLineNumber = 3;
     private Coroutine attackBeatDemoCoroutine;
     private Coroutine defenseDialogueDemoCoroutine;
-    private readonly List<int> activeBeatDemoNoteIds = new List<int>();
-
+    
     [Tooltip("고주파 노트가 공격 라인에서 생성될 위치 비율.0.5가 중앙이다.")]
     [SerializeField, Range(0f, 1f)] private float demoHighNotePositionRatio = 0.47f;
 
@@ -191,8 +188,6 @@ public class TutorialManager : MonoBehaviour
 
     private double lastAttackStartDspTime;
     private double lastAttackDuration;
-    private bool attackHighBeatDemoStarted;
-    private bool attackLowBeatDemoStarted;
     private int nextDemoNoteId;
 
     private readonly List<NoteData> lastAttackNotes = new List<NoteData>();
@@ -329,8 +324,6 @@ public class TutorialManager : MonoBehaviour
         
         ClearBeatDemoNotes();
 
-        attackHighBeatDemoStarted = false;
-        attackLowBeatDemoStarted = false;
         nextDemoNoteId = demoFirstNoteId;
 
         hud?.SetupPlayerPerspective(GetPlayerId(playerSide));
@@ -343,6 +336,7 @@ public class TutorialManager : MonoBehaviour
         ResetTutorialSanity();
         SetSanityVisible(false);
         UpdateTutorialSanityHud();
+        SetTutorialFrameVisible(true);
 
         gameCamera?.SetAttackView(playerSide);
 
@@ -503,6 +497,14 @@ public class TutorialManager : MonoBehaviour
         hud?.SetPanelMessagesVisible(false);
     }
 
+    private void SetTutorialFrameVisible(bool visible)
+    {
+        if (tutorialFrameImage != null)
+        {
+            tutorialFrameImage.SetActive(visible);
+        }
+    }
+
     /// <summary>
     /// 공격/방어/랠리 연습 구간에서는 랜덤 메시지 말풍선을 표시한다.
     /// </summary>
@@ -531,6 +533,7 @@ public class TutorialManager : MonoBehaviour
             Debug.Log("TutorialManager: AttackPractice 시작");
         }
 
+        SetTutorialFrameVisible(false);
         ShowPanelMessagesForPractice();
 
         ShowPracticeStartMessage(attackPracticeStartMessage);
@@ -594,6 +597,7 @@ public class TutorialManager : MonoBehaviour
             Debug.Log("TutorialManager: DefensePractice 시작");
         }
 
+        SetTutorialFrameVisible(false);
         ShowPanelMessagesForPractice();
 
         ShowPracticeStartMessage(defensePracticeStartMessage);
@@ -645,6 +649,7 @@ public class TutorialManager : MonoBehaviour
             Debug.Log("TutorialManager: RallyPractice 시작");
         }
 
+        SetTutorialFrameVisible(false);
         ShowPanelMessagesForPractice();
 
         ShowPracticeStartMessage(rallyPracticeStartMessage);
@@ -966,9 +971,9 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 공격 데모가 끝나거나, F/J로 대사 넘기기 요청이 들어올 때까지 기다린다.
-    /// 반복 데모 중 F/J를 누르면 즉시 빠져나와 데모를 중단할 수 있게 한다.
-    /// </summary>
+    /// 공격 데모가 끝나거나, Space로 대사 넘기기 요청이 들어올 때까지 기다린다.
+    /// 반복 데모 중 Space를 누르면 즉시 빠져나와 데모를 중단할 수 있게 한다.
+    /// /// </summary>
     private IEnumerator WaitAttackDemoEndOrAdvance()
     {
         float timeout = 10f;
@@ -1110,7 +1115,8 @@ public class TutorialManager : MonoBehaviour
         {
             yield break;
         }
-
+    
+        SetTutorialFrameVisible(true);
         HidePanelMessages();
 
         double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
@@ -1130,6 +1136,9 @@ public class TutorialManager : MonoBehaviour
         {
             yield break;
         }
+
+        SetTutorialFrameVisible(true);
+        HidePanelMessages();
 
         yield return dialoguePlayer.PlayLines(
             lines,
@@ -1151,6 +1160,7 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
+        SetTutorialFrameVisible(true);
         HidePanelMessages();
 
         double startDspTime = GetCurrentOrNextGuideBoundaryDspTime(AudioSettings.dspTime);
@@ -1182,10 +1192,8 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
+        SetTutorialFrameVisible(true);
         HidePanelMessages();
-
-        attackHighBeatDemoStarted = false;
-        attackLowBeatDemoStarted = false;
 
         if (attackBeatDemoCoroutine != null)
         {
@@ -1978,6 +1986,7 @@ public class TutorialManager : MonoBehaviour
             yield break;
         }
 
+        SetTutorialFrameVisible(true);
         HidePanelMessages();
 
         StopDefenseDialogueDemoCoroutine();

@@ -750,6 +750,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &652204199 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6382692847575858738, guid: 66162f9b0622b0947805e230e035cd06, type: 3}
+  m_PrefabInstance: {fileID: 1679452379}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &889573661 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6785369236386188834, guid: feb0289c027318244a2c43727103e4bd, type: 3}
@@ -1134,6 +1139,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6731067140535465102, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6754349473945636630, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6762276665088082456, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
@@ -1906,6 +1915,10 @@ PrefabInstance:
       propertyPath: lowNoteExampleView
       value: 
       objectReference: {fileID: 1679452383}
+    - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
+      propertyPath: tutorialFrameImage
+      value: 
+      objectReference: {fileID: 652204199}
     - target: {fileID: 2639346494071569757, guid: 8ac5e6360341788489a1b64b07031a86, type: 3}
       propertyPath: highNoteExampleView
       value: 
