@@ -444,6 +444,10 @@ PrefabInstance:
       propertyPath: introDialogueController
       value: 
       objectReference: {fileID: 1755156008}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: settingsWindowController
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 9217618931380790755, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -871,6 +875,10 @@ PrefabInstance:
       propertyPath: gameManager
       value: 
       objectReference: {fileID: 456633806}
+    - target: {fileID: 1322794709533363962, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+      propertyPath: settingsWindowController
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2623698149272734082, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -950,6 +958,14 @@ PrefabInstance:
     - target: {fileID: 2623698149272734082, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3491291141876287222, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+      propertyPath: gameManager
+      value: 
+      objectReference: {fileID: 456633806}
+    - target: {fileID: 3491291141876287222, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+      propertyPath: settingsWindowController
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8365410940559154053, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_Name

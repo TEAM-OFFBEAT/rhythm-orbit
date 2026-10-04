@@ -38,6 +38,8 @@ public class GameManager : MonoBehaviour
 
     [Header("HUD")]
     [SerializeField] private HUD hud;
+    [Header("Settings")]
+    [SerializeField] private SettingsWindowController settingsWindowController;
 
     [Header("Judgment Labels")]
     [SerializeField] private JudgmentLabel p1DefenseJudgmentLabel;
@@ -313,10 +315,16 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 게임 상태에 따라 noteType 입력을 적절한 턴 컴포넌트로 전달.
+    /// 현재 게임 상태에 따라 noteType 입력을 공격/방어 턴으로 전달한다.
+    /// 설정창이 열려 있을 때는 게임 입력을 막아 UI 조작과 충돌하지 않게 한다.
     /// </summary>
     public void OnTap(NoteType noteType)
     {
+        if (settingsWindowController != null && settingsWindowController.IsOpen)
+        {
+            return;
+        }
+
         if (currentState == GameState.ATTACK)
         {
             attackTurn.OnTap(noteType);
@@ -324,7 +332,11 @@ public class GameManager : MonoBehaviour
         else if (currentState == GameState.DEFENSE)
         {
             bool isLocalDefender = NetworkManager.Instance == null || attackerPlayerId != myLocalPlayerId;
-            if (isLocalDefender) defenseTurn.OnTap(noteType);
+
+            if (isLocalDefender)
+            {
+                defenseTurn.OnTap(noteType);
+            }
         }
     }
 

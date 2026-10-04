@@ -2337,6 +2337,7 @@ GameObject:
   - component: {fileID: 2623698149272734082}
   - component: {fileID: 1322794709533363962}
   - component: {fileID: 1953009781935199911}
+  - component: {fileID: 3491291141876287222}
   m_Layer: 0
   m_Name: HUD
   m_TagString: Untagged
@@ -2422,6 +2423,20 @@ MonoBehaviour:
   m_DefaultActionMap: GameLoop
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &3491291141876287222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8365410940559154053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c7f9f9d1096e764fb2493ad0b28f046, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SettingsInputRouter
+  gameManager: {fileID: 0}
+  settingsWindowController: {fileID: 0}
 --- !u!1 &8542963149900771795
 GameObject:
   m_ObjectHideFlags: 0

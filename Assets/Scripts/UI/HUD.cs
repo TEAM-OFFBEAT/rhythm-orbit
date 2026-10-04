@@ -11,6 +11,8 @@ public class HUD : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameManager gameManager;
+    [Header("Settings")]
+    [SerializeField] private SettingsWindowController settingsWindowController;
 
     [Header("Game Status UI")]
     [SerializeField] private BpmNumberUI bpmNumber;
@@ -120,11 +122,18 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// HIGH 노트 입력 버튼에서 호출된다.
-    /// 실제 입력 처리는 GameManager로 전달한다.
+    /// HIGH 노트 입력 버튼 또는 F 키 입력에서 호출된다.
+    /// 설정창 오프셋 탭이 열려 있으면 오프셋 테스트 입력으로 사용하고,
+    /// 그렇지 않으면 GameManager로 전달한다.
     /// </summary>
     public void OnTapHigh()
     {
+        if (settingsWindowController != null &&
+            settingsWindowController.TryHandleHighInput())
+        {
+            return;
+        }
+
         if (gameManager == null)
         {
             Debug.LogWarning("GameManager가 HUD에 연결되지 않았습니다.");
@@ -135,11 +144,17 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
-    /// LOW 노트 입력 버튼에서 호출된다.
-    /// 실제 입력 처리는 GameManager로 전달한다.
+    /// LOW 노트 입력 버튼 또는 J 키 입력에서 호출된다.
+    /// 설정창이 열려 있으면 게임 입력으로 전달하지 않는다.
     /// </summary>
     public void OnTapLow()
     {
+        if (settingsWindowController != null &&
+            settingsWindowController.TryHandleLowInput())
+        {
+            return;
+        }
+
         if (gameManager == null)
         {
             Debug.LogWarning("GameManager가 HUD에 연결되지 않았습니다.");
