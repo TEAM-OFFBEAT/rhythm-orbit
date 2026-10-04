@@ -48,12 +48,8 @@ public class DefenseTurn : MonoBehaviour
     public bool IsRunning => isRunning;
     
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
-    [SerializeField] private double fallbackMissTimeoutMs = 100.0;
     [SerializeField] private float fallbackTransferSpeed = 5f;
-    // 판정선 도달 예정 시각보다 이 시간(ms) 이전의 노트는 MISS 판정 및 키 입력을 무시한다.
-    [SerializeField] private double noteActivationLeadTimeMs = 300.0;
     [SerializeField] private int subdivisions = 2;
-    [SerializeField, Range(0f, 0.5f)] private float defenseTimingWindowRatio = 0.25f;
 
     private readonly List<NoteData> pendingNotes = new();
     private readonly List<NoteData> receivedNotes = new();
@@ -105,12 +101,24 @@ public class DefenseTurn : MonoBehaviour
         }
         else
         {
-            double missTimeout = GetDefenseTimingWindowSeconds();
+            JudgeSystem judgeSystem = JudgeSystem.Instance;
+
+            if (judgeSystem == null)
+            {
+                return;
+            }
+
+            double noteDuration = GetCurrentNoteDurationSeconds();
 
             for (int i = pendingNotes.Count - 1; i >= 0; i--)
             {
-                if (now < pendingNotes[i].judgeTime - noteActivationLeadTimeMs / 1000.0) continue;
-                if (now <= pendingNotes[i].judgeTime + missTimeout) continue;
+                if (!judgeSystem.HasPassedHitWindow(
+                    now,
+                    pendingNotes[i].judgeTime,
+                    noteDuration))
+                {
+                    continue;
+                }
 
                 ResolveDefenseNote(pendingNotes[i], Judgment.MISS);
             }
@@ -313,9 +321,7 @@ public class DefenseTurn : MonoBehaviour
         }
         else
         {
-            double noteDuration = RhythmClock.Instance != null
-                ? RhythmClock.Instance.GetNoteDuration(subdivisions)
-                : fallbackMissTimeoutMs / 1000.0 / defenseTimingWindowRatio;
+            double noteDuration = GetCurrentNoteDurationSeconds();
 
             result = JudgeSystem.Instance != null
                 ? JudgeSystem.Instance.Judge(inputTime, normalTarget.judgeTime, noteDuration)
@@ -393,36 +399,44 @@ public class DefenseTurn : MonoBehaviour
     /// </summary>
     private NoteData GetNearestNoteByTime(double inputTime)
     {
+        JudgeSystem judgeSystem = JudgeSystem.Instance;
+
+        if (judgeSystem == null)
+        {
+            return null;
+        }
+
         NoteData nearest = null;
         double minDist = double.MaxValue;
+        double noteDuration = GetCurrentNoteDurationSeconds();
 
         foreach (var note in pendingNotes)
         {
-            if (inputTime < note.judgeTime - noteActivationLeadTimeMs / 1000.0) continue;
+            if (!judgeSystem.IsNoteActive(inputTime, note.judgeTime))
+            {
+                continue;
+            }
 
-            double dist = System.Math.Abs(note.judgeTime - inputTime);
+            if (judgeSystem.HasPassedHitWindow(
+                inputTime, note.judgeTime, noteDuration))
+            {
+                continue;
+            }
 
-            if (dist >= minDist) continue;
+            double dist = System.Math.Abs(
+                judgeSystem.CalcOffsetMs(inputTime, note.judgeTime)
+            );
+
+            if (dist >= minDist)
+            {
+                continue;
+            }
 
             minDist = dist;
             nearest = note;
         }
 
         return nearest;
-    }
-
-    /// <summary>
-    /// 현재 BPM과 subdivisions 기준으로 방어 성공 판정 허용 시간을 초 단위로 반환한다.
-    /// 기본 기준은 노트 간격의 ±25%다.
-    /// </summary>
-    private double GetDefenseTimingWindowSeconds()
-    {
-        if (RhythmClock.Instance == null)
-        {
-            return fallbackMissTimeoutMs / 1000.0;
-        }
-
-        return RhythmClock.Instance.GetNoteDuration(subdivisions) * defenseTimingWindowRatio;
     }
 
     /// <summary>
@@ -572,7 +586,14 @@ public class DefenseTurn : MonoBehaviour
     {
         GhostNoteData nearest = null;
         double minDist = double.MaxValue;
-        double hitWindow = GetDefenseTimingWindowSeconds();
+        JudgeSystem judgeSystem = JudgeSystem.Instance;
+
+        if (judgeSystem == null)
+        {
+            return null;
+        }
+
+        double noteDuration = GetCurrentNoteDurationSeconds();
 
         foreach (GhostNoteData ghostNote in ghostNotes)
         {
@@ -581,17 +602,17 @@ public class DefenseTurn : MonoBehaviour
                 continue;
             }
 
-            if (inputTime < ghostNote.judgeTime - noteActivationLeadTimeMs / 1000.0)
+            if (!judgeSystem.IsNoteActive(inputTime, ghostNote.judgeTime))
             {
                 continue;
             }
 
-            if (inputTime > ghostNote.judgeTime + hitWindow)
+            if (judgeSystem.HasPassedHitWindow(inputTime, ghostNote.judgeTime, noteDuration))
             {
                 continue;
             }
 
-            double dist = System.Math.Abs(ghostNote.judgeTime - inputTime);
+            double dist = System.Math.Abs(judgeSystem.CalcOffsetMs(inputTime, ghostNote.judgeTime));
 
             if (dist >= minDist)
             {
@@ -621,8 +642,9 @@ public class DefenseTurn : MonoBehaviour
             return true;
         }
 
-        double normalDist = System.Math.Abs(normalTarget.judgeTime - inputTime);
-        double ghostDist = System.Math.Abs(ghostTarget.judgeTime - inputTime);
+        double normalDist = System.Math.Abs(JudgeSystem.Instance.CalcOffsetMs(inputTime, normalTarget.judgeTime));
+
+        double ghostDist = System.Math.Abs(JudgeSystem.Instance.CalcOffsetMs(inputTime, ghostTarget.judgeTime));
 
         return ghostDist <= normalDist;
     }
@@ -703,12 +725,9 @@ public class DefenseTurn : MonoBehaviour
 
     private double GetCurrentNoteDurationSeconds()
     {
-        if (RhythmClock.Instance != null)
-        {
-            return RhythmClock.Instance.GetNoteDuration(subdivisions);
-        }
-
-        return fallbackMissTimeoutMs / 1000.0 / defenseTimingWindowRatio;
+        return RhythmClock.Instance != null
+            ? RhythmClock.Instance.GetNoteDuration(subdivisions)
+            : 60.0 / 106.0 / System.Math.Max(1, subdivisions);
     }
 
     private int GetNearestGridStep(double relativeTime, double noteDuration)
