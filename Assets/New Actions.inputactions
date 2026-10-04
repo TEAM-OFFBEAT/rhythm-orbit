@@ -7,18 +7,18 @@
             "id": "8c876dda-aa2c-4fb0-9f22-378dc43787ab",
             "actions": [
                 {
-                    "name": "ToggleSettings",
+                    "name": "ToggleEscape",
                     "type": "Button",
-                    "id": "c0d9cc6a-84f0-4d8f-834a-6b2755438b8b",
+                    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ToggleEscape",
+                    "name": "ToggleSettings",
                     "type": "Button",
-                    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "id": "e02559f1-df85-4982-9744-22664ed03a43",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -28,23 +28,23 @@
             "bindings": [
                 {
                     "name": "",
-                    "id": "66d525ab-085b-4358-aad4-29f63f492317",
-                    "path": "<Keyboard>/tab",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ToggleSettings",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
                     "path": "<Keyboard>/escape",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "ToggleEscape",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4a8e48da-7ef3-4490-832e-a143ee9b22b1",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSettings",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -76,6 +76,15 @@
                     "name": "TapLow",
                     "type": "Button",
                     "id": "9b9bf97f-3ea5-49b5-9bbb-a6d9b671455d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleSettings",
+                    "type": "Button",
+                    "id": "4d2a1483-9fe6-4f50-9654-1438025f5bba",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -135,6 +144,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "TapLow",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f292decd-2d2b-47a5-acd6-2f07961eefd9",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSettings",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
