@@ -8,37 +8,185 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
 {
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip metronomeClip;
+    [SerializeField] private CalibrationNoteSpawner spawner;
+    [SerializeField, Min(1f)] private float fallbackBpm = 106f;
+    [SerializeField, Min(1)] private int beatsPerNote = 4;
 
-    private CalibrationNoteSpawner spawner;
-    private List<NoteData> notes;
-    private HashSet<int> resolvedIds;
-    private bool isRunning;
+    private readonly List<NoteData> notes = new();
     private Action<string> onFeedback;
+    private bool isRunning;
+    private double beatDuration;
+    private double nextJudgeTime;
+    private int nextNoteId;
+
+    // 생성 간격과 별개로, 메인루프처럼 반박 길이를 판정 기준으로 사용한다.
+    private double NoteDurationSeconds => beatDuration / 2.0;
 
     protected override void Awake()
     {
         base.Awake();
-        spawner = FindAnyObjectByType<CalibrationNoteSpawner>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        if (spawner == null)
+            spawner = FindAnyObjectByType<CalibrationNoteSpawner>();
     }
 
-    /// <summary>
-    /// 피드백 콜백을 받아 Play Test를 시작. 노트 스폰은 내부에서 처리.
-    /// </summary>
     public void StartPlayTest(Action<string> onFeedback)
     {
-        var spawnedNotes = spawner.SpawnNotes();
-        if (spawnedNotes == null || spawnedNotes.Count == 0) return;
-        StopAllCoroutines();
-        notes = spawnedNotes;
-        resolvedIds = new HashSet<int>();
-        isRunning = true;
+        StopPlayTest();
+
+        if (!isActiveAndEnabled || JudgeSystem.Instance == null ||
+            spawner == null || !spawner.IsReady)
+        {
+            Debug.LogError(
+                "CalibrationManager의 활성 상태, JudgeSystem과 스포너 UI 연결을 확인하세요.",
+                this);
+            return;
+        }
+
+        beatDuration = GetBeatDuration();
+        nextJudgeTime = AudioSettings.dspTime + spawner.LeadTime;
+        nextNoteId = 0;
         this.onFeedback = onFeedback;
-        StartCoroutine(PlayMetronome(notes));
+        isRunning = true;
+
+        this.onFeedback?.Invoke(string.Empty);
+        SpawnNotesIfNeeded(AudioSettings.dspTime);
     }
 
-    /// <summary>
-    /// offsetMs를 기준으로 피드백 문자열을 반환.
-    /// </summary>
+    public void StopPlayTest()
+    {
+        isRunning = false;
+        StopAllCoroutines();
+
+        if (audioSource != null)
+            audioSource.Stop();
+
+        if (spawner != null)
+            spawner.ClearAll();
+
+        notes.Clear();
+        onFeedback = null;
+    }
+
+    private void OnDisable()
+    {
+        StopPlayTest();
+    }
+
+    private void Update()
+    {
+        if (!isRunning) return;
+
+        if (JudgeSystem.Instance == null || spawner == null || !spawner.IsReady)
+        {
+            StopPlayTest();
+            return;
+        }
+
+        if (Math.Abs(beatDuration - GetBeatDuration()) > 0.000001)
+        {
+            Action<string> callback = onFeedback;
+            StartPlayTest(callback);
+            return;
+        }
+
+        double now = AudioSettings.dspTime;
+        RemoveExpiredNotes(now);
+        SpawnNotesIfNeeded(now);
+    }
+
+    private void SpawnNotesIfNeeded(double now)
+    {
+        double interval = beatDuration * Mathf.Max(1, beatsPerNote);
+
+        while (nextJudgeTime <= now + spawner.LeadTime)
+        {
+            double judgeTime = nextJudgeTime;
+            int noteId = nextNoteId++;
+            nextJudgeTime += interval;
+
+            // 프레임 지연으로 이미 판정 기한이 지난 노트는 생성하지 않는다.
+            if (JudgeSystem.Instance.HasPassedHitWindow(
+                now, judgeTime, NoteDurationSeconds))
+                continue;
+
+            var note = new NoteData
+            {
+                noteId = noteId,
+                noteType = NoteType.HIGH,
+                noteRelativeTime = noteId * interval,
+                judgeTime = judgeTime
+            };
+
+            if (!spawner.SpawnNote(note))
+            {
+                StopPlayTest();
+                return;
+            }
+
+            notes.Add(note);
+            StartCoroutine(PlayMetronome(judgeTime));
+        }
+    }
+
+    private void RemoveExpiredNotes(double now)
+    {
+        for (int i = notes.Count - 1; i >= 0; i--)
+        {
+            if (!JudgeSystem.Instance.HasPassedHitWindow(
+                now, notes[i].judgeTime, NoteDurationSeconds))
+                continue;
+
+            spawner.RemoveNote(notes[i].noteId);
+            notes.RemoveAt(i);
+        }
+    }
+
+    public void OnTap()
+    {
+        if (!isRunning || JudgeSystem.Instance == null ||
+            spawner == null || !spawner.IsReady)
+            return;
+
+        double now = AudioSettings.dspTime;
+        RemoveExpiredNotes(now);
+
+        NoteData note = FindClosestUnresolved(now);
+        if (note == null) return;
+
+        double offsetMs = JudgeSystem.Instance.CalcOffsetMs(now, note.judgeTime);
+
+        notes.Remove(note);
+        spawner.RemoveNote(note.noteId);
+        onFeedback?.Invoke(GetFeedback(offsetMs));
+    }
+
+    private NoteData FindClosestUnresolved(double tapTime)
+    {
+        NoteData closest = null;
+        double minDiff = double.MaxValue;
+
+        foreach (NoteData note in notes)
+        {
+            if (!JudgeSystem.Instance.IsNoteActive(tapTime, note.judgeTime))
+                continue;
+
+            double diff = Math.Abs(
+                JudgeSystem.Instance.CalcOffsetMs(tapTime, note.judgeTime));
+
+            if (diff < minDiff)
+            {
+                minDiff = diff;
+                closest = note;
+            }
+        }
+
+        return closest;
+    }
+
     public static string GetFeedback(double offsetMs)
     {
         if (offsetMs > 30.0) return "Too Late";
@@ -48,71 +196,41 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
         return "Too Early";
     }
 
-    /// <summary>
-    /// Tap 입력 시 가장 가까운 노트의 타이밍 오차를 계산해 피드백을 표시.
-    /// </summary>
-    public void OnTap()
+    private IEnumerator PlayMetronome(double judgeTime)
     {
-        // TODO: OnTap을 CalibrationManager에서 처리하지 않도록 변경하기
-        if (!isRunning) return;
-        var note = FindClosestUnresolved(AudioSettings.dspTime);
-        if (note == null) return;
-        double offsetMs = JudgeSystem.Instance.CalcOffsetMs(AudioSettings.dspTime, note.judgeTime);
-        resolvedIds.Add(note.noteId);
-        onFeedback?.Invoke(GetFeedback(offsetMs));
-        spawner.RemoveNote(note.noteId);
-    }
+        if (audioSource == null || metronomeClip == null)
+            yield break;
 
-    private void Update()
-    {
-        if (!isRunning) return;
-        if (notes != null && notes.Count > 0 &&
-            AudioSettings.dspTime > notes[notes.Count - 1].judgeTime + 1.0)
-            CompleteCalibration();
-    }
-
-    private NoteData FindClosestUnresolved(double tapTime)
-    {
-        NoteData closest = null;
-        double minDiff = double.MaxValue;
-        foreach (var note in notes)
+        while (isRunning && JudgeSystem.Instance != null)
         {
-            if (resolvedIds.Contains(note.noteId)) continue;
-            double diff = Math.Abs(tapTime - note.judgeTime);
-            if (diff < minDiff) { minDiff = diff; closest = note; }
-        }
-        return closest;
-    }
+            // 예약 전까지 슬라이더의 현재 오디오 오프셋을 반영한다.
+            double scheduledTime = judgeTime +
+                JudgeSystem.Instance.AudioOffsetMs / 1000.0;
 
-    private void CompleteCalibration()
-    {
-        isRunning = false;
-        spawner.ClearAll();
-    }
-
-    private IEnumerator PlayMetronome(List<NoteData> noteList)
-    {
-        if (audioSource == null || metronomeClip == null) yield break;
-        audioSource.clip = metronomeClip;
-
-        foreach (var note in noteList)
-        {
-            double audioOffsetSec = JudgeSystem.Instance.AudioOffsetMs / 1000.0;
-            double scheduledTime = note.judgeTime + audioOffsetSec; // 메트로놈 재생 시각 = 노트 판정 시각 + 오디오 오프셋
-            
-            // DSP 정확도 보장: scheduledTime 100ms 전까지 매 프레임 대기 후 PlayScheduled로 예약
-            while (AudioSettings.dspTime < scheduledTime - 0.1)
+            if (AudioSettings.dspTime < scheduledTime - 0.1)
+            {
                 yield return null;
+                continue;
+            }
+
+            if (audioSource == null)
+                yield break;
+
+            audioSource.clip = metronomeClip;
 
             if (scheduledTime <= AudioSettings.dspTime)
-            {
                 audioSource.Play();
-            }
             else
-            {
                 audioSource.PlayScheduled(scheduledTime);
-            }
+
+            yield break;
         }
     }
-    
+
+    private double GetBeatDuration()
+    {
+        return RhythmClock.Instance != null
+            ? RhythmClock.Instance.GetBeatDuration()
+            : 60.0 / Mathf.Max(1f, fallbackBpm);
+    }
 }

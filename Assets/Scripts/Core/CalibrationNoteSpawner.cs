@@ -9,97 +9,110 @@ public class CalibrationNoteSpawner : MonoBehaviour
     [SerializeField] private float spawnX = 700f;
     [SerializeField] private double leadTime = 2.0;
 
-    private const int NoteCount = 4;
-    private double beatDuration;
+    private struct NoteEntry
+    {
+        public RectTransform rect;
+        public int noteId;
+        public double judgeTime;
+    }
 
-    private struct NoteEntry { public RectTransform rect; public int noteId; public double judgeTime; }
     private readonly List<NoteEntry> activeNotes = new();
-    private bool isMoving;
 
-    public double LeadTime => leadTime;
+    public double LeadTime => System.Math.Max(0.1, leadTime);
+
+    public bool IsReady => isActiveAndEnabled &&
+        noteContainer != null && notePrefab != null && judgeLine != null &&
+        noteContainer.gameObject.activeInHierarchy;
+
+    public bool SpawnNote(NoteData note)
+    {
+        if (!IsReady)
+        {
+            Debug.LogError(
+                "CalibrationNoteSpawner의 UI 연결과 활성 상태를 확인하세요.", this);
+            return false;
+        }
+
+        Vector3 judgeLocalPos =
+            noteContainer.InverseTransformPoint(judgeLine.position);
+
+        RectTransform rect = Instantiate(notePrefab, noteContainer);
+
+        rect.localPosition = new Vector3(
+            spawnX, judgeLocalPos.y, judgeLocalPos.z);
+
+        rect.gameObject.SetActive(true);
+
+        activeNotes.Add(new NoteEntry
+        {
+            rect = rect,
+            noteId = note.noteId,
+            judgeTime = note.judgeTime
+        });
+
+        return true;
+    }
 
     private void Update()
     {
-        if (!isMoving || activeNotes.Count == 0) return;
+        if (activeNotes.Count == 0 ||
+            noteContainer == null || judgeLine == null)
+            return;
 
         double now = AudioSettings.dspTime;
-        float judgeLineX = judgeLine != null ? judgeLine.anchoredPosition.x : 0f;
+
+        Vector3 judgeLocalPos =
+            noteContainer.InverseTransformPoint(judgeLine.position);
 
         for (int i = activeNotes.Count - 1; i >= 0; i--)
         {
             NoteEntry entry = activeNotes[i];
-            if (entry.rect == null) { activeNotes.RemoveAt(i); continue; }
 
-            if (now >= entry.judgeTime)
+            if (entry.rect == null)
             {
-                Destroy(entry.rect.gameObject);
                 activeNotes.RemoveAt(i);
                 continue;
             }
 
-            double remainingTime = System.Math.Max(0.0, entry.judgeTime - now);
-            float ratio = Mathf.Clamp01((float)(remainingTime / leadTime));
-            Vector2 pos = entry.rect.anchoredPosition;
-            pos.x = Mathf.Lerp(judgeLineX, spawnX, ratio);
-            entry.rect.anchoredPosition = pos;
+            // 도착 후에는 ratio가 0이 되어 판정선에 머문다.
+            // 판정 기한에 따른 제거는 CalibrationManager가 담당한다.
+            double remainingTime = entry.judgeTime - now;
+            float ratio = Mathf.Clamp01((float)(remainingTime / LeadTime));
+
+            float x = Mathf.Lerp(judgeLocalPos.x, spawnX, ratio);
+
+            entry.rect.localPosition = new Vector3(
+                x, judgeLocalPos.y, judgeLocalPos.z);
         }
     }
 
-    /// <summary>
-    /// 현재 BPM 기준 1박 간격의 NoteData 4개를 생성하고 이동을 시작.
-    /// </summary>
-    public List<NoteData> SpawnNotes()
-    {
-        beatDuration = RhythmClock.Instance.GetBeatDuration();
-        ClearAll();
-        double firstJudgeTime = AudioSettings.dspTime + leadTime;
-        var result = new List<NoteData>();
-
-        for (int i = 0; i < NoteCount; i++)
-        {
-            var note = new NoteData
-            {
-                noteId = i,
-                noteRelativeTime = i * beatDuration,
-                judgeTime = firstJudgeTime + i * beatDuration
-            };
-            result.Add(note);
-
-            if (notePrefab == null || noteContainer == null) continue;
-            RectTransform rect = Instantiate(notePrefab, noteContainer);
-            Vector2 judgeLocalPos = (Vector2)noteContainer.InverseTransformPoint(judgeLine.position);
-            rect.anchoredPosition = new Vector2(spawnX, judgeLocalPos.y);
-            activeNotes.Add(new NoteEntry { rect = rect, noteId = note.noteId, judgeTime = note.judgeTime });
-        }
-
-        isMoving = true;
-        return result;
-    }
-
-    /// <summary>
-    /// noteId에 해당하는 노트를 제거.
-    /// </summary>
     public void RemoveNote(int noteId)
     {
         for (int i = activeNotes.Count - 1; i >= 0; i--)
         {
             if (activeNotes[i].noteId != noteId) continue;
-            if (activeNotes[i].rect != null) Destroy(activeNotes[i].rect.gameObject);
+
+            if (activeNotes[i].rect != null)
+                Destroy(activeNotes[i].rect.gameObject);
+
             activeNotes.RemoveAt(i);
             return;
         }
     }
 
-    /// <summary>
-    /// 모든 활성 노트를 제거하고 이동을 중단.
-    /// </summary>
     public void ClearAll()
     {
-        isMoving = false;
         foreach (NoteEntry entry in activeNotes)
         {
-            if (entry.rect != null) Destroy(entry.rect.gameObject);
+            if (entry.rect != null)
+                Destroy(entry.rect.gameObject);
         }
+
         activeNotes.Clear();
+    }
+
+    private void OnDisable()
+    {
+        ClearAll();
     }
 }
