@@ -6,10 +6,14 @@ using UnityEngine.Serialization;
 /// <summary>
 /// 게임 전체 사운드 재생을 담당하는 매니저.
 /// BGM, SFX 목록을 인스펙터에서 관리하고, BPM별 코어루프 BGM 예약 재생을 처리한다.
+/// 설정창에서 BGM/SFX 볼륨을 즉시 조절할 수 있도록 public setter를 제공한다.
 /// </summary>
 public class SoundManager : MonoBehaviour
 {
     public static SoundManager Instance { get; private set; }
+
+    public const string BgmVolumePrefsKey = "bgmMasterVolume";
+    public const string SfxVolumePrefsKey = "sfxMasterVolume";
 
     [Serializable]
     public class BgmEntry
@@ -59,14 +63,22 @@ public class SoundManager : MonoBehaviour
 
     [Header("Schedule")]
     [SerializeField] private double bgmScheduleLeadTime = 0.1;
+
     [Header("Master Volume")]
     [SerializeField, Range(0f, 1f)] private float masterVolume = 1f;
     [SerializeField, Range(0f, 1f)] private float bgmMasterVolume = 0.6f;
     [SerializeField, Range(0f, 1f)] private float sfxMasterVolume = 0.8f;
 
+    public float BgmMasterVolume => bgmMasterVolume;
+    public float SfxMasterVolume => sfxMasterVolume;
+
     private readonly Dictionary<BgmId, BgmEntry> bgmMap = new();
     private readonly Dictionary<SfxId, SfxEntry> sfxMap = new();
     private readonly List<AudioSource> sfxSources = new();
+
+    // BGM Source마다 원래 BgmEntry.volume 값을 기억해두고,
+    // 설정창 볼륨 변경 시 현재 재생 중인 BGM에도 새 master volume을 적용한다.
+    private readonly Dictionary<AudioSource, float> bgmBaseVolumeBySource = new();
 
     private AudioSource currentBgmSource;
     private AudioSource standbyBgmSource;
@@ -82,24 +94,50 @@ public class SoundManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        LoadSavedVolumeSettings();
+
         SetupBgmSources();
         SetupSfxPool();
         BuildLookupTables();
+        ApplyBgmMasterVolumeToSources();
+    }
+
+    private void LoadSavedVolumeSettings()
+    {
+        bgmMasterVolume = PlayerPrefs.GetFloat(BgmVolumePrefsKey, bgmMasterVolume);
+        sfxMasterVolume = PlayerPrefs.GetFloat(SfxVolumePrefsKey, sfxMasterVolume);
+
+        bgmMasterVolume = Mathf.Clamp01(bgmMasterVolume);
+        sfxMasterVolume = Mathf.Clamp01(sfxMasterVolume);
     }
 
     private void SetupBgmSources()
     {
         if (bgmSourceA == null)
+        {
             bgmSourceA = CreateAudioSource("BGM Source A");
+        }
 
         if (bgmSourceB == null)
+        {
             bgmSourceB = CreateAudioSource("BGM Source B");
+        }
 
         bgmSourceA.playOnAwake = false;
         bgmSourceB.playOnAwake = false;
 
         currentBgmSource = bgmSourceA;
         standbyBgmSource = bgmSourceB;
+
+        if (!bgmBaseVolumeBySource.ContainsKey(bgmSourceA))
+        {
+            bgmBaseVolumeBySource[bgmSourceA] = 1f;
+        }
+
+        if (!bgmBaseVolumeBySource.ContainsKey(bgmSourceB))
+        {
+            bgmBaseVolumeBySource[bgmSourceB] = 1f;
+        }
     }
 
     private void SetupSfxPool()
@@ -133,15 +171,86 @@ public class SoundManager : MonoBehaviour
 
         foreach (BgmEntry entry in bgmEntries)
         {
-            if (entry == null || entry.clip == null) continue;
+            if (entry == null || entry.clip == null)
+            {
+                continue;
+            }
+
             bgmMap[entry.id] = entry;
         }
 
         foreach (SfxEntry entry in sfxEntries)
         {
-            if (entry == null || entry.clip == null) continue;
+            if (entry == null || entry.clip == null)
+            {
+                continue;
+            }
+
             sfxMap[entry.id] = entry;
         }
+    }
+
+    /// <summary>
+    /// 설정창에서 BGM 전체 볼륨을 변경할 때 호출한다.
+    /// 현재 재생 중인 BGM에도 즉시 반영된다.
+    /// </summary>
+    public void SetBgmMasterVolume(float volume)
+    {
+        bgmMasterVolume = Mathf.Clamp01(volume);
+        PlayerPrefs.SetFloat(BgmVolumePrefsKey, bgmMasterVolume);
+        ApplyBgmMasterVolumeToSources();
+    }
+
+    /// <summary>
+    /// 설정창에서 SFX 전체 볼륨을 변경할 때 호출한다.
+    /// 이후 재생되는 효과음부터 반영된다.
+    /// </summary>
+    public void SetSfxMasterVolume(float volume)
+    {
+        sfxMasterVolume = Mathf.Clamp01(volume);
+        PlayerPrefs.SetFloat(SfxVolumePrefsKey, sfxMasterVolume);
+    }
+
+    /// <summary>
+    /// BGM/SFX 볼륨을 기본값으로 되돌린다.
+    /// </summary>
+    public void ResetVolumeSettings(float defaultBgmVolume = 0.6f, float defaultSfxVolume = 0.8f)
+    {
+        SetBgmMasterVolume(defaultBgmVolume);
+        SetSfxMasterVolume(defaultSfxVolume);
+    }
+
+    private float GetScaledBgmVolume(float baseVolume)
+    {
+        return Mathf.Clamp01(baseVolume) * bgmMasterVolume * masterVolume;
+    }
+
+    private float GetScaledSfxVolume(float baseVolume)
+    {
+        return Mathf.Clamp01(baseVolume) * sfxMasterVolume * masterVolume;
+    }
+
+    private void ApplyBgmMasterVolumeToSources()
+    {
+        ApplyBgmMasterVolumeToSource(bgmSourceA);
+        ApplyBgmMasterVolumeToSource(bgmSourceB);
+    }
+
+    private void ApplyBgmMasterVolumeToSource(AudioSource source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        float baseVolume = 1f;
+
+        if (bgmBaseVolumeBySource.TryGetValue(source, out float savedBaseVolume))
+        {
+            baseVolume = savedBaseVolume;
+        }
+
+        source.volume = GetScaledBgmVolume(baseVolume);
     }
 
     /// <summary>
@@ -149,7 +258,11 @@ public class SoundManager : MonoBehaviour
     /// </summary>
     public void PlayBGM(AudioClip clip)
     {
-        if (clip == null) return;
+        if (clip == null)
+        {
+            return;
+        }
+
         ScheduleRawBgm(clip, AudioSettings.dspTime + bgmScheduleLeadTime, 1f, true);
     }
 
@@ -187,15 +300,21 @@ public class SoundManager : MonoBehaviour
 
     private void ScheduleRawBgm(AudioClip clip, double dspTime, float volume, bool loop, double stopAt = -1)
     {
-        if (clip == null) return;
+        if (clip == null)
+        {
+            return;
+        }
 
         AudioSource nextSource = standbyBgmSource;
         AudioSource oldSource = currentBgmSource;
 
         nextSource.Stop();
         nextSource.clip = clip;
-        nextSource.volume = volume * bgmMasterVolume * masterVolume;
         nextSource.loop = loop;
+
+        bgmBaseVolumeBySource[nextSource] = volume;
+        nextSource.volume = GetScaledBgmVolume(volume);
+
         nextSource.PlayScheduled(dspTime);
 
         if (oldSource != null && oldSource.isPlaying)
@@ -272,7 +391,10 @@ public class SoundManager : MonoBehaviour
             return;
         }
 
-        if (entry.clip == null) return;
+        if (entry.clip == null)
+        {
+            return;
+        }
 
         if (CountPlayingSameClip(entry.clip) >= entry.maxSimultaneous)
         {
@@ -282,7 +404,7 @@ public class SoundManager : MonoBehaviour
         AudioSource source = GetAvailableSfxSource();
 
         source.clip = entry.clip;
-        source.volume = entry.volume * sfxMasterVolume * masterVolume;
+        source.volume = GetScaledSfxVolume(entry.volume);
         source.loop = false;
         source.PlayScheduled(dspTime);
     }
@@ -292,7 +414,9 @@ public class SoundManager : MonoBehaviour
         foreach (AudioSource source in sfxSources)
         {
             if (!source.isPlaying)
+            {
                 return source;
+            }
         }
 
         return sfxSources[0];
@@ -305,7 +429,9 @@ public class SoundManager : MonoBehaviour
         foreach (AudioSource source in sfxSources)
         {
             if (source.isPlaying && source.clip == clip)
+            {
                 count++;
+            }
         }
 
         return count;
