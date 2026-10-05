@@ -491,7 +491,8 @@ public class GameManager : MonoBehaviour
     private double GetCurrentTurnDuration()
     {
         if (RhythmClock.Instance == null) return 2.0;
-        return RhythmClock.Instance.GetNoteDuration() * 8.0;
+        int notes = GetCurrentRoundSetting()?.notesPerTurn ?? 8;
+        return RhythmClock.Instance.GetNoteDuration() * notes;
     }
 
     private System.Random GetSharedRng(int attackPhaseIdx)
@@ -529,6 +530,11 @@ public class GameManager : MonoBehaviour
                 rng,
                 setting.minTargetNoteCount,
                 setting.maxTargetNoteCount);
+
+        // notesPerTurn - 1 = 이 턴에서 실제로 입력 가능한 최대 스텝 수.
+        // (step 0은 공격 시작 경계라 제외, step notesPerTurn은 공격 종료 경계라 제외)
+        int maxPlayable = (setting?.notesPerTurn ?? 8) - 1;
+        noteCount = Mathf.Min(noteCount, maxPlayable);
 
         string msg = randomMessageProvider.GetRandomMessage(noteCount, rng);
 
