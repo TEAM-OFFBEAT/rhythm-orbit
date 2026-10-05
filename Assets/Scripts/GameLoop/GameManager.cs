@@ -25,6 +25,7 @@ public class RoundSetting
     [Header("Turns")]
     public int introTurns = 4;   // 라운드 시작 후 카메라 중앙 대기 + 입력 차단 구간 (턴 단위)
     public int totalTurns = 12;  // 이 라운드의 전체 턴 수 (BGM 전체 길이와 일치)
+    public int notesPerTurn = 8; // 1턴 = 8분음표 몇 개. 4/4 = 8, 3/4 = 6
 }
 public class GameManager : MonoBehaviour
 {
@@ -74,6 +75,7 @@ public class GameManager : MonoBehaviour
             roundUpSfx = SfxId.RoundStart1,
             introTurns = 4,
             totalTurns = 12,
+            notesPerTurn = 8,
         },
         new RoundSetting
         {
@@ -84,6 +86,7 @@ public class GameManager : MonoBehaviour
             roundUpSfx = SfxId.RoundStart2,
             introTurns = 2,
             totalTurns = 12,
+            notesPerTurn = 8,
         },
         new RoundSetting
         {
@@ -94,6 +97,39 @@ public class GameManager : MonoBehaviour
             roundUpSfx = SfxId.RoundStart3,
             introTurns = 4,
             totalTurns = 16,
+            notesPerTurn = 8,
+        },
+    };
+
+    [Header("Time Signature Mode")]
+    [SerializeField] private TimeSignatureMode timeSignatureMode = TimeSignatureMode.FourFour;
+
+    [Header("Round Settings (3/4)")]
+    [SerializeField] private RoundSetting[] roundSettings34 =
+    {
+        new RoundSetting
+        {
+            roundName = "R1", bpm = 100f,
+            minTargetNoteCount = 2, maxTargetNoteCount = 4,
+            roundUpSfx = SfxId.RoundStart1,
+            introTurns = 4, totalTurns = 12,
+            notesPerTurn = 6,
+        },
+        new RoundSetting
+        {
+            roundName = "R2", bpm = 116f,
+            minTargetNoteCount = 2, maxTargetNoteCount = 5,
+            roundUpSfx = SfxId.RoundStart2,
+            introTurns = 2, totalTurns = 12,
+            notesPerTurn = 6,
+        },
+        new RoundSetting
+        {
+            roundName = "R3", bpm = 132f,
+            minTargetNoteCount = 2, maxTargetNoteCount = 5,
+            roundUpSfx = SfxId.RoundStart3,
+            introTurns = 4, totalTurns = 16,
+            notesPerTurn = 6,
         },
     };
 
@@ -1068,6 +1104,20 @@ public class GameManager : MonoBehaviour
 
     // ── Helpers ───────────────────────────────────────────────────────────────────
 
+    private RoundSetting[] ActiveRoundSettings
+    {
+        get
+        {
+            if (timeSignatureMode == TimeSignatureMode.ThreeFour)
+            {
+                if (roundSettings34 != null && roundSettings34.Length > 0)
+                    return roundSettings34;
+                Debug.LogWarning("GameManager: roundSettings34가 비어 있어 roundSettings로 대체합니다.");
+            }
+            return roundSettings;
+        }
+    }
+
     /// <summary>
     /// 현재 공격자의 반대 플레이어를 방어자로 반환한다.
     /// P1이 공격 중이면 P2가 방어자, P2가 공격 중이면 P1이 방어자다.
@@ -1160,13 +1210,10 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private RoundSetting GetCurrentRoundSetting()
     {
-        if (roundSettings == null || roundSettings.Length == 0)
-        {
-            return null;
-        }
-
-        int safeIndex = Mathf.Clamp(currentRoundIndex, 0, roundSettings.Length - 1);
-        return roundSettings[safeIndex];
+        var settings = ActiveRoundSettings;
+        if (settings == null || settings.Length == 0) return null;
+        int safeIndex = Mathf.Clamp(currentRoundIndex, 0, settings.Length - 1);
+        return settings[safeIndex];
     }
 
     /// <summary>
@@ -1175,15 +1222,16 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private int GetRoundIndexByAttackPhase(int attackPhaseIdx)
     {
-        if (roundSettings == null || roundSettings.Length == 0) return 0;
+        var settings = ActiveRoundSettings;
+        if (settings == null || settings.Length == 0) return 0;
 
         int cumulative = 0;
-        for (int i = 0; i < roundSettings.Length; i++)
+        for (int i = 0; i < settings.Length; i++)
         {
-            cumulative += Mathf.Max(1, roundSettings[i].totalTurns - roundSettings[i].introTurns);
+            cumulative += Mathf.Max(1, settings[i].totalTurns - settings[i].introTurns);
             if (attackPhaseIdx < cumulative) return i;
         }
-        return roundSettings.Length - 1;
+        return settings.Length - 1;
     }
 
     /// <summary>
@@ -1191,10 +1239,11 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private int GetTotalPlannedAttackTurnCount()
     {
-        if (roundSettings == null || roundSettings.Length == 0) return 0;
+        var settings = ActiveRoundSettings;
+        if (settings == null || settings.Length == 0) return 0;
 
         int total = 0;
-        foreach (RoundSetting s in roundSettings)
+        foreach (RoundSetting s in settings)
             total += Mathf.Max(1, s.totalTurns - s.introTurns);
         return total;
     }
@@ -1244,13 +1293,11 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private RoundSetting GetRoundSettingByAttackPhase(int attackPhaseIdx)
     {
-        if (roundSettings == null || roundSettings.Length == 0)
-        {
-            return null;
-        }
+        var settings = ActiveRoundSettings;
+        if (settings == null || settings.Length == 0) return null;
 
         int roundIndex = GetRoundIndexByAttackPhase(attackPhaseIdx);
-        return roundSettings[roundIndex];
+        return settings[roundIndex];
     }
 
     /// <summary>
@@ -1529,14 +1576,15 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private int GetAttackIndexInRound(int attackPhaseIdx)
     {
-        if (roundSettings == null || roundSettings.Length == 0)
+        var settings = ActiveRoundSettings;
+        if (settings == null || settings.Length == 0)
         {
             return attackPhaseIdx;
         }
 
         int remainingAttackIndex = attackPhaseIdx;
 
-        for (int i = 0; i < roundSettings.Length; i++)
+        for (int i = 0; i < settings.Length; i++)
         {
             int attackCountInRound = GetPlayableAttackTurnCountInRound(i);
 
@@ -1557,14 +1605,11 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private int GetPlayableAttackTurnCountInRound(int roundIndex)
     {
-        if (roundSettings == null || roundSettings.Length == 0)
-        {
-            return 0;
-        }
+        var settings = ActiveRoundSettings;
+        if (settings == null || settings.Length == 0) return 0;
 
-        int safeIndex = Mathf.Clamp(roundIndex, 0, roundSettings.Length - 1);
-        RoundSetting setting = roundSettings[safeIndex];
-
+        int safeIndex = Mathf.Clamp(roundIndex, 0, settings.Length - 1);
+        RoundSetting setting = settings[safeIndex];
         return Mathf.Max(1, setting.totalTurns - setting.introTurns);
     }
 
