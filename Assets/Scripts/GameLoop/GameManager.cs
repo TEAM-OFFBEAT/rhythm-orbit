@@ -541,9 +541,11 @@ public class GameManager : MonoBehaviour
         bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId ||
                                 NetworkManager.Instance == null);
 
+        int notesPerTurn = setting?.notesPerTurn ?? 8;
+
         if (isLocalAttacker)
         {
-            attackTurn.StartLocalPlayerAttack(attackerSide, noteCount, msg, phaseStartDspTime);
+            attackTurn.StartLocalPlayerAttack(attackerSide, noteCount, msg, phaseStartDspTime, notesPerTurn);
             hud?.UpdateAttackProgress(0, noteCount);
         }
         else if (NetworkManager.Instance == null)

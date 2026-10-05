@@ -29,14 +29,8 @@ public class AttackTurn : MonoBehaviour
     [Header("Rhythm [리듬 설정]")]
     [SerializeField] private int subdivisions = 2; // 1박당 분할 수. 2=반박(기본), 3=3연음
 
-    // 4/4박자 고정. 1마디 = 4박 * subdivisions 스텝
-    private int StepsPerMeasure => 4 * subdivisions;
-
     // 0번째 칸은 공격 시작 지점이라 입력 가능 칸에서 제외한다.
     private const int FirstPlayableGridStep = 1;
-
-    // 현재 공격 턴 길이. 지금은 1마디 고정.
-    private int attackMeasureCount = 1;
 
     [Header("Attack input window [공격 성공 범위]")]
     [SerializeField, Range(0f, 0.5f)] private float attackTimingWindowRatio = 0.25f;
@@ -64,8 +58,6 @@ public class AttackTurn : MonoBehaviour
     private int nextOpponentDemoIndex;
     private bool isRunning;
     private bool isLocalPlayerAttack;
-    private readonly int[] opponentDemoGridSteps = { 2, 4, 6 };
-    
     private string currentAttackMessage;
 
     private void Awake()
@@ -134,8 +126,6 @@ public class AttackTurn : MonoBehaviour
     /// </summary>
     public event System.Action OnHalfNoteIncomplete;
     
-    public int OpponentDemoNoteCount => opponentDemoGridSteps.Length;
-
     public IReadOnlyList<NoteData> CurrentCreatedNotes => createdNotes;
     public AttackSide CurrentSide => currentSide;   
     
@@ -165,27 +155,30 @@ public class AttackTurn : MonoBehaviour
     /// <summary>
     /// 로컬 플레이어의 공격 턴을 시작. turnStartDspTime은 GameManager의 DSP 페이즈 루프가 전달한다.
     /// </summary>
-    public void StartLocalPlayerAttack(AttackSide side, int targetNoteCount, string attackMessage, double turnStartDspTime)
+    public void StartLocalPlayerAttack(AttackSide side, int targetNoteCount,
+        string attackMessage, double turnStartDspTime, int notesPerTurn = 8)
     {
-        StartAttack(side, true, targetNoteCount, attackMessage, turnStartDspTime);
+        StartAttack(side, true, targetNoteCount, attackMessage, turnStartDspTime, notesPerTurn);
     }
 
     /// <summary>
     /// 개발용 P2 공격 데모 시작. DevAttackPanel 버튼에서 호출.
     /// </summary>
-    public void StartOpponentAttackDemo(string attackMessage)
+    public void StartOpponentAttackDemo(string attackMessage, int notesPerTurn = 8)
     {
-        StartAttack(AttackSide.P2, false, opponentDemoGridSteps.Length, attackMessage, AudioSettings.dspTime);
+        int[] demoSteps = BuildDemoGridSteps(notesPerTurn);
+        StartAttack(AttackSide.P2, false, demoSteps.Length, attackMessage,
+            AudioSettings.dspTime, notesPerTurn);
 
         opponentDemoRelativeTimes.Clear();
         double noteDuration = NoteDuration;
 
-        for (int i = 0; i < opponentDemoGridSteps.Length; i++)
+        for (int i = 0; i < demoSteps.Length; i++)
         {
-            int step = opponentDemoGridSteps[i];
-            double relativeTime = step * noteDuration;
-            if (relativeTime <= attackDuration)
-                opponentDemoRelativeTimes.Add((relativeTime, i % 2 == 0 ? NoteType.HIGH : NoteType.LOW));
+            double relativeTime = demoSteps[i] * noteDuration;
+            if (relativeTime < attackDuration)
+                opponentDemoRelativeTimes.Add((relativeTime,
+                    i % 2 == 0 ? NoteType.HIGH : NoteType.LOW));
         }
 
         targetTapCount = opponentDemoRelativeTimes.Count;
@@ -204,8 +197,8 @@ public class AttackTurn : MonoBehaviour
     public void StartOpponentAttackDemo(
         string attackMessage,
         NoteType[] demoPattern,
-        double startDspTime
-    )
+        double startDspTime,
+        int notesPerTurn = 8)
     {
         if (demoPattern == null || demoPattern.Length == 0)
         {
@@ -213,13 +206,8 @@ public class AttackTurn : MonoBehaviour
             return;
         }
 
-        StartAttack(
-            AttackSide.P2,
-            false,
-            demoPattern.Length,
-            attackMessage,
-            startDspTime
-        );
+        StartAttack(AttackSide.P2, false, demoPattern.Length, attackMessage,
+            startDspTime, notesPerTurn);
 
         opponentDemoRelativeTimes.Clear();
 
@@ -251,8 +239,8 @@ public class AttackTurn : MonoBehaviour
         string attackMessage,
         NoteType[] demoPattern,
         int[] gridSteps,
-        double startDspTime
-    )
+        double startDspTime,
+        int notesPerTurn = 8)
     {
         if (demoPattern == null || demoPattern.Length == 0)
         {
@@ -260,13 +248,8 @@ public class AttackTurn : MonoBehaviour
             return;
         }
 
-        StartAttack(
-            AttackSide.P2,
-            false,
-            demoPattern.Length,
-            attackMessage,
-            startDspTime
-        );
+        StartAttack(AttackSide.P2, false, demoPattern.Length, attackMessage,
+            startDspTime, notesPerTurn);
 
         opponentDemoRelativeTimes.Clear();
 
@@ -274,17 +257,9 @@ public class AttackTurn : MonoBehaviour
 
         for (int i = 0; i < demoPattern.Length; i++)
         {
-            int step;
-
-            if (gridSteps != null && i < gridSteps.Length)
-            {
-                step = Mathf.Max(0, gridSteps[i]);
-            }
-            else
-            {
-                // gridSteps를 안 넣으면 기존 방식 유지
-                step = 2 + i * 2;
-            }
+            int step = (gridSteps != null && i < gridSteps.Length)
+                ? Mathf.Max(0, gridSteps[i])
+                : 2 + i * 2;
 
             double relativeTime = step * noteDuration;
 
@@ -309,8 +284,8 @@ public class AttackTurn : MonoBehaviour
         string attackMessage,
         NoteType[] demoPattern,
         int[] gridSteps,
-        double startDspTime
-    )
+        double startDspTime,
+        int notesPerTurn = 8)
     {
         if (demoPattern == null || demoPattern.Length == 0)
         {
@@ -318,13 +293,8 @@ public class AttackTurn : MonoBehaviour
             return;
         }
 
-        StartAttack(
-            attackerSide,
-            false,
-            demoPattern.Length,
-            attackMessage,
-            startDspTime
-        );
+        StartAttack(attackerSide, false, demoPattern.Length, attackMessage,
+            startDspTime, notesPerTurn);
 
         opponentDemoRelativeTimes.Clear();
 
@@ -332,16 +302,9 @@ public class AttackTurn : MonoBehaviour
 
         for (int i = 0; i < demoPattern.Length; i++)
         {
-            int step;
-
-            if (gridSteps != null && i < gridSteps.Length)
-            {
-                step = Mathf.Max(FirstPlayableGridStep, gridSteps[i]);
-            }
-            else
-            {
-                step = 2 + i * 2;
-            }
+            int step = (gridSteps != null && i < gridSteps.Length)
+                ? Mathf.Max(FirstPlayableGridStep, gridSteps[i])
+                : 2 + i * 2;
 
             double relativeTime = step * noteDuration;
 
@@ -450,7 +413,8 @@ public class AttackTurn : MonoBehaviour
     /// 공격자 방향, 입력 주체, 목표 노트 수, 메시지를 설정하고 공격 판정선 이동을 시작한다.
     /// turnStartDspTime은 GameManager의 DSP 페이즈 루프가 전달한 턴 시작 시각이다.
     /// </summary>
-    private void StartAttack(AttackSide side, bool localPlayerAttack, int requiredTapCount, string attackMessage, double turnStartDspTime)
+    private void StartAttack(AttackSide side, bool localPlayerAttack, int requiredTapCount,
+        string attackMessage, double turnStartDspTime, int notesPerTurn = 8)
     {
         currentSide = side;
         isLocalPlayerAttack = localPlayerAttack;
@@ -465,7 +429,7 @@ public class AttackTurn : MonoBehaviour
         duplicateInputCount = 0;
 
         double noteDuration = NoteDuration;
-        gridStepCount = Mathf.Max(1, attackMeasureCount) * StepsPerMeasure;
+        gridStepCount = Mathf.Max(1, notesPerTurn);
         attackDuration = noteDuration * gridStepCount;
         attackStartDspTime = turnStartDspTime;
         targetTapCount = Mathf.Clamp(requiredTapCount, 1, MaxPlayableTapCount);
@@ -674,6 +638,20 @@ public class AttackTurn : MonoBehaviour
         if (noteDuration <= 0.0) return FirstPlayableGridStep;
         int nearestStep = Mathf.RoundToInt((float)(relativeTime / noteDuration));
         return Mathf.Clamp(nearestStep, FirstPlayableGridStep, LastPlayableGridStep);
+    }
+
+    /// <summary>
+    /// notesPerTurn에 맞게 데모용 grid step 배열을 생성한다.
+    /// 짝수 스텝을 균등 배치하되 0번(시작 경계)과 마지막(종료 경계)은 제외.
+    /// notesPerTurn=8 → {2,4,6}, notesPerTurn=6 → {2,4}
+    /// </summary>
+    private static int[] BuildDemoGridSteps(int notesPerTurn)
+    {
+        int lastPlayable = notesPerTurn - 1;
+        var steps = new System.Collections.Generic.List<int>();
+        for (int s = 2; s < lastPlayable; s += 2)
+            steps.Add(s);
+        return steps.ToArray();
     }
 
     /// <summary>
