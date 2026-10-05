@@ -2,8 +2,6 @@ using UnityEngine;
 
 public static class BeatCalculator
 {
-    private const int Numerator = 4; // 4/4박자
-
     /// <summary>
     /// 박자 수를 초 단위 시간으로 변환.
     /// </summary>
