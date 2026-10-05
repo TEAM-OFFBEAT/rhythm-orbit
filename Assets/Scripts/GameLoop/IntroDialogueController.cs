@@ -58,6 +58,14 @@ public class IntroDialogueController : MonoBehaviour
         ResetPanelGlow();
     }
 
+    /// <summary>
+    /// 박자 모드 변경 시 GameManager가 호출해 대사 줄 표시 간격을 갱신한다.
+    /// </summary>
+    public void SetBeatsPerLine(int beats)
+    {
+        beatsPerLine = Mathf.Max(1, beats);
+    }
+
     private IEnumerator RunIntro(double startDspTime)
     {
         if (dialoguePlayer == null || introLines == null || introLines.Length == 0)

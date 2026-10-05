@@ -1162,6 +1162,10 @@ public class GameManager : MonoBehaviour
         RhythmClock.Instance?.SetBpm(bpm);
         hud?.UpdateBpm(bpm);
 
+        // 3/4 모드면 3박, 4/4 모드면 4박 단위로 대사 줄 간격을 맞춘다.
+        int beatsPerLine = timeSignatureMode == TimeSignatureMode.ThreeFour ? 3 : 4;
+        introDialogueController?.SetBeatsPerLine(beatsPerLine);
+
         if (scheduleBgm)
         {
             double scheduleTime = AudioSettings.dspTime + bpmChangeBgmLeadTime;
