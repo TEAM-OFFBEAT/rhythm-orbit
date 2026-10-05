@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private IntroDialogueController introDialogueController;
 
     [Header("Round Settings")]
-    [SerializeField] private RoundSetting[] roundSettings =
+    [SerializeField] private RoundSetting[] roundSettings44 =
     {
         new RoundSetting
         {
@@ -109,26 +109,35 @@ public class GameManager : MonoBehaviour
     {
         new RoundSetting
         {
-            roundName = "R1", bpm = 100f,
-            minTargetNoteCount = 2, maxTargetNoteCount = 4,
+            roundName = "R1",
+            bpm = 108f,
+            minTargetNoteCount = 2,
+            maxTargetNoteCount = 4,
             roundUpSfx = SfxId.RoundStart1,
-            introTurns = 4, totalTurns = 12,
+            introTurns = 4,
+            totalTurns = 12,
             notesPerTurn = 6,
         },
         new RoundSetting
         {
-            roundName = "R2", bpm = 116f,
-            minTargetNoteCount = 2, maxTargetNoteCount = 5,
+            roundName = "R2",
+            bpm = 132f,
+            minTargetNoteCount = 2,
+            maxTargetNoteCount = 5,
             roundUpSfx = SfxId.RoundStart2,
-            introTurns = 2, totalTurns = 12,
+            introTurns = 2,
+            totalTurns = 12,
             notesPerTurn = 6,
         },
         new RoundSetting
         {
-            roundName = "R3", bpm = 132f,
-            minTargetNoteCount = 2, maxTargetNoteCount = 5,
+            roundName = "R3",
+            bpm = 148f,
+            minTargetNoteCount = 2,
+            maxTargetNoteCount = 5,
             roundUpSfx = SfxId.RoundStart3,
-            introTurns = 4, totalTurns = 16,
+            introTurns = 4,
+            totalTurns = 16,
             notesPerTurn = 6,
         },
     };
@@ -1120,9 +1129,9 @@ public class GameManager : MonoBehaviour
             {
                 if (roundSettings34 != null && roundSettings34.Length > 0)
                     return roundSettings34;
-                Debug.LogWarning("GameManager: roundSettings34가 비어 있어 roundSettings로 대체합니다.");
+                Debug.LogWarning("GameManager: roundSettings34가 비어 있어 roundSettings44로 대체합니다.");
             }
-            return roundSettings;
+            return roundSettings44;
         }
     }
 
