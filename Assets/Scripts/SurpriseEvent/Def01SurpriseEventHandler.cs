@@ -499,7 +499,11 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             return;
         }
 
-        AudioSource.PlayClipAtPoint(clip, Vector3.zero, sfxVolume);
+        float volume = SoundManager.Instance != null
+            ? SoundManager.Instance.GetScaledSfxVolume(sfxVolume)
+            : sfxVolume;
+
+        AudioSource.PlayClipAtPoint(clip, Vector3.zero, volume);
     }
 
     /// <summary>

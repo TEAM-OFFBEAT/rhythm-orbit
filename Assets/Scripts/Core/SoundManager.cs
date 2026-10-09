@@ -220,7 +220,7 @@ public class SoundManager : MonoBehaviour
         SetSfxMasterVolume(defaultSfxVolume);
     }
 
-    private float GetScaledBgmVolume(float baseVolume)
+    public float GetScaledBgmVolume(float baseVolume)
     {
         return Mathf.Clamp01(baseVolume) * bgmMasterVolume * masterVolume;
     }

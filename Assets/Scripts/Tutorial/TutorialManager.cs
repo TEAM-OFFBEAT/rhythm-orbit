@@ -222,6 +222,41 @@ public class TutorialManager : MonoBehaviour
         StartCoroutine(RunTutorial());
     }
 
+    private void LateUpdate()
+    {
+        ApplyTutorialSoundVolumes();
+    }
+
+    private void ApplyTutorialSoundVolumes()
+    {
+        SoundManager soundManager = SoundManager.Instance;
+        if (soundManager == null) return;
+
+        if (tutorialBgmSource != null)
+        {
+            tutorialBgmSource.volume =
+                soundManager.GetScaledBgmVolume(tutorialBgmVolume);
+        }
+
+        if (guideMetronomeLoopSource != null)
+        {
+            guideMetronomeLoopSource.volume =
+                soundManager.GetScaledSfxVolume(1f);
+        }
+
+        if (directHitSources != null)
+        {
+            foreach (AudioSource source in directHitSources)
+            {
+                if (source != null)
+                {
+                    source.volume =
+                        soundManager.GetScaledSfxVolume(1f);
+                }
+            }
+        }
+    }
+
     private void SubscribeEvents()
     {
         if (attackTurn != null)
@@ -1693,6 +1728,7 @@ public class TutorialManager : MonoBehaviour
         tutorialBgmSource.outputAudioMixerGroup = null;
 
         double safeStartDspTime = Math.Max(startDspTime, AudioSettings.dspTime + 0.05);
+        ApplyTutorialSoundVolumes();
         tutorialBgmSource.PlayScheduled(safeStartDspTime);
 
         Debug.Log(
@@ -1832,6 +1868,7 @@ public class TutorialManager : MonoBehaviour
         }
 
         guideMetronomeLoopSource.clip = generatedGuideMetronomeLoopClip;
+        ApplyTutorialSoundVolumes();        
         guideMetronomeLoopSource.PlayScheduled(startDspTime);
 
         Debug.Log(
@@ -2481,6 +2518,7 @@ public class TutorialManager : MonoBehaviour
         source.priority = 0;
         source.outputAudioMixerGroup = null;
 
+        ApplyTutorialSoundVolumes();
         source.PlayOneShot(clip, directHitVolume);
 
     }

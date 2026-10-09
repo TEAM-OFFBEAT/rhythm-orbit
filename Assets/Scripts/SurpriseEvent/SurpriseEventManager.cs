@@ -562,7 +562,12 @@ public class SurpriseEventManager : MonoBehaviour
             return;
         }
 
-        AudioSource.PlayClipAtPoint(definition.entrySfx, Vector3.zero);
+        float volume = SoundManager.Instance != null
+            ? SoundManager.Instance.GetScaledSfxVolume(1f)
+            : 1f;
+
+        AudioSource.PlayClipAtPoint(
+            definition.entrySfx, Vector3.zero, volume);
     }
 
     // ─────────────────────────────────────────────────────────
