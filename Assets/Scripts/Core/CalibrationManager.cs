@@ -77,7 +77,12 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
     }
 
     private void Update()
-    {
+    {   
+        if (audioSource != null && SoundManager.Instance != null)
+        {
+            audioSource.volume = SoundManager.Instance.GetScaledSfxVolume(1f);
+        }
+
         if (!isRunning) return;
 
         if (JudgeSystem.Instance == null || spawner == null || !spawner.IsReady)

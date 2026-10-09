@@ -225,7 +225,7 @@ public class SoundManager : MonoBehaviour
         return Mathf.Clamp01(baseVolume) * bgmMasterVolume * masterVolume;
     }
 
-    private float GetScaledSfxVolume(float baseVolume)
+    public float GetScaledSfxVolume(float baseVolume)
     {
         return Mathf.Clamp01(baseVolume) * sfxMasterVolume * masterVolume;
     }
