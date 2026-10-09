@@ -20,6 +20,7 @@ public class SettingsWindowController : MonoBehaviour
 
     [Header("Window")]
     [SerializeField] private GameObject windowRoot;
+    [SerializeField] private GameObject blurBackground;
     [SerializeField] private Button closeButton;
 
     [Header("Tabs")]
@@ -110,6 +111,11 @@ public class SettingsWindowController : MonoBehaviour
     {
         IsOpen = true;
 
+        if (blurBackground != null)
+        {
+            blurBackground.SetActive(true);
+        }
+
         if (windowRoot != null)
         {
             windowRoot.SetActive(true);
@@ -129,10 +135,15 @@ public class SettingsWindowController : MonoBehaviour
 
         StopCalibration();
 
+        if (blurBackground != null)
+        {
+            blurBackground.SetActive(false);
+        }
+
         if (windowRoot != null)
         {
             windowRoot.SetActive(false);
-        }
+        }        
     }
 
     /// <summary>
@@ -537,6 +548,12 @@ public class SettingsWindowController : MonoBehaviour
     private void OnDisable()
     {
         IsOpen = false;
+
+        if (blurBackground != null)
+        {
+            blurBackground.SetActive(false);
+        }
+
         StopCalibration();
     }
 
