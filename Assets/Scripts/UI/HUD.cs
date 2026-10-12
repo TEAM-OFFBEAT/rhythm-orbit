@@ -89,8 +89,8 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void SetTurnOwner(int activePlayerId)
     {
-        p1Slot?.SetActiveState(activePlayerId == 1, dimWhenInactive: true);
-        p2Slot?.SetActiveState(activePlayerId == 2, dimWhenInactive: true);
+        p1Slot?.SetActiveState(activePlayerId == 1);
+        p2Slot?.SetActiveState(activePlayerId == 2);
     }
 
     /// <summary>
@@ -102,8 +102,8 @@ public class HUD : MonoBehaviour
         p1Slot?.ClearJudgment();
         p2Slot?.ClearJudgment();
 
-        p1Slot?.SetActiveState(false, dimWhenInactive: false);
-        p2Slot?.SetActiveState(false, dimWhenInactive: false);
+        p1Slot?.SetActiveState(false);
+        p2Slot?.SetActiveState(false);
     }
 
     /// <summary>

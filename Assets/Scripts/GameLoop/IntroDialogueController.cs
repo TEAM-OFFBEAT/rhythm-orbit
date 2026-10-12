@@ -92,14 +92,14 @@ public class IntroDialogueController : MonoBehaviour
             return;
 
         IntroGuideLineData line = introLines[lineIndex];
-        p1Slot?.SetActiveState(line.highlightP1Panel, dimWhenInactive: false);
-        p2Slot?.SetActiveState(line.highlightP2Panel, dimWhenInactive: false);
+        p1Slot?.SetActiveState(line.highlightP1Panel);
+        p2Slot?.SetActiveState(line.highlightP2Panel);
     }
 
     private void ResetPanelGlow()
     {
-        p1Slot?.SetActiveState(false, dimWhenInactive: false);
-        p2Slot?.SetActiveState(false, dimWhenInactive: false);
+        p1Slot?.SetActiveState(false);
+        p2Slot?.SetActiveState(false);
     }
 
     private TutorialGuideLineData[] ExtractDialogueLines()
