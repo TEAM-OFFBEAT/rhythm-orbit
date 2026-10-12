@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 1355423543610342555}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.3776565, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -327,3 +327,16 @@ MonoBehaviour:
   spaceFactor: 0.8
   sparkleFactor: 0.1
   planetFactor: 0.5
+  spaceSprites:
+  - {fileID: -7443756053782179069, guid: 84f3a821e867ca14b8265b9d7df7fe98, type: 3}
+  - {fileID: 3431957961771140920, guid: 279d343bde7dc904798c459eec53f915, type: 3}
+  - {fileID: -7377130755375783657, guid: 3f3d5c81b2695ad4abffac06a6b1afd2, type: 3}
+  sparkleSprites:
+  - {fileID: 21300000, guid: b55b68a161b27914ab7419b4c1b0fc23, type: 3}
+  - {fileID: 21300000, guid: 63dc3c8014f1f2a49ac54f727d0a523a, type: 3}
+  - {fileID: 21300000, guid: 93d27405d86e68a4f9ddc2dd9504ae41, type: 3}
+  planetSprites:
+  - {fileID: 21300000, guid: 93db7cdd863c9d54ab9870b563057363, type: 3}
+  - {fileID: 21300000, guid: ec3b56ab0113e0a42afdb73627ede692, type: 3}
+  - {fileID: 21300000, guid: 356bdf6b986bdcd4fbf38103e36af63a, type: 3}
+  transitionDuration: 1

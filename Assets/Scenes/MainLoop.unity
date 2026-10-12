@@ -425,6 +425,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 5872880317697721941}
     - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: parallaxBackground
+      value: 
+      objectReference: {fileID: 7723943202393023524}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: surpriseEventManager
       value: 
       objectReference: {fileID: 1345864466}
@@ -2770,6 +2774,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
+--- !u!114 &7723943202393023524 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8701924729721646753, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
+  m_PrefabInstance: {fileID: 7723943202393023523}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 634efa6473daece47ada1ae499f7f9d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ParallaxBackground
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
