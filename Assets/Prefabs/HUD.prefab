@@ -2691,7 +2691,7 @@ MonoBehaviour:
   panelImage: {fileID: 4897033064702728408}
   defaultPanelSprite: {fileID: 9165623242308869086, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
   highlightPanelSprite: {fileID: 5464961714324258731, guid: cc68ca4077c42f6478714f9aac7dce6c, type: 3}
-  pulseColorMin: {r: 1, g: 1, b: 1, a: 0.5}
+  pulseColorMin: {r: 1, g: 1, b: 1, a: 0.1}
   pulseColorMax: {r: 1, g: 1, b: 1, a: 1}
   pulseSpeed: 2
   inactiveDimOverlay: {fileID: 8749004185141462487}
@@ -2799,7 +2799,7 @@ MonoBehaviour:
   panelImage: {fileID: 7702125488828697384}
   defaultPanelSprite: {fileID: -5356235205854507632, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
   highlightPanelSprite: {fileID: -3456634472872534739, guid: cc68ca4077c42f6478714f9aac7dce6c, type: 3}
-  pulseColorMin: {r: 1, g: 1, b: 1, a: 0.5}
+  pulseColorMin: {r: 1, g: 1, b: 1, a: 0.1}
   pulseColorMax: {r: 1, g: 1, b: 1, a: 1}
   pulseSpeed: 2
   inactiveDimOverlay: {fileID: 254199521237865716}
