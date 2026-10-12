@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 1355423543610342555}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -1.3776565, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -321,7 +321,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxBackground
   targetCamera: {fileID: 0}
+  spaceLayer: {fileID: 5185981406611547677}
   sparkleLayer: {fileID: 2832677344381121224}
   planetLayer: {fileID: 5413895493820638655}
+  spaceFactor: 0.8
   sparkleFactor: 0.1
   planetFactor: 0.5

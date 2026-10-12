@@ -8,14 +8,17 @@ public class ParallaxBackground : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Camera targetCamera;
+    [SerializeField] private Transform spaceLayer;
     [SerializeField] private Transform sparkleLayer;
     [SerializeField] private Transform planetLayer;
 
     [Header("Parallax Factors")]
+    [SerializeField] private float spaceFactor = 0.8f;
     [SerializeField] private float sparkleFactor = 0.25f;
     [SerializeField] private float planetFactor = 0.333f;
 
     private float cameraStartX;
+    private Vector3 spaceStartLocalPos;
     private Vector3 sparkleStartLocalPos;
     private Vector3 planetStartLocalPos;
 
@@ -25,6 +28,7 @@ public class ParallaxBackground : MonoBehaviour
             targetCamera = Camera.main;
 
         cameraStartX = targetCamera.transform.position.x;
+        spaceStartLocalPos = spaceLayer != null ? spaceLayer.localPosition : Vector3.zero;
         sparkleStartLocalPos = sparkleLayer != null ? sparkleLayer.localPosition : Vector3.zero;
         planetStartLocalPos = planetLayer != null ? planetLayer.localPosition : Vector3.zero;
     }
@@ -32,6 +36,13 @@ public class ParallaxBackground : MonoBehaviour
     private void LateUpdate()
     {
         float cameraDelta = targetCamera.transform.position.x - cameraStartX;
+
+        if (spaceLayer != null)
+        {
+            Vector3 pos = spaceStartLocalPos;
+            pos.x += cameraDelta * spaceFactor;
+            spaceLayer.localPosition = pos;
+        }
 
         if (sparkleLayer != null)
         {
