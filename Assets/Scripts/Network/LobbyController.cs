@@ -25,6 +25,7 @@ public class LobbyController : MonoBehaviour
     [SerializeField] private Button createRoomButton;
     [SerializeField] private Button joinRoomButton;
     [SerializeField] private Button goTutorialButton;
+    [SerializeField] private Button localTestButton;
 
     [Header("Host — 대기 화면")]
     [SerializeField] private TMP_Text roomCodeText;
@@ -58,6 +59,7 @@ public class LobbyController : MonoBehaviour
         createRoomButton.onClick.AddListener(OnCreateRoom);
         joinRoomButton.onClick.AddListener(OnJoinRoom);
         goTutorialButton.onClick.AddListener(GoToTutorial);
+        localTestButton?.onClick.AddListener(OnLocalTest); // [임시 모드]
         cancelHostButton.onClick.AddListener(OnCancel);
         connectButton.onClick.AddListener(OnConnect);
         cancelJoinButton.onClick.AddListener(OnCancel);
@@ -203,6 +205,20 @@ public class LobbyController : MonoBehaviour
         joinPanel.SetActive(false);
 
         connectButton.interactable = true;
+    }
+
+    /// <summary>
+    /// [임시 모드] 네트워크 없이 로컬 1인 테스트 모드로 MainLoop를 시작한다.
+    /// </summary>
+    private void OnLocalTest()
+    {
+        if (NetworkManager.Instance != null)
+        {
+            NetworkManager.Instance.Disconnect();
+            Destroy(NetworkManager.Instance.gameObject);
+        }
+
+        SceneManager.LoadScene(mainLoopSceneName);
     }
 
     public void GoToTutorial()
