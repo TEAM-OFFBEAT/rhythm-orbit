@@ -339,4 +339,4 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 93db7cdd863c9d54ab9870b563057363, type: 3}
   - {fileID: 21300000, guid: ec3b56ab0113e0a42afdb73627ede692, type: 3}
   - {fileID: 21300000, guid: 356bdf6b986bdcd4fbf38103e36af63a, type: 3}
-  transitionDuration: 1
+  transitionDuration: 3
