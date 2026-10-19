@@ -449,24 +449,10 @@ public class TutorialManager : MonoBehaviour
 
     /// <summary>
     /// Space 입력으로 튜토리얼 대사를 넘긴다.
-    /// TutorialInputRouter 또는 PlayerInput SendMessage에서 호출한다.
+    /// TutorialInputRouter에서 호출한다.
     /// </summary>
     public void OnAdvanceDialogue()
     {
-        RequestDialogueAdvance();
-    }
-
-    /// <summary>
-    /// Space 입력으로 튜토리얼 대사를 넘긴다.
-    /// Unity New Input System PlayerInput SendMessage용 오버로드다.
-    /// </summary>
-    public void OnAdvanceDialogue(InputValue value)
-    {
-        if (value != null && !value.isPressed)
-        {
-            return;
-        }
-
         RequestDialogueAdvance();
     }
 

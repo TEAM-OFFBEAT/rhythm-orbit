@@ -35,6 +35,17 @@ public class TutorialInputRouter : MonoBehaviour
         OnTapLow();
     }
 
+    public void OnAdvanceDialogue()
+    {
+        tutorialManager?.OnAdvanceDialogue();
+    }
+
+    public void OnAdvanceDialogue(InputValue value)
+    {
+        if (!IsPressed(value)) return;
+        OnAdvanceDialogue();
+    }
+
     private bool IsPressed(InputValue value)
     {
         if (value == null) return true;

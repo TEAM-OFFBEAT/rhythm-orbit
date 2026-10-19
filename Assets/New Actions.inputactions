@@ -89,6 +89,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "AdvanceDialogue",
+                    "type": "Button",
+                    "id": "a3f1b2c4-d5e6-7890-abcd-ef1234567891",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -155,6 +164,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleSettings",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b4c5d6e7-f8a9-0123-bcde-f12345678902",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "AdvanceDialogue",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
