@@ -48,6 +48,10 @@ public class SurpriseEventDefinition
     public SurpriseEventPhase applicablePhase;
 
     [Header("Entry")]
+    [Tooltip("이벤트 진입 시 플레이어 이름 뒤에 표시할 문구.")]
+    [TextArea(1, 2)]
+    public string entryMessage;
+
     [Tooltip("이벤트 진입 시 1회 재생할 효과음.")]
     public AudioClip entrySfx;
 

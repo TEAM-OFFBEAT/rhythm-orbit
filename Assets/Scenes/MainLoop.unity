@@ -2193,6 +2193,22 @@ PrefabInstance:
       propertyPath: eventDefinitions.Array.data[3].enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[0].entryMessage
+      value: "\uC2E0\uD638\uAC00 \uB04A\uAE30\uACE0 \uC788\uC5B4!"
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[1].entryMessage
+      value: "\uC2DC\uC57C\uAC00 \uD750\uB824\uC9C0\uB294 \uAC83 \uAC19\uC544..."
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[2].entryMessage
+      value: "\uC720\uB839 \uC2E0\uD638\uB97C \uC870\uC2EC\uD574!"
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[3].entryMessage
+      value: "\uADC0\uB97C \uAE30\uC6B8\uC5EC\uBD10!"
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
