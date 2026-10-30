@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4455417679041671106}
   - component: {fileID: 5087980873428537591}
   - component: {fileID: 3740588991197817950}
-  - component: {fileID: 2772309519243709102}
   m_Layer: 0
   m_Name: CalibrationManager
   m_TagString: Untagged
@@ -145,33 +144,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: RhythmOrbit.Runtime::CalibrationManager
   audioSource: {fileID: 5087980873428537591}
   metronomeClip: {fileID: 8300000, guid: 3c450153aa5e63540a711757e87d2b19, type: 3}
---- !u!114 &2772309519243709102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1564116538943715832}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 831eb93e35de0c14eaa36ce056e0608f, type: 3}
-  m_NotificationBehavior: 0
-  m_UIInputModule: {fileID: 0}
-  m_DeviceLostEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_DeviceRegainedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ControlsChangedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ActionEvents: []
-  m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
-  m_DefaultActionMap: GameLoop
-  m_SplitScreenIndex: -1
-  m_Camera: {fileID: 0}
+  spawner: {fileID: 0}
+  fallbackBpm: 106
+  beatsPerNote: 4
