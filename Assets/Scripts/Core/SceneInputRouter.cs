@@ -34,6 +34,7 @@ public class SceneInputRouter : MonoBehaviour
     [SerializeField] private TutorialManager tutorialManager;
     [SerializeField] private MainLoopControlUI mainLoopControlUI;
     [SerializeField] private TutorialExitUI tutorialExitUI;
+    [SerializeField] private LobbyExitUI lobbyExitUI;
 
     // 씬마다 독립된 액션 인스턴스를 사용한다.
     // 다른 씬이나 원본 에셋의 활성 상태를 변경하지 않는다.
@@ -159,8 +160,16 @@ public class SceneInputRouter : MonoBehaviour
                 tutorialExitUI.Toggle();
                 break;
 
-            // 로비에서는 열린 설정창을 닫는 동작만 사용한다.
             case SceneMode.Lobby:
+                if (lobbyExitUI == null)
+                {
+                    Debug.LogWarning(
+                        "SceneInputRouter: Lobby Exit UI를 연결해주세요.",
+                        this);
+                    return;
+                }
+
+                lobbyExitUI.Toggle();
                 break;
         }
     }
@@ -236,7 +245,7 @@ public class SceneInputRouter : MonoBehaviour
     {
         bool missingTarget =
             (sceneMode == SceneMode.Lobby &&
-             settingsWindowController == null) ||
+             (settingsWindowController == null || lobbyExitUI == null)) ||
             (sceneMode == SceneMode.MainLoop &&
              (gameManager == null || mainLoopControlUI == null)) ||
             (sceneMode == SceneMode.Tutorial &&
