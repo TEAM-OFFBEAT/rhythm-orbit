@@ -108,12 +108,35 @@ public class MainLoopControlUI : MonoBehaviour
     }
 
     /// <summary>
-    /// PlayerInput SendMessages — ESC 입력 또는 외부 호출로 ExitPanel을 토글한다.
+    /// 나가기 패널을 열고 닫는다.
+    /// 열 때 같은 Canvas의 마지막 자식으로 옮겨 다른 UI보다 앞에 표시한다.
+    /// 진단 로그로 같은 프레임의 중복 호출과 실제 활성 상태를 확인한다.
     /// </summary>
     public void OnToggleEscape()
     {
-        if (exitPanel == null) return;
-        exitPanel.SetActive(!exitPanel.activeSelf);
+        if (exitPanel == null)
+        {
+            Debug.LogError(
+                "MainLoopControlUI: Exit Panel이 연결되지 않았습니다.",
+                this);
+            return;
+        }
+
+        bool wasOpen = exitPanel.activeSelf;
+        bool shouldOpen = !wasOpen;
+
+        if (shouldOpen)
+        {
+            exitPanel.transform.SetAsLastSibling();
+        }
+
+        exitPanel.SetActive(shouldOpen);
+
+        Debug.Log(
+            $"[ExitPanel] frame={Time.frameCount}, " +
+            $"{wasOpen} → {exitPanel.activeSelf}, " +
+            $"activeInHierarchy={exitPanel.activeInHierarchy}",
+            this);
     }
 
     /// <summary>

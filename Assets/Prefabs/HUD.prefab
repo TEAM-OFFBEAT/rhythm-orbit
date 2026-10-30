@@ -2186,8 +2186,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2623698149272734082}
   - component: {fileID: 1322794709533363962}
-  - component: {fileID: 1953009781935199911}
-  - component: {fileID: 3491291141876287222}
   m_Layer: 0
   m_Name: HUD
   m_TagString: Untagged
@@ -2244,49 +2242,6 @@ MonoBehaviour:
   defaultBubbleMessage: ...
   p1Slot: {fileID: 8460358692341138137}
   p2Slot: {fileID: 8057561938852359967}
---- !u!114 &1953009781935199911
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8365410940559154053}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 831eb93e35de0c14eaa36ce056e0608f, type: 3}
-  m_NotificationBehavior: 0
-  m_UIInputModule: {fileID: 0}
-  m_DeviceLostEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_DeviceRegainedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ControlsChangedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ActionEvents: []
-  m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
-  m_DefaultActionMap: GameLoop
-  m_SplitScreenIndex: -1
-  m_Camera: {fileID: 0}
---- !u!114 &3491291141876287222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8365410940559154053}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c7f9f9d1096e764fb2493ad0b28f046, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SettingsInputRouter
-  settingsWindowController: {fileID: 0}
 --- !u!1 &8542963149900771795
 GameObject:
   m_ObjectHideFlags: 0
