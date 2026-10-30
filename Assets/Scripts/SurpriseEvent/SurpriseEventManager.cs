@@ -45,7 +45,6 @@ public class SurpriseEventManager : MonoBehaviour
     [Header("UI")]
     [Tooltip("이벤트 알림을 표시할 텍스트 컴포넌트. GameNoticePanel의 GuideText에 연결한다.")]
     [SerializeField] private TMP_Text notificationText;
-    [SerializeField] private string toastMessage = "이벤트 발생!";
 
     [Header("Debug")]
     [Tooltip("테스트용. true면 확률과 관계없이 가능한 전환마다 이벤트를 발생시킨다.")]
@@ -434,10 +433,14 @@ public class SurpriseEventManager : MonoBehaviour
         preparedEventCounted = false;
         activeEventPhaseBegun = false;
 
-        SetNotification($"진입\n{activeEvent.phase} / P{activeEvent.targetPlayerId}");
-
         if (definitionMap.TryGetValue(activeEvent.eventId, out SurpriseEventDefinition definition))
         {
+            if (!string.IsNullOrWhiteSpace(definition.entryMessage))
+            {
+                string prefix = GetPlayerPrefix(activeEvent.targetPlayerId);
+                SetNotification($"{prefix} {definition.entryMessage}");
+            }
+
             PlayEntrySfx(definition);
         }
 
@@ -471,8 +474,6 @@ public class SurpriseEventManager : MonoBehaviour
         }
 
         activeEventPhaseBegun = true;
-
-        SetNotification($"적용중\n{activeEvent.phase} / P{activeEvent.targetPlayerId}");
 
         if (handlerMap.TryGetValue(activeEvent.eventId, out ISurpriseEventHandler handler))
         {
@@ -612,12 +613,12 @@ public class SurpriseEventManager : MonoBehaviour
         Debug.Log($"SurpriseEventManager: {message}");
     }
 
-    private void SetNotification(string debugLine)
+    private void SetNotification(string text)
     {
         if (notificationText == null) return;
         notificationText.transform.parent.gameObject.SetActive(true);
         notificationText.gameObject.SetActive(true);
-        notificationText.text = $"{toastMessage}\n{debugLine}";
+        notificationText.text = text;
         notificationText.maxVisibleCharacters = int.MaxValue;
     }
 
@@ -627,5 +628,12 @@ public class SurpriseEventManager : MonoBehaviour
         notificationText.text = "";
         notificationText.gameObject.SetActive(false);
         notificationText.transform.parent.gameObject.SetActive(false);
+    }
+
+    private static string GetPlayerPrefix(int playerId)
+    {
+        return playerId == 1
+            ? "<b><color=#FF66BF>OBIT</color></b>,"
+            : "<b><color=#59FF73>RYMO</color></b>,";
     }
 }
