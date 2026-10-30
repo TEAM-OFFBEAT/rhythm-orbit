@@ -32,7 +32,7 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private GameCamera gameCamera;
 
-    [SerializeField] private GameObject lobbyButtonRoot;
+    //[SerializeField] private GameObject lobbyButtonRoot;
     [SerializeField] private string lobbySceneName = "Lobby";
     
     [Header("UI")]
@@ -348,12 +348,12 @@ public class TutorialManager : MonoBehaviour
         dialoguePlayer?.SetBpm(tutorialBpm);
         dialoguePlayer?.Hide();
 
-        if (lobbyButtonRoot != null)
+        /*if (lobbyButtonRoot != null)
         {   
             //튜토리얼을 항상 나갈 수 있게 수정
             //lobbyButtonRoot.SetActive(false);
             lobbyButtonRoot.SetActive(true);
-        }
+        }*/
 
         attackTurnRenderer.ClearAll();
         
@@ -1460,10 +1460,10 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearPanelMessages();
         HidePanelMessages();
 
-        if (lobbyButtonRoot != null)
+        /*if (lobbyButtonRoot != null)
         {
             lobbyButtonRoot.SetActive(true);
-        }
+        }*/
 
         Debug.Log("TutorialManager: Complete");
     }

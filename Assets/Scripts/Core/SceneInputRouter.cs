@@ -33,6 +33,7 @@ public class SceneInputRouter : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [SerializeField] private TutorialManager tutorialManager;
     [SerializeField] private MainLoopControlUI mainLoopControlUI;
+    [SerializeField] private TutorialExitUI tutorialExitUI;
 
     // 씬마다 독립된 액션 인스턴스를 사용한다.
     // 다른 씬이나 원본 에셋의 활성 상태를 변경하지 않는다.
@@ -115,36 +116,53 @@ public class SceneInputRouter : MonoBehaviour
         settingsWindowController?.Toggle();
     }
 
+    /// <summary>
+    /// 설정창이 열려 있으면 먼저 닫는다.
+    /// 그렇지 않으면 현재 씬의 나가기 확인창을 토글한다.
+    /// </summary>
     private void HandleEscape(InputAction.CallbackContext context)
     {
         if (!context.ReadValueAsButton()) return;
 
-        // ESC 액션이 수신됐는지, 어떤 씬 모드로 처리되는지 확인한다.
         Trace($"ESC 수신 / 모드: {sceneMode}");
 
         if (settingsWindowController != null &&
             settingsWindowController.IsOpen)
         {
-            Trace("ESC → 설정창 닫기");
             settingsWindowController.Close();
             return;
         }
 
-        if (sceneMode != SceneMode.MainLoop)
+        switch (sceneMode)
         {
-            return;
-        }
+            case SceneMode.MainLoop:
+                if (mainLoopControlUI == null)
+                {
+                    Debug.LogError(
+                        "SceneInputRouter: Main Loop Control UI를 연결해주세요.",
+                        this);
+                    return;
+                }
 
-        if (mainLoopControlUI == null)
-        {
-            Debug.LogError(
-                "SceneInputRouter: Main Loop Control UI를 연결해주세요.",
-                this);
-            return;
-        }
+                mainLoopControlUI.OnToggleEscape();
+                break;
 
-        Trace("ESC → 메인 루프 나가기 패널 호출");
-        mainLoopControlUI.OnToggleEscape();
+            case SceneMode.Tutorial:
+                if (tutorialExitUI == null)
+                {
+                    Debug.LogError(
+                        "SceneInputRouter: Tutorial Exit UI를 연결해주세요.",
+                        this);
+                    return;
+                }
+
+                tutorialExitUI.Toggle();
+                break;
+
+            // 로비에서는 열린 설정창을 닫는 동작만 사용한다.
+            case SceneMode.Lobby:
+                break;
+        }
     }
 
     private void HandleHigh(InputAction.CallbackContext context)
