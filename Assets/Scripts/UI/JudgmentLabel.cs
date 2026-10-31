@@ -8,12 +8,14 @@ using UnityEngine;
 public class JudgmentLabel : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private Sprite perfectSprite;
-    [SerializeField] private Sprite goodSprite;
-    [SerializeField] private Sprite missSprite;
+    [SerializeField] private Sprite[] perfectFrames;
+    [SerializeField] private Sprite[] goodFrames;
+    [SerializeField] private Sprite[] missFrames;
+    [SerializeField] private float frameTime = 0.05f;
     [SerializeField] private float displayDuration = 0.6f;
 
     private Coroutine hideCoroutine;
+    private Coroutine animCoroutine;
 
     private void Awake()
     {
@@ -22,18 +24,25 @@ public class JudgmentLabel : MonoBehaviour
     }
 
     /// <summary>
-    /// 판정 결과에 맞는 스프라이트를 표시하고 displayDuration 후 자동으로 숨긴다.
+    /// 판정 결과에 맞는 애니메이션을 재생하고 displayDuration 후 자동으로 숨긴다.
     /// </summary>
     public void ShowJudgment(Judgment judgment)
     {
         if (spriteRenderer == null) return;
-        spriteRenderer.sprite = judgment switch
+
+        var frames = judgment switch
         {
-            Judgment.PERFECT => perfectSprite,
-            Judgment.GOOD    => goodSprite,
-            _                => missSprite,
+            Judgment.PERFECT => perfectFrames,
+            Judgment.GOOD    => goodFrames,
+            _                => missFrames,
         };
-        spriteRenderer.enabled = spriteRenderer.sprite != null;
+
+        if (frames == null || frames.Length == 0) return;
+
+        spriteRenderer.enabled = true;
+
+        if (animCoroutine != null) StopCoroutine(animCoroutine);
+        animCoroutine = StartCoroutine(PlayFrames(frames));
 
         if (hideCoroutine != null) StopCoroutine(hideCoroutine);
         hideCoroutine = StartCoroutine(HideAfterDelay());
@@ -44,13 +53,20 @@ public class JudgmentLabel : MonoBehaviour
     /// </summary>
     public void ClearJudgment()
     {
-        if (hideCoroutine != null)
-        {
-            StopCoroutine(hideCoroutine);
-            hideCoroutine = null;
-        }
+        if (animCoroutine != null) { StopCoroutine(animCoroutine); animCoroutine = null; }
+        if (hideCoroutine != null) { StopCoroutine(hideCoroutine); hideCoroutine = null; }
         if (spriteRenderer != null)
             spriteRenderer.enabled = false;
+    }
+
+    private IEnumerator PlayFrames(Sprite[] frames)
+    {
+        foreach (var sprite in frames)
+        {
+            spriteRenderer.sprite = sprite;
+            yield return new WaitForSeconds(frameTime);
+        }
+        animCoroutine = null;
     }
 
     /// <summary>
