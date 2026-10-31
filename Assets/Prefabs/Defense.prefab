@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8107159429992398166}
   - component: {fileID: 2970065367794442594}
   - component: {fileID: 2604827737916760537}
+  - component: {fileID: 301121103010849208}
   m_Layer: 0
   m_Name: JudgementLabel
   m_TagString: Untagged
@@ -105,10 +106,42 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JudgmentLabel
   spriteRenderer: {fileID: 2970065367794442594}
-  perfectSprite: {fileID: -7483751810003268922, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
-  goodSprite: {fileID: 3210145055518743399, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
-  missSprite: {fileID: 4389592565083480856, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
+  perfectFrames:
+  - {fileID: 21300000, guid: c6ca0a0e29ef7b34191a8674e676dcee, type: 3}
+  - {fileID: 21300000, guid: 7afce3316656a274f8287f70179d5a90, type: 3}
+  - {fileID: 21300000, guid: 544b14b59958bb74e8845e113c5b07b8, type: 3}
+  - {fileID: 21300000, guid: dc173e0c42ede3046b146f3c654995c4, type: 3}
+  goodFrames:
+  - {fileID: 21300000, guid: fb40c3fd808b3bb4d886148e76d48c06, type: 3}
+  - {fileID: 21300000, guid: 0eea82de6abeb6846b37f39e5f5b9977, type: 3}
+  - {fileID: 21300000, guid: 965e7f2d484400d45840175e660940db, type: 3}
+  - {fileID: 21300000, guid: c2d93d4e58f0b7449820246e75599f22, type: 3}
+  missFrames:
+  - {fileID: 21300000, guid: f977a846d7a2a1f4f8935642929df89d, type: 3}
+  - {fileID: 21300000, guid: 31e549f773057894ca8d8998282a17cc, type: 3}
+  - {fileID: 21300000, guid: ab908aa7c85f5b141ae21b16ba58f915, type: 3}
+  - {fileID: 21300000, guid: 027b5388b55cc304aa8d3a2152aa021d, type: 3}
+  frameTime: 0.05
   displayDuration: 0.6
+--- !u!111 &301121103010849208
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233508732310051991}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 7400000, guid: 11e4567516c71be48bdadd30a4e0395a, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: 11e4567516c71be48bdadd30a4e0395a, type: 2}
+  - {fileID: 7400000, guid: ab09dd1acd363d24b88fbbed5e0a797a, type: 2}
+  - {fileID: 7400000, guid: 80a0155b18d92c643acaab6516a289a3, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 0
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
 --- !u!1 &3439859871237220073
 GameObject:
   m_ObjectHideFlags: 0
@@ -340,11 +373,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DefenseTurn
   attackTurnRenderer: {fileID: 0}
-  fallbackMissTimeoutMs: 100
   fallbackTransferSpeed: 5
-  noteActivationLeadTimeMs: 300
   subdivisions: 2
-  defenseTimingWindowRatio: 0.25
+  ghostNoteIdBase: 700000
+  ghostPassDisappearDelayMs: 80
 --- !u!1 &8003745205623763523
 GameObject:
   m_ObjectHideFlags: 0
@@ -356,6 +388,7 @@ GameObject:
   - component: {fileID: 7510006755678142845}
   - component: {fileID: 3908924113513435961}
   - component: {fileID: 6785369236386188834}
+  - component: {fileID: 7778634581345620251}
   m_Layer: 0
   m_Name: JudgementLabel
   m_TagString: Untagged
@@ -450,7 +483,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JudgmentLabel
   spriteRenderer: {fileID: 3908924113513435961}
-  perfectSprite: {fileID: -7483751810003268922, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
-  goodSprite: {fileID: 3210145055518743399, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
-  missSprite: {fileID: 4389592565083480856, guid: b45662f64fb86354a9c7857b85be8bd9, type: 3}
+  perfectFrames:
+  - {fileID: 21300000, guid: c6ca0a0e29ef7b34191a8674e676dcee, type: 3}
+  - {fileID: 21300000, guid: 7afce3316656a274f8287f70179d5a90, type: 3}
+  - {fileID: 21300000, guid: 544b14b59958bb74e8845e113c5b07b8, type: 3}
+  - {fileID: 21300000, guid: dc173e0c42ede3046b146f3c654995c4, type: 3}
+  goodFrames:
+  - {fileID: 21300000, guid: fb40c3fd808b3bb4d886148e76d48c06, type: 3}
+  - {fileID: 21300000, guid: 0eea82de6abeb6846b37f39e5f5b9977, type: 3}
+  - {fileID: 21300000, guid: 965e7f2d484400d45840175e660940db, type: 3}
+  - {fileID: 21300000, guid: c2d93d4e58f0b7449820246e75599f22, type: 3}
+  missFrames:
+  - {fileID: 21300000, guid: f977a846d7a2a1f4f8935642929df89d, type: 3}
+  - {fileID: 21300000, guid: 31e549f773057894ca8d8998282a17cc, type: 3}
+  - {fileID: 21300000, guid: ab908aa7c85f5b141ae21b16ba58f915, type: 3}
+  - {fileID: 21300000, guid: 027b5388b55cc304aa8d3a2152aa021d, type: 3}
+  frameTime: 0.05
   displayDuration: 0.6
+--- !u!111 &7778634581345620251
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8003745205623763523}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 7400000, guid: 11e4567516c71be48bdadd30a4e0395a, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: 11e4567516c71be48bdadd30a4e0395a, type: 2}
+  - {fileID: 7400000, guid: ab09dd1acd363d24b88fbbed5e0a797a, type: 2}
+  - {fileID: 7400000, guid: 80a0155b18d92c643acaab6516a289a3, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 0
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
