@@ -799,6 +799,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3659558241181190724, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3677631295347243371, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4669177742181912063, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5501738816694032748, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: m_Name
       value: LobbyCanvas
