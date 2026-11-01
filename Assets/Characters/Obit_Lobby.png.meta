@@ -1,0 +1,663 @@
+fileFormatVersion: 2
+guid: 0ad178c9c8d3d0c4393879cbf179e10e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7023548877440394467
+    second: Obit_Lobby_0
+  - first:
+      213: -2430436424169208371
+    second: Obit_Lobby_1
+  - first:
+      213: 5463966142025480157
+    second: Obit_Lobby_2
+  - first:
+      213: -9208857029260566119
+    second: Obit_Lobby_3
+  - first:
+      213: 4453998405344657085
+    second: Obit_Lobby_4
+  - first:
+      213: -3644439232384893246
+    second: Obit_Lobby_5
+  - first:
+      213: 1327231647346229141
+    second: Obit_Lobby_6
+  - first:
+      213: -3062151145000861734
+    second: Obit_Lobby_7
+  - first:
+      213: -4765187235049364530
+    second: Obit_Lobby_8
+  - first:
+      213: -5065928141484736402
+    second: Obit_Lobby_9
+  - first:
+      213: -3806158278369085670
+    second: Obit_Lobby_10
+  - first:
+      213: 3069395472784133626
+    second: Obit_Lobby_11
+  - first:
+      213: 5647714085667006864
+    second: Obit_Lobby_12
+  - first:
+      213: -9044441349227449151
+    second: Obit_Lobby_13
+  - first:
+      213: 7504466910930532801
+    second: Obit_Lobby_14
+  - first:
+      213: -2751404869716207580
+    second: Obit_Lobby_15
+  - first:
+      213: 9176060129959297095
+    second: Obit_Lobby_16
+  - first:
+      213: 3972609837976598996
+    second: Obit_Lobby_17
+  - first:
+      213: 519501688518585240
+    second: Obit_Lobby_18
+  - first:
+      213: 8780358832157038225
+    second: Obit_Lobby_19
+  - first:
+      213: 552864881619782978
+    second: Obit_Lobby_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Obit_Lobby_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 295
+        width: 26
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e4ad6edd78a87160800000000000000
+      internalID: 7023548877440394467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_1
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 296
+        width: 21
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc5493003fa554ed0800000000000000
+      internalID: -2430436424169208371
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_2
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 176
+        width: 136
+        height: 155
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd7b030c148e3db40800000000000000
+      internalID: 5463966142025480157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_3
+      rect:
+        serializedVersion: 2
+        x: 351
+        y: 176
+        width: 127
+        height: 149
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 991a09f8251933080800000000000000
+      internalID: -9208857029260566119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_4
+      rect:
+        serializedVersion: 2
+        x: 479
+        y: 265
+        width: 114
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbe79bc83f7cfcd30800000000000000
+      internalID: 4453998405344657085
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_5
+      rect:
+        serializedVersion: 2
+        x: 594
+        y: 266
+        width: 69
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ce7334c3d95c6dc0800000000000000
+      internalID: -3644439232384893246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_6
+      rect:
+        serializedVersion: 2
+        x: 684
+        y: 2
+        width: 309
+        height: 323
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59f7abab6264b6210800000000000000
+      internalID: 1327231647346229141
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_7
+      rect:
+        serializedVersion: 2
+        x: 995
+        y: 2
+        width: 230
+        height: 322
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: adffaa1f1cd0185d0800000000000000
+      internalID: -3062151145000861734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_8
+      rect:
+        serializedVersion: 2
+        x: 1226
+        y: 239
+        width: 137
+        height: 92
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec328aee477aeddb0800000000000000
+      internalID: -4765187235049364530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_9
+      rect:
+        serializedVersion: 2
+        x: 1365
+        y: 240
+        width: 119
+        height: 91
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e60c52d123532b9b0800000000000000
+      internalID: -5065928141484736402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_10
+      rect:
+        serializedVersion: 2
+        x: 1485
+        y: 166
+        width: 101
+        height: 150
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a17f5e2363fcd2bc0800000000000000
+      internalID: -3806158278369085670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_11
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 176
+        width: 210
+        height: 118
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afd8d7e8beea89a20800000000000000
+      internalID: 3069395472784133626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_12
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 176
+        width: 199
+        height: 88
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 099e62db906b06e40800000000000000
+      internalID: 5647714085667006864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_13
+      rect:
+        serializedVersion: 2
+        x: 1227
+        y: 2
+        width: 169
+        height: 236
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c4717b2380bb7280800000000000000
+      internalID: -9044441349227449151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_14
+      rect:
+        serializedVersion: 2
+        x: 1397
+        y: 159
+        width: 41
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c9ffa625e8352860800000000000000
+      internalID: 7504466910930532801
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_15
+      rect:
+        serializedVersion: 2
+        x: 1588
+        y: 166
+        width: 97
+        height: 110
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 428194b39db01d9d0800000000000000
+      internalID: -2751404869716207580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_16
+      rect:
+        serializedVersion: 2
+        x: 519
+        y: 14
+        width: 164
+        height: 161
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74049d3421ae75f70800000000000000
+      internalID: 9176060129959297095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_17
+      rect:
+        serializedVersion: 2
+        x: 1405
+        y: 104
+        width: 75
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d931df899b812730800000000000000
+      internalID: 3972609837976598996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_18
+      rect:
+        serializedVersion: 2
+        x: 1486
+        y: 2
+        width: 191
+        height: 162
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89bad548804a53700800000000000000
+      internalID: 519501688518585240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_19
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1
+        width: 126
+        height: 93
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1961f2766d91ad970800000000000000
+      internalID: 8780358832157038225
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Obit_Lobby_20
+      rect:
+        serializedVersion: 2
+        x: 1398
+        y: 2
+        width: 83
+        height: 101
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24d4cbd3eab2ca700800000000000000
+      internalID: 552864881619782978
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Obit_Lobby_0: 7023548877440394467
+      Obit_Lobby_1: -2430436424169208371
+      Obit_Lobby_10: -3806158278369085670
+      Obit_Lobby_11: 3069395472784133626
+      Obit_Lobby_12: 5647714085667006864
+      Obit_Lobby_13: -9044441349227449151
+      Obit_Lobby_14: 7504466910930532801
+      Obit_Lobby_15: -2751404869716207580
+      Obit_Lobby_16: 9176060129959297095
+      Obit_Lobby_17: 3972609837976598996
+      Obit_Lobby_18: 519501688518585240
+      Obit_Lobby_19: 8780358832157038225
+      Obit_Lobby_2: 5463966142025480157
+      Obit_Lobby_20: 552864881619782978
+      Obit_Lobby_3: -9208857029260566119
+      Obit_Lobby_4: 4453998405344657085
+      Obit_Lobby_5: -3644439232384893246
+      Obit_Lobby_6: 1327231647346229141
+      Obit_Lobby_7: -3062151145000861734
+      Obit_Lobby_8: -4765187235049364530
+      Obit_Lobby_9: -5065928141484736402
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
