@@ -1,0 +1,533 @@
+fileFormatVersion: 2
+guid: ab97441a3ef88f043abc05a523cebd96
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1771684033372118996
+    second: Rymo_Lobby_0
+  - first:
+      213: 2992010281636881772
+    second: Rymo_Lobby_1
+  - first:
+      213: 8287110142715617380
+    second: Rymo_Lobby_2
+  - first:
+      213: 8047704064144912343
+    second: Rymo_Lobby_3
+  - first:
+      213: -1040323835077079018
+    second: Rymo_Lobby_4
+  - first:
+      213: 2616013399690590983
+    second: Rymo_Lobby_5
+  - first:
+      213: 8159385537140958182
+    second: Rymo_Lobby_6
+  - first:
+      213: -3436005850613997211
+    second: Rymo_Lobby_7
+  - first:
+      213: -4921833294855053551
+    second: Rymo_Lobby_8
+  - first:
+      213: 7847600266290676138
+    second: Rymo_Lobby_9
+  - first:
+      213: -1199882996092708521
+    second: Rymo_Lobby_10
+  - first:
+      213: -2479685087809342173
+    second: Rymo_Lobby_11
+  - first:
+      213: -7339102563230009415
+    second: Rymo_Lobby_12
+  - first:
+      213: 5917851939377292472
+    second: Rymo_Lobby_13
+  - first:
+      213: 615989511658401294
+    second: Rymo_Lobby_14
+  - first:
+      213: 2779557017988353624
+    second: Rymo_Lobby_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Rymo_Lobby_0
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 2
+        width: 332
+        height: 273
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4df5067dd39469810800000000000000
+      internalID: 1771684033372118996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_1
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 169
+        width: 202
+        height: 109
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c656841bf71c58920800000000000000
+      internalID: 2992010281636881772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_2
+      rect:
+        serializedVersion: 2
+        x: 539
+        y: 145
+        width: 75
+        height: 141
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 460e91f84cab10370800000000000000
+      internalID: 8287110142715617380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_3
+      rect:
+        serializedVersion: 2
+        x: 852
+        y: 217
+        width: 246
+        height: 72
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7df23d035303faf60800000000000000
+      internalID: 8047704064144912343
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_4
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 216
+        width: 50
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 610dbdedbf60091f0800000000000000
+      internalID: -1040323835077079018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_5
+      rect:
+        serializedVersion: 2
+        x: 1149
+        y: 271
+        width: 41
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70b3838a352fd4420800000000000000
+      internalID: 2616013399690590983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_6
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 2
+        width: 183
+        height: 165
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e32fbe6ae5fb3170800000000000000
+      internalID: 8159385537140958182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_7
+      rect:
+        serializedVersion: 2
+        x: 614
+        y: 145
+        width: 66
+        height: 79
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5612df332ead050d0800000000000000
+      internalID: -3436005850613997211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_8
+      rect:
+        serializedVersion: 2
+        x: 688
+        y: 134
+        width: 162
+        height: 126
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11f597002b222bbb0800000000000000
+      internalID: -4921833294855053551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_9
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 131
+        width: 266
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa144832dd648ec60800000000000000
+      internalID: 7847600266290676138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_10
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 160
+        width: 23
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 759dcd5b5c8295fe0800000000000000
+      internalID: -1199882996092708521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_11
+      rect:
+        serializedVersion: 2
+        x: 1155
+        y: 2
+        width: 126
+        height: 268
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3257a42fc83669dd0800000000000000
+      internalID: -2479685087809342173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_12
+      rect:
+        serializedVersion: 2
+        x: 521
+        y: 2
+        width: 165
+        height: 142
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b7348c5a15462a90800000000000000
+      internalID: -7339102563230009415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_13
+      rect:
+        serializedVersion: 2
+        x: 687
+        y: 1
+        width: 168
+        height: 132
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b4a0f71cfe602250800000000000000
+      internalID: 5917851939377292472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_14
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 130
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0ee3cb723f6c8800800000000000000
+      internalID: 615989511658401294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rymo_Lobby_15
+      rect:
+        serializedVersion: 2
+        x: 855
+        y: 2
+        width: 298
+        height: 127
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85ec3229168f29620800000000000000
+      internalID: 2779557017988353624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Rymo_Lobby_0: 1771684033372118996
+      Rymo_Lobby_1: 2992010281636881772
+      Rymo_Lobby_10: -1199882996092708521
+      Rymo_Lobby_11: -2479685087809342173
+      Rymo_Lobby_12: -7339102563230009415
+      Rymo_Lobby_13: 5917851939377292472
+      Rymo_Lobby_14: 615989511658401294
+      Rymo_Lobby_15: 2779557017988353624
+      Rymo_Lobby_2: 8287110142715617380
+      Rymo_Lobby_3: 8047704064144912343
+      Rymo_Lobby_4: -1040323835077079018
+      Rymo_Lobby_5: 2616013399690590983
+      Rymo_Lobby_6: 8159385537140958182
+      Rymo_Lobby_7: -3436005850613997211
+      Rymo_Lobby_8: -4921833294855053551
+      Rymo_Lobby_9: 7847600266290676138
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
