@@ -36,6 +36,10 @@ public class SceneInputRouter : MonoBehaviour
     [SerializeField] private TutorialExitUI tutorialExitUI;
     [SerializeField] private LobbyExitUI lobbyExitUI;
 
+    [Header("Exclusive Panels")]
+    [Tooltip("열려 있는 동안 다른 패널 입력을 차단하는 패널 목록. IExclusivePanel 구현체만 등록한다.")]
+    [SerializeField] private List<MonoBehaviour> exclusivePanels;
+
     // 씬마다 독립된 액션 인스턴스를 사용한다.
     // 다른 씬이나 원본 에셋의 활성 상태를 변경하지 않는다.
     private InputActionAsset runtimeActions;
@@ -112,14 +116,16 @@ public class SceneInputRouter : MonoBehaviour
     {
         if (!context.ReadValueAsButton()) return;
 
-        Trace("Tab → 설정창");
+        var open = FindOpenExclusivePanel();
+        if (open != null && (open as MonoBehaviour) != settingsWindowController) return;
 
+        Trace("Tab → 설정창");
         settingsWindowController?.Toggle();
     }
 
     /// <summary>
-    /// 설정창이 열려 있으면 먼저 닫는다.
-    /// 그렇지 않으면 현재 씬의 나가기 확인창을 토글한다.
+    /// 열린 전용 패널이 있으면 먼저 닫는다.
+    /// 없으면 현재 씬의 나가기 확인창을 토글한다.
     /// </summary>
     private void HandleEscape(InputAction.CallbackContext context)
     {
@@ -127,10 +133,10 @@ public class SceneInputRouter : MonoBehaviour
 
         Trace($"ESC 수신 / 모드: {sceneMode}");
 
-        if (settingsWindowController != null &&
-            settingsWindowController.IsOpen)
+        var open = FindOpenExclusivePanel();
+        if (open != null)
         {
-            settingsWindowController.Close();
+            open.Close();
             return;
         }
 
@@ -257,6 +263,13 @@ public class SceneInputRouter : MonoBehaviour
                 $"SceneInputRouter: {sceneMode} 씬의 필수 대상을 연결해주세요.",
                 this);
         }
+    }
+
+    private IExclusivePanel FindOpenExclusivePanel()
+    {
+        foreach (var p in exclusivePanels)
+            if (p is IExclusivePanel ep && ep.IsOpen) return ep;
+        return null;
     }
 
     private void Trace(string message)

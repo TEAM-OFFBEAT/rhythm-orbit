@@ -1127,6 +1127,18 @@ PrefabInstance:
       propertyPath: settingsWindowController
       value: 
       objectReference: {fileID: 914828969}
+    - target: {fileID: 8093130277369622593, guid: 19e2aff678119f443b52b1547512943e, type: 3}
+      propertyPath: exclusivePanels.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8093130277369622593, guid: 19e2aff678119f443b52b1547512943e, type: 3}
+      propertyPath: 'exclusivePanels.Array.data[0]'
+      value: 
+      objectReference: {fileID: 914828969}
+    - target: {fileID: 8093130277369622593, guid: 19e2aff678119f443b52b1547512943e, type: 3}
+      propertyPath: 'exclusivePanels.Array.data[1]'
+      value: 
+      objectReference: {fileID: 1836659183}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

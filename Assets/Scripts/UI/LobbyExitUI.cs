@@ -5,12 +5,14 @@ using UnityEngine.UI;
 /// 로비의 게임 종료 확인창을 관리한다.
 /// ESC 입력은 SceneInputRouter에서 전달받는다.
 /// </summary>
-public class LobbyExitUI : MonoBehaviour
+public class LobbyExitUI : MonoBehaviour, IExclusivePanel
 {
     [Header("Exit Panel")]
     [SerializeField] private GameObject exitPanel;
     [SerializeField] private Button exitYesButton;
     [SerializeField] private Button exitNoButton;
+
+    public bool IsOpen => exitPanel != null && exitPanel.activeSelf;
 
     private bool isQuitting;
 

@@ -58,6 +58,8 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("공격 시작 예약 지연. 튜토리얼에서는 즉시 입력이 먹도록 0 권장.")]
     [SerializeField] private float attackStartDelay = 0f;
     [SerializeField] private float viewTransitionDelay = 0.15f;
+    [Tooltip("튜토리얼 완료 후 로비 씬으로 자동 이동하기까지 대기 시간(초).")]
+    [SerializeField] private float lobbyTransitionDelay = 3f;
     
     [Tooltip("4박 경계선을 이 시간만큼 살짝 지난 경우에도 같은 경계선으로 인정한다. 공격 연습 시작 전 긴 공백 방지용.")]
     [SerializeField, Min(0f)] private float guideBoundaryLateGraceSeconds = 0.25f;
@@ -322,6 +324,9 @@ public class TutorialManager : MonoBehaviour
 
         currentStep = TutorialStep.Complete;
         CompleteTutorial();
+
+        yield return new WaitForSecondsRealtime(lobbyTransitionDelay);
+        GoToLobby();
     }
 
     private void InitializeTutorial()

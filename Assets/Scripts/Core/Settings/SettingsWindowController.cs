@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /// 이 스크립트는 SettingsWindowPrefab 루트에 붙이고,
 /// 실제로 보였다 사라지는 창 오브젝트는 windowRoot에 연결한다.
 /// </summary>
-public class SettingsWindowController : MonoBehaviour
+public class SettingsWindowController : MonoBehaviour, IExclusivePanel
 {
     private enum SettingsPageType
     {
