@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6823858592981940950}
   - component: {fileID: 1646391898211643351}
   m_Layer: 5
-  m_Name: InputField
+  m_Name: IPInputField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -110,7 +110,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1, y: -133.68637}
+  m_AnchoredPosition: {x: -1, y: -132}
   m_SizeDelta: {x: 785, y: 57.3727}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1950534657722924886
@@ -731,7 +731,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3055696391922798780
 RectTransform:
   m_ObjectHideFlags: 0
