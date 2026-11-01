@@ -1012,6 +1012,8 @@ public class GameManager : MonoBehaviour
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
 
+        surpriseEventManager?.ResetForNewGame();
+
         GameResultType resultType = defeatedPlayerId == 1
             ? GameResultType.P2Win
             : GameResultType.P1Win;
@@ -1058,6 +1060,8 @@ public class GameManager : MonoBehaviour
         hud?.ClearJudgments();
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
+
+        surpriseEventManager?.ResetForNewGame();
 
         resultPanelUI?.Show(GameResultType.CommunicationSuccess);
 
