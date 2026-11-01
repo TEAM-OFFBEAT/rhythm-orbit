@@ -11,7 +11,7 @@ using System.Net.NetworkInformation;
 /// PING/PONG 클럭 동기화 완료 후 세션 데이터를 NetworkManager에 저장하고 MainLoop 씬으로 전환한다.
 /// Host = P1 (첫 공격자), Guest = P2.
 /// </summary>
-public class LobbyController : MonoBehaviour
+public class LobbyController : MonoBehaviour, IExclusivePanel
 {
     [Header("Network")]
     [SerializeField] private NetworkManager networkManager;
@@ -197,6 +197,20 @@ public class LobbyController : MonoBehaviour
     {
         SceneManager.LoadScene(mainLoopSceneName);
     }
+
+    // ── IExclusivePanel ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// 서브패널(방 생성 대기 / 방 입장)이 열려 있는지 반환한다.
+    /// </summary>
+    public bool IsOpen =>
+        (hostWaitingPanel != null && hostWaitingPanel.activeSelf) ||
+        (joinPanel        != null && joinPanel.activeSelf);
+
+    /// <summary>
+    /// ESC 입력으로 현재 서브패널을 닫고 메인 메뉴로 돌아간다.
+    /// </summary>
+    public void Close() => OnCancel();
 
     private void ShowMainMenu()
     {
