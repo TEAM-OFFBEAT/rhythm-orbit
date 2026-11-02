@@ -9,9 +9,10 @@ public class GameCamera : MonoBehaviour
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
 
     [Header("Movement")]
-    [SerializeField] private float lerpSpeed;
+    [SerializeField] private float smoothTime = 0.15f;
 
     private float targetX;
+    private float velocityX;
 
     private void Awake()
     {
@@ -79,11 +80,10 @@ public class GameCamera : MonoBehaviour
         targetX = (gridCenterX + judgeLineX) * 0.5f;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
-        // 카메라 이동은 시각 효과이므로 Time.deltaTime 사용 (게임 타이밍 로직 아님)
         Vector3 pos = transform.position;
-        pos.x = Mathf.Lerp(pos.x, targetX, lerpSpeed * Time.deltaTime);
+        pos.x = Mathf.SmoothDamp(pos.x, targetX, ref velocityX, smoothTime);
         transform.position = pos;
     }
 }
