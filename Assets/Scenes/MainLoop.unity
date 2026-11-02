@@ -452,6 +452,10 @@ PrefabInstance:
       propertyPath: settingsWindowController
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: roundTransitionVideoPlayer
+      value: 
+      objectReference: {fileID: 7723943202393023525}
     - target: {fileID: 9217618931380790755, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -970,6 +974,10 @@ PrefabInstance:
     - target: {fileID: 3491291141876287222, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: settingsWindowController
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7483729547041339421, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8365410940559154053, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_Name
@@ -1911,6 +1919,10 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 456633806}
+    - target: {fileID: 7971608759510111601, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8278191591010166277, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: logPanel
       value: 
@@ -1938,6 +1950,14 @@ PrefabInstance:
     - target: {fileID: 8441840504047799915, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: m_Name
       value: MainLoopControlUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 8441840504047799915, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8507967163798801031, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2619,6 +2639,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2970065367794442594, guid: feb0289c027318244a2c43727103e4bd, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3908924113513435961, guid: feb0289c027318244a2c43727103e4bd, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5468208319108040782, guid: feb0289c027318244a2c43727103e4bd, type: 3}
       propertyPath: m_Name
       value: Defense
@@ -2792,6 +2820,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ResultPanelUI
       objectReference: {fileID: 0}
+    - target: {fileID: 3110310685775548142, guid: adfa215dfa2b9bc4a82799c3b19f8b39, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2821,6 +2853,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3635125610886757837, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
+      propertyPath: targetCamera
+      value: 
+      objectReference: {fileID: 519420031}
     - target: {fileID: 5702597431537666845, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2885,6 +2921,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 634efa6473daece47ada1ae499f7f9d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxBackground
+--- !u!114 &7723943202393023525 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3635125610886757837, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
+  m_PrefabInstance: {fileID: 7723943202393023523}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af06818df80e8864eaf0ee89669bdb39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoundTransitionVideoPlayer
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

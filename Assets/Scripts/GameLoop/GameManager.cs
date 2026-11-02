@@ -65,6 +65,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Background")]
     [SerializeField] private ParallaxBackground parallaxBackground;
+    [SerializeField] private RoundTransitionVideoPlayer roundTransitionVideoPlayer;
 
     [Header("Round Settings")]
     [SerializeField] private RoundSetting[] roundSettings44 =
@@ -333,6 +334,7 @@ public class GameManager : MonoBehaviour
         currentRoundIndex = 0;
         lastSurpriseEventPreparePhaseIndex = -1;
         parallaxBackground?.ApplyRound(0, animate: false);
+        roundTransitionVideoPlayer?.PrepareClip(0);
         surpriseEventManager?.ResetForNewGame(NetworkManager.Instance?.SharedSeed ?? 0);
 
         ApplyCurrentBpm(scheduleBgm: false);
@@ -456,8 +458,14 @@ public class GameManager : MonoBehaviour
 
                 SoundManager.Instance?.PlaySfxScheduled(SfxId.RoundChange, thisPhaseStart);
 
+                int oldRoundIndex = currentRoundIndex;
                 currentRoundIndex = nextRoundIndex;
-                parallaxBackground?.ApplyRound(currentRoundIndex);
+                int newRoundIndex = currentRoundIndex;
+                if (roundTransitionVideoPlayer != null)
+                    roundTransitionVideoPlayer.TriggerTransition(oldRoundIndex,
+                        () => parallaxBackground?.ApplyRound(newRoundIndex, animate: false));
+                else
+                    parallaxBackground?.ApplyRound(currentRoundIndex);
                 ApplyCurrentBpm(scheduleBgm: false);
 
                 double nextRoundStart = thisPhaseStart + gapDuration;

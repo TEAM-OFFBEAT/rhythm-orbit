@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -97,10 +96,11 @@ public class ParallaxBackground : MonoBehaviour
         var sprite = GetSprite(sprites, roundIndex);
         if (sprite == null) return;
 
-        if (animate && transitionDuration > 0f)
-            StartCoroutine(CrossfadeSprite(renderer, sprite));
-        else
-            renderer.sprite = sprite;
+        // 라운드 전환 영상(RoundTransitionVideoPlayer)이 전환 연출을 담당하므로 crossfade 비활성화
+        // if (animate && transitionDuration > 0f)
+        //     StartCoroutine(CrossfadeSprite(renderer, sprite));
+        // else
+        renderer.sprite = sprite;
     }
 
     private static Sprite GetSprite(Sprite[] sprites, int index)
@@ -109,35 +109,29 @@ public class ParallaxBackground : MonoBehaviour
         return sprites[Mathf.Clamp(index, 0, sprites.Length - 1)];
     }
 
-    private IEnumerator CrossfadeSprite(SpriteRenderer target, Sprite newSprite)
-    {
-        if (target.sprite == newSprite) yield break;
-
-        // 구 스프라이트를 임시 자식으로 보존해 두고, 새 스프라이트를 위에 서서히 올린다.
-        // 이 방식은 구 스프라이트가 항상 보이므로 투명해지는 순간(플래시)이 없다.
-        var tempGo = new GameObject("_fade");
-        tempGo.transform.SetParent(target.transform, false);
-        var temp = tempGo.AddComponent<SpriteRenderer>();
-        temp.sprite = target.sprite;
-        temp.material = target.material;
-        temp.sortingLayerID = target.sortingLayerID;
-        temp.sortingOrder = target.sortingOrder - 1;
-        temp.color = Color.white;
-
-        target.sprite = newSprite;
-        target.color  = new Color(1f, 1f, 1f, 0f);
-
-        float elapsed = 0f;
-        while (elapsed < transitionDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / transitionDuration);
-            target.color = new Color(1f, 1f, 1f, t);
-            temp.color   = new Color(1f, 1f, 1f, 1f - t);
-            yield return null;
-        }
-
-        target.color = Color.white;
-        Destroy(tempGo);
-    }
+    // private IEnumerator CrossfadeSprite(SpriteRenderer target, Sprite newSprite)
+    // {
+    //     if (target.sprite == newSprite) yield break;
+    //     var tempGo = new GameObject("_fade");
+    //     tempGo.transform.SetParent(target.transform, false);
+    //     var temp = tempGo.AddComponent<SpriteRenderer>();
+    //     temp.sprite = target.sprite;
+    //     temp.material = target.material;
+    //     temp.sortingLayerID = target.sortingLayerID;
+    //     temp.sortingOrder = target.sortingOrder - 1;
+    //     temp.color = Color.white;
+    //     target.sprite = newSprite;
+    //     target.color  = new Color(1f, 1f, 1f, 0f);
+    //     float elapsed = 0f;
+    //     while (elapsed < transitionDuration)
+    //     {
+    //         elapsed += Time.deltaTime;
+    //         float t = Mathf.Clamp01(elapsed / transitionDuration);
+    //         target.color = new Color(1f, 1f, 1f, t);
+    //         temp.color   = new Color(1f, 1f, 1f, 1f - t);
+    //         yield return null;
+    //     }
+    //     target.color = Color.white;
+    //     Destroy(tempGo);
+    // }
 }
