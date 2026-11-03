@@ -921,7 +921,7 @@ public class GameManager : MonoBehaviour
         if (judgment != Judgment.MISS && attackTurnRenderer != null
             && noteTypeByNoteId.TryGetValue(packet.noteId, out NoteType hitNoteType))
         {
-            HitEffectSpawner.Instance?.Play(hitNoteType, attackTurnRenderer.GetTransferJudgeLineWorldPos());
+            HitEffectSpawner.Instance?.Play(hitNoteType, attackTurnRenderer.GetTransferJudgeLineWorldPos(), judgment == Judgment.PERFECT);
         }
     }
 

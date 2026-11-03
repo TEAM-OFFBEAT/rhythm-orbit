@@ -46,3 +46,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HitEffectSpawner
   highEffectPrefab: {fileID: 4089078816333213400, guid: 249481ba4e72e7446bdb727afc599c69, type: 3}
   lowEffectPrefab: {fileID: 2568871887876273255, guid: 06d31e48f9807de41b8d29bb479d7b41, type: 3}
+  perfectHighEffectPrefab: {fileID: 4089078816333213400, guid: b53d486655f9b9b4dafe5e25b99f5c27, type: 3}
+  perfectLowEffectPrefab: {fileID: 2568871887876273255, guid: df614536dc71a11439a75c9ae87c7626, type: 3}

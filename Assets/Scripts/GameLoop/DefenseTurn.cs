@@ -357,7 +357,7 @@ public class DefenseTurn : MonoBehaviour
             Vector3 effectPos = attackTurnRenderer != null
                 ? attackTurnRenderer.GetTransferJudgeLineWorldPos()
                 : Vector3.zero;
-            HitEffectSpawner.Instance?.Play(note.noteType, effectPos);
+            HitEffectSpawner.Instance?.Play(note.noteType, effectPos, judgment == Judgment.PERFECT);
         }
 
         attackTurnRenderer.RemoveNote(note.noteId);

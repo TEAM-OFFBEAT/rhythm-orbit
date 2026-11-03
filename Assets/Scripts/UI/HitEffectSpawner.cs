@@ -8,13 +8,20 @@ public class HitEffectSpawner : SceneSingleton<HitEffectSpawner>
 {
     [SerializeField] private GameObject highEffectPrefab;
     [SerializeField] private GameObject lowEffectPrefab;
+    [SerializeField] private GameObject perfectHighEffectPrefab;
+    [SerializeField] private GameObject perfectLowEffectPrefab;
 
     /// <summary>
-    /// noteType에 맞는 이펙트를 worldPos에 생성한다.
+    /// noteType에 맞는 이펙트를 worldPos에 생성한다. isPerfect가 true이면 Perfect 전용 이펙트를 사용한다.
     /// </summary>
-    public void Play(NoteType noteType, Vector3 worldPos)
+    public void Play(NoteType noteType, Vector3 worldPos, bool isPerfect = false)
     {
-        GameObject prefab = noteType == NoteType.HIGH ? highEffectPrefab : lowEffectPrefab;
+        GameObject prefab;
+        if (isPerfect)
+            prefab = noteType == NoteType.HIGH ? perfectHighEffectPrefab : perfectLowEffectPrefab;
+        else
+            prefab = noteType == NoteType.HIGH ? highEffectPrefab : lowEffectPrefab;
+
         if (prefab == null)
         {
             Debug.LogWarning($"HitEffectSpawner: {noteType} 이펙트 프리팹이 연결되지 않음.");
