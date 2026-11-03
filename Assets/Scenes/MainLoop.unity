@@ -764,7 +764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameCamera
   attackTurnRenderer: {fileID: 4572499397756924744}
-  lerpSpeed: 6
+  smoothTime: 0.15
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1921,7 +1921,7 @@ PrefabInstance:
       objectReference: {fileID: 456633806}
     - target: {fileID: 7971608759510111601, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8278191591010166277, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: logPanel
@@ -2854,9 +2854,9 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 3635125610886757837, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
-      propertyPath: targetCamera
-      value: 
-      objectReference: {fileID: 519420031}
+      propertyPath: videoSortingOrder
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5702597431537666845, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2901,10 +2901,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Background
       objectReference: {fileID: 0}
-    - target: {fileID: 8701924729721646753, guid: 3c7654589eac03143964412cc2ef52ee, type: 3}
-      propertyPath: targetCamera
-      value: 
-      objectReference: {fileID: 519420031}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
