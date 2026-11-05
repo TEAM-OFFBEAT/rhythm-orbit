@@ -417,6 +417,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 6973210026399278952}
     - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: laneController
+      value: 
+      objectReference: {fileID: 8242475120548370171}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: attackTurnRenderer
       value: 
       objectReference: {fileID: 4572499397756924744}
@@ -2866,6 +2870,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cd08d864baff41841a37998b7bb73210, type: 3}
+--- !u!114 &8242475120548370171 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 68933059842292664, guid: cd08d864baff41841a37998b7bb73210, type: 3}
+  m_PrefabInstance: {fileID: 8242475120548370170}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e7b78f376e3baf4cb3d1b2481b8fa97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LaneController
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
