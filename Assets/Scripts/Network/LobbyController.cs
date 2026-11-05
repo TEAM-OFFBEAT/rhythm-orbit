@@ -38,8 +38,16 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     [SerializeField] private Button cancelJoinButton;
     [SerializeField] private TMP_Text joinStatusText;
 
+    [Header("Mode Select Panel")]
+    [SerializeField] private GameObject modeSelectPanel;
+    [SerializeField] private Button modeButton44;
+    [SerializeField] private Button modeButton34;
+    [SerializeField] private TMP_Text modeSelectStatusText;
+
     [SerializeField] private string mainLoopSceneName = "MainLoop";
     [SerializeField] private string tutorialSceneName = "Tutorial";
+
+    private TimeSignatureMode pendingMode;
 
     private void Start()
     {
@@ -63,6 +71,8 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         cancelHostButton.onClick.AddListener(OnCancel);
         connectButton.onClick.AddListener(OnConnect);
         cancelJoinButton.onClick.AddListener(OnCancel);
+        modeButton44?.onClick.AddListener(() => OnModeButtonClicked(TimeSignatureMode.FourFour));
+        modeButton34?.onClick.AddListener(() => OnModeButtonClicked(TimeSignatureMode.ThreeFour));
 
         networkManager.OnConnected += HandleConnected;
         networkManager.OnConnectionFailed += HandleConnectionFailed;
@@ -148,31 +158,36 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     private void HandleConnected()
     {
         if (networkManager.IsHost)
-        {
-            waitingStatusText.text = "클럭 동기화 중...";
-            networkManager.TimeSync.StartSync(OnClockSyncComplete);
-        }
+            ShowModeSelect(enableButtons: true, "모드를 선택하세요.");
         else
-        {
-            joinStatusText.text = "동기화 중... 잠시 기다려 주세요.";
-            // Guest: GAME_START 수신까지 대기
-        }
+            ShowModeSelect(enableButtons: false, "방장이 모드를 선택 중...");
     }
 
-    private void OnClockSyncComplete()
+    private void OnModeButtonClicked(TimeSignatureMode mode)
+    {
+        pendingMode = mode;
+        if (modeButton44 != null) modeButton44.interactable = false;
+        if (modeButton34 != null) modeButton34.interactable = false;
+        if (modeSelectStatusText != null) modeSelectStatusText.text = "최종 동기화 중...";
+        networkManager.TimeSync.StartSync(OnFinalSyncComplete);
+    }
+
+    private void OnFinalSyncComplete()
     {
         double hostDspTime = AudioSettings.dspTime;
-        double clockOffset = networkManager.TimeSync.ClockOffset;
         int sharedSeed = new System.Random().Next();
+        double clockOffset = networkManager.TimeSync.ClockOffset;
 
-        // Host = P1, Guest = P2, 첫 공격자 = P1
         networkManager.SetSessionData(localPlayerId: 1, firstAttackerId: 1,
             localGameStartDspTime: hostDspTime, sharedSeed: sharedSeed);
+        networkManager.SelectedMode = pendingMode;
+
         networkManager.Send(w => PacketSerializer.WriteGameStart(w,
             myPlayerId: 2, firstAttackerId: 1,
             clockOffset: clockOffset,
             gameStartDspTime: hostDspTime,
-            sharedSeed: sharedSeed));
+            sharedSeed: sharedSeed,
+            selectedMode: pendingMode));
         LoadMainLoop();
     }
 
@@ -188,7 +203,19 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
             firstAttackerId:      packet.firstAttackerId,
             localGameStartDspTime: guestGameStartDspTime,
             sharedSeed:           packet.sharedSeed);
+        networkManager.SelectedMode = (TimeSignatureMode)packet.selectedMode;
         LoadMainLoop();
+    }
+
+    private void ShowModeSelect(bool enableButtons, string statusText)
+    {
+        mainMenuPanel.SetActive(false);
+        hostWaitingPanel.SetActive(false);
+        joinPanel.SetActive(false);
+        modeSelectPanel?.SetActive(true);
+        if (modeButton44 != null) modeButton44.interactable = enableButtons;
+        if (modeButton34 != null) modeButton34.interactable = enableButtons;
+        if (modeSelectStatusText != null) modeSelectStatusText.text = statusText;
     }
 
     // ── 씬 전환 ──────────────────────────────────────────────────────────────
@@ -205,7 +232,8 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     /// </summary>
     public bool IsOpen =>
         (hostWaitingPanel != null && hostWaitingPanel.activeSelf) ||
-        (joinPanel        != null && joinPanel.activeSelf);
+        (joinPanel        != null && joinPanel.activeSelf) ||
+        (modeSelectPanel  != null && modeSelectPanel.activeSelf);
 
     /// <summary>
     /// ESC 입력으로 현재 서브패널을 닫고 메인 메뉴로 돌아간다.
@@ -217,6 +245,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         mainMenuPanel.SetActive(true);
         hostWaitingPanel.SetActive(false);
         joinPanel.SetActive(false);
+        modeSelectPanel?.SetActive(false);
 
         connectButton.interactable = true;
     }
