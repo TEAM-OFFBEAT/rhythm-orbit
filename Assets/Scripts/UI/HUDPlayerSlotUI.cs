@@ -5,9 +5,13 @@ using UnityEngine.UI;
 /// <summary>
 /// 플레이어 한 명의 HUD 슬롯을 표시하는 UI 컴포넌트.
 /// 프로필 이미지, 정신력 바, 판정 이미지를 갱신한다.
+/// spineProfile이 연결되면 Spine 애니메이션 기반으로 동작하고, 없으면 스프라이트 폴백.
 /// </summary>
 public class HUDPlayerSlotUI : MonoBehaviour
 {
+    [Header("Profile - Spine (P1)")]
+    [SerializeField] private SpineUIPlayer spineProfile;
+
     [Header("Profile (4/4 Mode)")]
     [SerializeField] private Image profileImage;
     [SerializeField] private Sprite defaultPortrait;
@@ -27,6 +31,13 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     private TimeSignatureMode currentMode;
 
+    private const string SpineIdle    = "default_2";
+    private const string SpinePerfect = "perfect";
+    private const string SpineGood    = "good";
+    private const string SpineMiss    = "miss";
+    private const string SpineSuccess = "success";
+    private const string SpineFail    = "fail";
+
     [Header("Sanity")]
     [SerializeField] private Image sanityBarFill;
 
@@ -41,7 +52,10 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     private void Awake()
     {
-        SetPortrait(defaultPortrait);
+        if (spineProfile != null)
+            spineProfile.Play(SpineIdle, true);
+        else
+            SetPortrait(defaultPortrait);
         SetActiveState(false);
     }
 
@@ -68,9 +82,20 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     /// <summary>
     /// 판정 결과에 따라 프로필 이미지를 교체한다.
+    /// spineProfile이 연결된 경우 해당 애니메이션을 한 번 재생 후 idle로 복귀한다.
     /// </summary>
     public void ShowJudgment(Judgment judgment)
     {
+        if (spineProfile != null)
+        {
+            PlaySpineOnce(judgment switch
+            {
+                Judgment.PERFECT => SpinePerfect,
+                Judgment.GOOD    => SpineGood,
+                _                => SpineMiss,
+            });
+            return;
+        }
         SetPortrait(judgment switch
         {
             Judgment.PERFECT => GetPortrait(perfectPortrait, perfectPortrait34),
@@ -80,10 +105,15 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 프로필을 기본 상태로 되돌린다.
+    /// 프로필을 기본 상태(idle)로 되돌린다.
     /// </summary>
     public void ClearJudgment()
     {
+        if (spineProfile != null)
+        {
+            spineProfile.Play(SpineIdle, true);
+            return;
+        }
         SetPortrait(GetPortrait(defaultPortrait, defaultPortrait34));
     }
 
@@ -92,9 +122,20 @@ public class HUDPlayerSlotUI : MonoBehaviour
     /// </summary>
     public void SetGameEndPortrait(bool communicationSuccess)
     {
+        if (spineProfile != null)
+        {
+            PlaySpineOnce(communicationSuccess ? SpineSuccess : SpineFail);
+            return;
+        }
         SetPortrait(communicationSuccess
             ? GetPortrait(successPortrait, successPortrait34)
             : GetPortrait(failPortrait, failPortrait34));
+    }
+
+    private void PlaySpineOnce(string animName)
+    {
+        spineProfile.Play(animName, false);
+        spineProfile.AnimationState.AddAnimation(0, SpineIdle, true, 0f);
     }
 
     /// <summary>

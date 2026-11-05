@@ -616,81 +616,6 @@ MonoBehaviour:
   m_FillOrigin: 1
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &3837630612141094654
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5075806484379397879}
-  - component: {fileID: 8641312207841538542}
-  - component: {fileID: 2057407754436431171}
-  m_Layer: 0
-  m_Name: P1ProfileImage
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &5075806484379397879
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3837630612141094654}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 634911470253977377}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -206, y: 51}
-  m_SizeDelta: {x: 450, y: 500}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &8641312207841538542
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3837630612141094654}
-  m_CullTransparentMesh: 1
---- !u!114 &2057407754436431171
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3837630612141094654}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 679739729869728943, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &3903294749430369904
 GameObject:
   m_ObjectHideFlags: 0
@@ -766,6 +691,187 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &3969056655879106597
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1155401080502947939}
+  - component: {fileID: 5773685641405989241}
+  - component: {fileID: 8277883639669198200}
+  - component: {fileID: 4104596652930000454}
+  - component: {fileID: 5848349653902868374}
+  m_Layer: 0
+  m_Name: P1SpineProfile
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1155401080502947939
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3969056655879106597}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 634911470253977377}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -213, y: -276}
+  m_SizeDelta: {x: 450, y: 500}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &5773685641405989241
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3969056655879106597}
+  m_CullTransparentMesh: 0
+--- !u!114 &8277883639669198200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3969056655879106597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85b887af7e6c3f45a2e2d2920d641bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonGraphic
+  m_Material: {fileID: 2100000, guid: 9d7e3f2a1b4c5e6f8a9b0c1d2e3f4a5b, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  skeletonDataAsset: {fileID: 11400000, guid: 482a09e3502a7374ba291cd5cc4f64ef, type: 2}
+  initialSkinName: 
+  initialFlipX: 0
+  initialFlipY: 0
+  meshSettings:
+    useClipping: 1
+    zSpacing: 0
+    tintBlack: 0
+    canvasGroupCompatible: 0
+    pmaVertexColors: 1
+    addNormals: 0
+    calculateTangents: 0
+    immutableTriangles: 0
+  updateWhenInvisible: 3
+  clearStateOnDisable: 0
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  disableRenderingOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsPositionInheritanceLimit: {x: Infinity, y: Infinity}
+  physicsRotationInheritanceLimit: 3.4028235e+38
+  physicsMovementRelativeTo: {fileID: 0}
+  threadedMeshGeneration: 2
+  m_SkeletonColor: {r: 1, g: 1, b: 1, a: 1}
+  freeze: 0
+  allowMultipleCanvasRenderers: 0
+  updateSeparatorPartLocation: 1
+  updateSeparatorPartScale: 0
+  additiveMaterial: {fileID: 0}
+  multiplyMaterial: {fileID: 0}
+  screenMaterial: {fileID: 0}
+  forceAdditiveMaterial: 0
+  layoutScaleMode: 0
+  referenceSize: {x: 450, y: 500}
+  pivotOffset: {x: 0, y: 0}
+  referenceScale: 1
+  layoutScale: 1
+  rectTransformSize: {x: 450, y: 500}
+  editReferenceRect: 0
+  canvasRenderers: []
+  separatorParts: []
+  disableMeshAssignmentOnOverride: 1
+  wasDeprecatedTransferred: 1
+  meshGeneratorDeprecated:
+    settings:
+      useClipping: 1
+      zSpacing: 0
+      tintBlack: 0
+      canvasGroupCompatible: 0
+      pmaVertexColors: 1
+      addNormals: 0
+      calculateTangents: 0
+      immutableTriangles: 0
+  updateTimingDeprecated: 1
+  startingAnimationDeprecated: 
+  startingLoopDeprecated: 0
+  timeScaleDeprecated: 1
+  unscaledTimeDeprecated: 0
+--- !u!114 &4104596652930000454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3969056655879106597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d247ba06193faa74d9335f5481b2b56c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonAnimation
+  updateTiming: 1
+  threadedAnimation: 2
+  animationName: 
+  loop: 0
+  timeScale: 1
+  unscaledTime: 0
+  wasDeprecatedTransferred: 1
+  skeletonDataAssetDeprecated: {fileID: 0}
+  initialSkinNameDeprecated: 
+  editorSkipSkinSyncDeprecated: 0
+  fixPrefabOverrideViaMeshFilterDeprecated: 2
+  initialFlipXDeprecated: 0
+  initialFlipYDeprecated: 0
+  updateModeDeprecated: 3
+  updateWhenInvisibleDeprecated: 3
+  separatorSlotNamesDeprecated: []
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  clearStateOnDisableDeprecated: 0
+  tintBlackDeprecated: 0
+  singleSubmeshDeprecated: 0
+  fixDrawOrderDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
+  disableRenderingOnOverrideDeprecated: 1
+  physicsPositionInheritanceFactorDeprecated: {x: 1, y: 1}
+  physicsRotationInheritanceFactorDeprecated: 1
+  physicsMovementRelativeToDeprecated: {fileID: 0}
+  maskInteractionDeprecated: 0
+--- !u!114 &5848349653902868374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3969056655879106597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d811ba91d639fc43a3bca4b44807bf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineUIPlayer
 --- !u!1 &4014179360083566950
 GameObject:
   m_ObjectHideFlags: 0
@@ -1549,7 +1655,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6297980018562491523}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -2424,7 +2530,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5075806484379397879}
+  - {fileID: 1155401080502947939}
   - {fileID: 120589602015071689}
   - {fileID: 3670465369542434335}
   m_Father: {fileID: 2623698149272734082}
@@ -2484,13 +2590,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75b4cc834a20b4a419f2ea686bd5feba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProfileSlotUI
-  profileImage: {fileID: 2057407754436431171}
+  spineProfile: {fileID: 5848349653902868374}
+  profileImage: {fileID: 0}
   defaultPortrait: {fileID: 4620578802948863353, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   perfectPortrait: {fileID: 679739729869728943, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   goodPortrait: {fileID: -6835189599539173722, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   missPortrait: {fileID: 5248155131499935147, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   failPortrait: {fileID: -3303779423006393323, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   successPortrait: {fileID: -790699523677361007, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
+  defaultPortrait34: {fileID: 0}
+  perfectPortrait34: {fileID: 0}
+  goodPortrait34: {fileID: 0}
+  missPortrait34: {fileID: 0}
+  failPortrait34: {fileID: 0}
+  successPortrait34: {fileID: 0}
   sanityBarFill: {fileID: 2726978777307346578}
   panelImage: {fileID: 4897033064702728408}
   defaultPanelSprite: {fileID: 5247654415162562235, guid: d273e516d9ccfd24da8b19393c76269c, type: 3}
@@ -2589,6 +2702,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75b4cc834a20b4a419f2ea686bd5feba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProfileSlotUI
+  spineProfile: {fileID: 0}
   profileImage: {fileID: 3808855878415715405}
   defaultPortrait: {fileID: 7152930139536384079, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   perfectPortrait: {fileID: -8401692288953904933, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
@@ -2596,6 +2710,12 @@ MonoBehaviour:
   missPortrait: {fileID: 7456334905099763947, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   failPortrait: {fileID: 5377859178988851676, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
   successPortrait: {fileID: -8090365562718305141, guid: 17676ff2119e8c446a17857a3b11fb82, type: 3}
+  defaultPortrait34: {fileID: 0}
+  perfectPortrait34: {fileID: 0}
+  goodPortrait34: {fileID: 0}
+  missPortrait34: {fileID: 0}
+  failPortrait34: {fileID: 0}
+  successPortrait34: {fileID: 0}
   sanityBarFill: {fileID: 360101682030975484}
   panelImage: {fileID: 7702125488828697384}
   defaultPanelSprite: {fileID: -3978961482574289900, guid: d273e516d9ccfd24da8b19393c76269c, type: 3}
