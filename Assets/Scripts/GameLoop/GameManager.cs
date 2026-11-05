@@ -66,6 +66,7 @@ public class GameManager : MonoBehaviour
     [Header("Background")]
     [SerializeField] private ParallaxBackground parallaxBackground;
     [SerializeField] private RoundTransitionVideoPlayer roundTransitionVideoPlayer;
+    [SerializeField] private LaneController laneController;
 
     [Header("Round Settings")]
     [SerializeField] private RoundSetting[] roundSettings44 =
@@ -115,8 +116,8 @@ public class GameManager : MonoBehaviour
         {
             roundName = "R1",
             bpm = 108f,
-            minTargetNoteCount = 2,
-            maxTargetNoteCount = 4,
+            minTargetNoteCount = 1,
+            maxTargetNoteCount = 3,
             roundUpSfx = SfxId.RoundStart1,
             introTurns = 4,
             totalTurns = 12,
@@ -127,7 +128,7 @@ public class GameManager : MonoBehaviour
             roundName = "R2",
             bpm = 132f,
             minTargetNoteCount = 2,
-            maxTargetNoteCount = 5,
+            maxTargetNoteCount = 4,
             roundUpSfx = SfxId.RoundStart2,
             introTurns = 2,
             totalTurns = 12,
@@ -300,6 +301,9 @@ public class GameManager : MonoBehaviour
         attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
 
         if (NetworkManager.Instance != null)
+            timeSignatureMode = NetworkManager.Instance.SelectedMode;
+
+        if (NetworkManager.Instance != null)
             StartGame();
     }
 
@@ -333,6 +337,8 @@ public class GameManager : MonoBehaviour
         phaseIndex = 0;
         currentRoundIndex = 0;
         lastSurpriseEventPreparePhaseIndex = -1;
+        laneController?.SetMode(timeSignatureMode);
+        hud?.SetP2Mode(timeSignatureMode);
         parallaxBackground?.ApplyRound(0, animate: false);
         roundTransitionVideoPlayer?.PrepareClip(0);
         surpriseEventManager?.ResetForNewGame(NetworkManager.Instance?.SharedSeed ?? 0);
