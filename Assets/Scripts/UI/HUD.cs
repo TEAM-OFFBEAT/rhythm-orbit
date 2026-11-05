@@ -94,6 +94,14 @@ public class HUD : MonoBehaviour
     }
 
     /// <summary>
+    /// P2 슬롯의 박자 모드를 전환한다. 게임 시작 시 GameManager가 호출한다.
+    /// </summary>
+    public void SetP2Mode(TimeSignatureMode mode)
+    {
+        p2Slot?.SetMode(mode);
+    }
+
+    /// <summary>
     /// P1/P2 슬롯의 판정 라벨과 패널 상태(스프라이트, 글로우)를 기본 상태로 초기화한다.
     /// 턴 전환 및 라운드 인트로 진입 시 GameManager가 호출한다.
     /// </summary>
