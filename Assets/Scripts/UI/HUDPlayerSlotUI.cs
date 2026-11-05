@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /// </summary>
 public class HUDPlayerSlotUI : MonoBehaviour
 {
-    [Header("Profile")]
+    [Header("Profile (4/4 Mode)")]
     [SerializeField] private Image profileImage;
     [SerializeField] private Sprite defaultPortrait;
     [SerializeField] private Sprite perfectPortrait;
@@ -16,6 +16,16 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [SerializeField] private Sprite missPortrait;
     [SerializeField] private Sprite failPortrait;
     [SerializeField] private Sprite successPortrait;
+
+    [Header("Profile (3/4 Mode)")]
+    [SerializeField] private Sprite defaultPortrait34;
+    [SerializeField] private Sprite perfectPortrait34;
+    [SerializeField] private Sprite goodPortrait34;
+    [SerializeField] private Sprite missPortrait34;
+    [SerializeField] private Sprite failPortrait34;
+    [SerializeField] private Sprite successPortrait34;
+
+    private TimeSignatureMode currentMode;
 
     [Header("Sanity")]
     [SerializeField] private Image sanityBarFill;
@@ -48,15 +58,24 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
+    /// 박자 모드에 따라 활성 스프라이트 세트를 전환한다. P1은 모드 무관(3/4 슬롯 비워두면 4/4 폴백).
+    /// </summary>
+    public void SetMode(TimeSignatureMode mode)
+    {
+        currentMode = mode;
+        ClearJudgment();
+    }
+
+    /// <summary>
     /// 판정 결과에 따라 프로필 이미지를 교체한다.
     /// </summary>
     public void ShowJudgment(Judgment judgment)
     {
         SetPortrait(judgment switch
         {
-            Judgment.PERFECT => perfectPortrait,
-            Judgment.GOOD    => goodPortrait,
-            _                => missPortrait,
+            Judgment.PERFECT => GetPortrait(perfectPortrait, perfectPortrait34),
+            Judgment.GOOD    => GetPortrait(goodPortrait, goodPortrait34),
+            _                => GetPortrait(missPortrait, missPortrait34),
         });
     }
 
@@ -65,7 +84,7 @@ public class HUDPlayerSlotUI : MonoBehaviour
     /// </summary>
     public void ClearJudgment()
     {
-        SetPortrait(defaultPortrait);
+        SetPortrait(GetPortrait(defaultPortrait, defaultPortrait34));
     }
 
     /// <summary>
@@ -73,7 +92,9 @@ public class HUDPlayerSlotUI : MonoBehaviour
     /// </summary>
     public void SetGameEndPortrait(bool communicationSuccess)
     {
-        SetPortrait(communicationSuccess ? successPortrait : failPortrait);
+        SetPortrait(communicationSuccess
+            ? GetPortrait(successPortrait, successPortrait34)
+            : GetPortrait(failPortrait, failPortrait34));
     }
 
     /// <summary>
@@ -112,6 +133,9 @@ public class HUDPlayerSlotUI : MonoBehaviour
             yield return null;
         }
     }
+
+    private Sprite GetPortrait(Sprite p44, Sprite p34)
+        => currentMode == TimeSignatureMode.ThreeFour ? p34 : p44;
 
     private void SetPortrait(Sprite sprite)
     {
