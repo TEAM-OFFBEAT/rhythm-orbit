@@ -10,6 +10,7 @@ public struct GameStartPacket
     public double clockOffset;         // guest_clock - host_clock (Host가 측정한 오프셋)
     public double gameStartDspTime;    // Host의 AudioSettings.dspTime (RhythmClock 동기화 기준)
     public int sharedSeed;             // 양측 RNG 동기화용 공유 시드 (Host가 생성해 전송)
+    public byte selectedMode;          // TimeSignatureMode 값 (Host가 모드 선택 시 결정)
 }
 
 /// <summary>

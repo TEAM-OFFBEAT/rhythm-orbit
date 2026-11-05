@@ -40,6 +40,9 @@ public class NetworkManager : Singleton<NetworkManager>
     /// <summary>Host가 생성한 RNG 공유 시드. LobbyController가 씬 전환 전 SetSessionData()로 설정.</summary>
     public int SharedSeed { get; private set; }
 
+    /// <summary>모드 선택 창에서 Host가 선택한 박자 모드. 모드 선택 완료 시 LobbyController가 설정.</summary>
+    public TimeSignatureMode SelectedMode { get; set; } = TimeSignatureMode.FourFour;
+
     // ── 수신 이벤트 ──────────────────────────────────────────────────────────
     public event Action OnConnected;
     public event Action OnConnectionFailed;

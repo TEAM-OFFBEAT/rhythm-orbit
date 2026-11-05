@@ -29,7 +29,7 @@ public static class PacketSerializer
     /// clockOffset은 Host가 측정한 guest_clock - host_clock, gameStartDspTime은 Host의 AudioSettings.dspTime.
     /// sharedSeed는 Host가 생성한 RNG 공유 시드 — 양측 노트 수/메시지 동기화에 사용.
     /// </summary>
-    public static void WriteGameStart(BinaryWriter w, byte myPlayerId, byte firstAttackerId, double clockOffset, double gameStartDspTime, int sharedSeed)
+    public static void WriteGameStart(BinaryWriter w, byte myPlayerId, byte firstAttackerId, double clockOffset, double gameStartDspTime, int sharedSeed, TimeSignatureMode selectedMode = TimeSignatureMode.FourFour)
     {
         w.Write((byte)PacketType.GAME_START);
         w.Write(myPlayerId);
@@ -37,6 +37,7 @@ public static class PacketSerializer
         w.Write(clockOffset);
         w.Write(gameStartDspTime);
         w.Write(sharedSeed);
+        w.Write((byte)selectedMode);
     }
 
     /// <summary>
@@ -94,7 +95,8 @@ public static class PacketSerializer
             firstAttackerId  = r.ReadByte(),
             clockOffset      = r.ReadDouble(),
             gameStartDspTime = r.ReadDouble(),
-            sharedSeed       = r.ReadInt32()
+            sharedSeed       = r.ReadInt32(),
+            selectedMode     = r.ReadByte()
         };
 
     /// <summary>
