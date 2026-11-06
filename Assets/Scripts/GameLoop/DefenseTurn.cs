@@ -43,6 +43,15 @@ public class DefenseTurn : MonoBehaviour
     public event System.Action OnDefenseBegan;
 
     /// <summary>
+    /// 상대 공격 노트를 수신하고 화면에 생성한 뒤 발행한다.
+    /// 유령 이벤트가 실제 노트와의 겹침을 검사할 때 사용한다.
+    /// </summary>
+    public event System.Action<NoteData> OnAttackNoteReceived;
+
+    // 공격 중 수신한 노트 목록. 외부에서는 읽기만 한다.
+    public IReadOnlyList<NoteData> ReceivedAttackNotes => receivedNotes;
+
+    /// <summary>
     /// 현재 방어 턴이 진행 중인지 외부에서 읽기 위한 값.
     /// </summary>
     public bool IsRunning => isRunning;
@@ -220,26 +229,42 @@ public class DefenseTurn : MonoBehaviour
 
     /// <summary>
     /// NOTE_CREATED 수신 시 GameManager를 통해 호출.
-    /// judgeTime을 즉시 계산해 설정하고 노트를 스폰한다.
-    /// localDefenseStart는 localAttackStartDspTime + currentTurnDuration, 즉 방어 페이즈 시작 시각.
+    /// judgeTime을 계산하고 노트를 생성한 뒤 수신 이벤트를 발행한다.
     /// </summary>
-    public void OnNoteReceived(NoteCreatedPacket packet, double localDefenseStart)
+    public void OnNoteReceived(
+        NoteCreatedPacket packet,
+        double localDefenseStart)
     {
         var note = new NoteData
         {
-            noteId           = packet.noteId,
-            noteType         = packet.noteType,
+            noteId = packet.noteId,
+            noteType = packet.noteType,
             noteRelativeTime = packet.noteRelativeTime,
-            judgeTime        = localDefenseStart + packet.noteRelativeTime
+            judgeTime = localDefenseStart + packet.noteRelativeTime
         };
+
         receivedNotes.Add(note);
+
         if (attackTurnRenderer != null)
         {
-            Vector3? spawnPos = attackTurnRenderer.SpawnAttackNote(pendingAttackSide, note, pendingAttackDuration);
-            attackTurnRenderer.SetNoteJudgeTime(note.noteId, note.judgeTime);
+            Vector3? spawnPos = attackTurnRenderer.SpawnAttackNote(
+                pendingAttackSide,
+                note,
+                pendingAttackDuration);
+
+            attackTurnRenderer.SetNoteJudgeTime(
+                note.noteId,
+                note.judgeTime);
+
             if (spawnPos.HasValue)
-                HitEffectSpawner.Instance?.Play(note.noteType, spawnPos.Value);
+            {
+                HitEffectSpawner.Instance?.Play(
+                    note.noteType,
+                    spawnPos.Value);
+            }
         }
+
+        OnAttackNoteReceived?.Invoke(note);
     }
 
     /// <summary>
