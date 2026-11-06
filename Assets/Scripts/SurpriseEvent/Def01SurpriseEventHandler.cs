@@ -41,6 +41,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
     private readonly List<GhostNoteData> preparedGhostNotes = new();
     private readonly Dictionary<int, double> ghostFadeStartTimes = new();
+    private readonly HashSet<int> realNoteSteps = new();// 이번 이벤트에서 확인한 실제 노트의 칸. 멀티 수신 목록이 방어 전환 시 비워져도 이 기록은 유지한다.   
     private double eventEnteredDspTime;
     private SurpriseEventContext activeContext;
     private Coroutine fadeInCoroutine;
@@ -253,39 +254,52 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     private List<int> BuildBalancedCandidateSteps(double noteDuration)
     {
         List<int> candidates = new List<int>();
-        HashSet<int> occupiedSteps = new HashSet<int>();
+        realNoteSteps.Clear();
 
-        IReadOnlyList<NoteData> createdNotes = attackTurn.CurrentCreatedNotes;
-
-        if (createdNotes != null)
+        if (attackTurnRenderer == null || noteDuration <= 0.0)
         {
-            foreach (NoteData note in createdNotes)
-            {
-                if (note == null)
-                {
-                    continue;
-                }
+            return candidates;
+        }
 
-                int occupiedStep = GetGridStep(note.noteRelativeTime, noteDuration);
-                occupiedSteps.Add(occupiedStep);
+        IReadOnlyList<NoteData> currentNotes;
+
+        if (NetworkManager.Instance != null)
+        {
+            // 멀티에서는 이 화면의 방어자가 받은 상대 공격 노트를 사용한다.
+            currentNotes = defenseTurn != null
+                ? defenseTurn.ReceivedAttackNotes
+                : null;
+        }
+        else
+        {
+            currentNotes = attackTurn != null
+                ? attackTurn.CurrentCreatedNotes
+                : null;
+        }
+
+        if (currentNotes != null)
+        {
+            foreach (NoteData note in currentNotes)
+            {
+                if (note != null)
+                {
+                    realNoteSteps.Add(
+                        GetGridStep(note.noteRelativeTime, noteDuration));
+                }
             }
         }
 
-        int maxStep = Mathf.FloorToInt((float)(attackTurnRenderer.AttackDuration / noteDuration));
+        int maxStep = Mathf.FloorToInt(
+            (float)(attackTurnRenderer.AttackDuration / noteDuration));
 
-        // 0번째 칸은 시작 경계, maxStep은 종료 경계라 제외.
-        // 즉 1 ~ maxStep - 1만 유령 노트 후보.
+        // 0번째 칸과 마지막 칸은 시작/끝 경계라 제외.
         for (int step = 1; step < maxStep; step++)
         {
-            if (occupiedSteps.Contains(step))
+            if (!realNoteSteps.Contains(step))
             {
-                continue;
+                candidates.Add(step);
             }
-
-            candidates.Add(step);
         }
-
-        candidates.Sort();
 
         return candidates;
     }
@@ -559,38 +573,51 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
     private void SubscribeAttackNoteCreated()
     {
-        if (attackTurn == null)
+        if (attackTurn != null)
         {
-            return;
+            attackTurn.OnAttackNoteCreated -= HandleAttackNoteCreated;
+            attackTurn.OnAttackNoteCreated += HandleAttackNoteCreated;
         }
 
-        attackTurn.OnAttackNoteCreated -= HandleAttackNoteCreated;
-        attackTurn.OnAttackNoteCreated += HandleAttackNoteCreated;
+        if (defenseTurn != null)
+        {
+            defenseTurn.OnAttackNoteReceived -= HandleAttackNoteCreated;
+            defenseTurn.OnAttackNoteReceived += HandleAttackNoteCreated;
+        }
     }
 
     private void UnsubscribeAttackNoteCreated()
     {
-        if (attackTurn == null)
+        if (attackTurn != null)
         {
-            return;
+            attackTurn.OnAttackNoteCreated -= HandleAttackNoteCreated;
         }
 
-        attackTurn.OnAttackNoteCreated -= HandleAttackNoteCreated;
+        if (defenseTurn != null)
+        {
+            defenseTurn.OnAttackNoteReceived -= HandleAttackNoteCreated;
+        }
     }
 
     private void HandleAttackNoteCreated(NoteData note)
     {
+        if (activeContext == null ||
+            note == null ||
+            cachedNoteDuration <= 0.0)
+        {
+            return;
+        }
+
+        int realStep = GetGridStep(
+            note.noteRelativeTime,
+            cachedNoteDuration);
+
+        realNoteSteps.Add(realStep);
+
         if (!removeGhostIfRealNoteAppearsOnSameStep)
         {
             return;
         }
-
-        if (note == null || cachedNoteDuration <= 0.0)
-        {
-            return;
-        }
-
-        int realStep = GetGridStep(note.noteRelativeTime, cachedNoteDuration);
 
         for (int i = preparedGhostNotes.Count - 1; i >= 0; i--)
         {
@@ -602,7 +629,9 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
                 continue;
             }
 
-            int ghostStep = GetGridStep(ghostNote.noteRelativeTime, cachedNoteDuration);
+            int ghostStep = GetGridStep(
+                ghostNote.noteRelativeTime,
+                cachedNoteDuration);
 
             if (ghostStep != realStep)
             {
@@ -614,16 +643,21 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             if (!relocated)
             {
                 attackTurnRenderer?.RemoveGhostNote(ghostNote.noteId);
+                ghostFadeStartTimes.Remove(ghostNote.noteId);
                 preparedGhostNotes.RemoveAt(i);
 
-                Debug.Log($"DEF_01: 옮길 빈 칸이 없어 유령 노트 제거 / step:{realStep}");
+                Debug.Log(
+                    $"DEF_01: 옮길 빈 칸이 없어 유령 노트 제거 / step:{realStep}");
             }
         }
     }
 
     private bool TryRelocateGhostNote(GhostNoteData ghostNote)
     {
-        if (ghostNote == null || attackTurn == null || attackTurnRenderer == null)
+        if (ghostNote == null ||
+            activeContext == null ||
+            attackTurnRenderer == null ||
+            cachedNoteDuration <= 0.0)
         {
             return false;
         }
@@ -641,42 +675,48 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         attackTurnRenderer.RemoveGhostNote(ghostNote.noteId);
 
         ghostNote.noteRelativeTime = newRelativeTime;
-        ghostNote.judgeTime = activeContext.phaseStartDspTime + newRelativeTime;
+        ghostNote.judgeTime =
+            activeContext.phaseStartDspTime + newRelativeTime;
 
-        AttackSide attackerSide = attackTurn.CurrentSide;
+        AttackSide attackerSide = attackTurnRenderer.CurrentSide;
 
         attackTurnRenderer.SpawnGhostNote(
             ghostNote,
-            attackTurn.AttackDuration,
+            attackTurnRenderer.AttackDuration,
             attackTurnRenderer.GetStartX(attackerSide),
             attackTurnRenderer.GetEndX(attackerSide),
-            0f
-        );
+            0f);
 
-        Debug.Log($"DEF_01: 실제 노트와 겹친 유령 노트 재배치 / newStep:{newStep}");
+        double linePassDspTime =
+            attackTurnRenderer.AttackStartDspTime +
+            newRelativeTime +
+            appearAfterLinePassSeconds;
+
+        // 새 칸의 공격선 통과 이후에 나타난다.
+        // 이미 통과한 칸이라면 지금부터 페이드를 시작한다.
+        ghostFadeStartTimes[ghostNote.noteId] = System.Math.Max(
+            linePassDspTime,
+            AudioSettings.dspTime);
+
+        StartGhostFadeIn();
+
+        Debug.Log(
+            $"DEF_01: 실제 노트와 겹친 유령 노트 재배치 / newStep:{newStep}");
 
         return true;
     }
 
-    private List<int> BuildEmptyStepsExceptCurrentGhost(GhostNoteData currentGhost)
+    private List<int> BuildEmptyStepsExceptCurrentGhost(
+    GhostNoteData currentGhost)
     {
         List<int> emptySteps = new List<int>();
-        HashSet<int> blockedSteps = new HashSet<int>();
 
-        IReadOnlyList<NoteData> createdNotes = attackTurn.CurrentCreatedNotes;
-
-        if (createdNotes != null)
+        if (attackTurnRenderer == null || cachedNoteDuration <= 0.0)
         {
-            foreach (NoteData note in createdNotes)
-            {
-                if (note == null)
-                {
-                    continue;
-                }
-
-                blockedSteps.Add(GetGridStep(note.noteRelativeTime, cachedNoteDuration));
-            }
+            return emptySteps;
         }
+
+        HashSet<int> blockedSteps = new HashSet<int>(realNoteSteps);
 
         foreach (GhostNoteData ghostNote in preparedGhostNotes)
         {
@@ -685,19 +725,21 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
                 continue;
             }
 
-            blockedSteps.Add(GetGridStep(ghostNote.noteRelativeTime, cachedNoteDuration));
+            blockedSteps.Add(
+                GetGridStep(
+                    ghostNote.noteRelativeTime,
+                    cachedNoteDuration));
         }
 
-        int maxStep = Mathf.FloorToInt((float)(attackTurn.AttackDuration / cachedNoteDuration));
+        int maxStep = Mathf.FloorToInt(
+            (float)(attackTurnRenderer.AttackDuration / cachedNoteDuration));
 
         for (int step = 1; step < maxStep; step++)
         {
-            if (blockedSteps.Contains(step))
+            if (!blockedSteps.Contains(step))
             {
-                continue;
+                emptySteps.Add(step);
             }
-
-            emptySteps.Add(step);
         }
 
         return emptySteps;
