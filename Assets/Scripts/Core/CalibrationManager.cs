@@ -143,9 +143,12 @@ public class CalibrationManager : SceneSingleton<CalibrationManager>
         {
             if (!JudgeSystem.Instance.HasPassedHitWindow(
                 now, notes[i].judgeTime, NoteDurationSeconds))
+            {
                 continue;
+            }
 
-            spawner.RemoveNote(notes[i].noteId);
+            // 자동 만료는 판정 데이터만 정리한다.
+            // 화면의 노트는 스포너가 레인 끝에서 제거한다.
             notes.RemoveAt(i);
         }
     }

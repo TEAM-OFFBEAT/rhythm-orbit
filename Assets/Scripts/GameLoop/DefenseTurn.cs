@@ -129,7 +129,10 @@ public class DefenseTurn : MonoBehaviour
                     continue;
                 }
 
-                ResolveDefenseNote(pendingNotes[i], Judgment.MISS);
+                ResolveDefenseNote(
+                pendingNotes[i],
+                Judgment.MISS,
+                wasHit: false);
             }
         }
 
@@ -380,10 +383,13 @@ public class DefenseTurn : MonoBehaviour
 
     /// <summary>
     /// 방어 노트 하나의 판정 결과를 공통 처리한다.
-    /// 실제 방어 입력에서 발생한 판정만 입력 결과 사운드 이벤트를 발행한다.
-    /// 공격자 미러뷰나 AI 자동 판정은 시각 동기화용이므로 타격음을 재생하지 않는다.
+    /// 타격한 노트는 즉시 제거하고, 자동 MISS는 판정 데이터만 정리한다.
     /// </summary>
-    private void ResolveDefenseNote(NoteData note, Judgment judgment, bool playInputSfx = true)
+    private void ResolveDefenseNote(
+        NoteData note,
+        Judgment judgment,
+        bool playInputSfx = true,
+        bool wasHit = true)
     {
         if (note == null) return;
 
@@ -404,20 +410,34 @@ public class DefenseTurn : MonoBehaviour
             Vector3 effectPos = attackTurnRenderer != null
                 ? attackTurnRenderer.GetTransferJudgeLineWorldPos()
                 : Vector3.zero;
-            HitEffectSpawner.Instance?.Play(note.noteType, effectPos, judgment == Judgment.PERFECT);
+
+            HitEffectSpawner.Instance?.Play(
+                note.noteType,
+                effectPos,
+                judgment == Judgment.PERFECT);
         }
 
-        attackTurnRenderer.RemoveNote(note.noteId);
+        // 입력으로 판정한 노트는 결과가 MISS여도 즉시 제거한다.
+        if (wasHit)
+        {
+            attackTurnRenderer?.RemoveNote(note.noteId);
+        }
+
         pendingNotes.Remove(note);
 
         if (networkManager != null)
         {
             int id = note.noteId;
             Judgment j = judgment;
-            networkManager.Send(w => PacketSerializer.WriteJudgment(w, id, j));
+            bool hit = wasHit;
+
+            networkManager.Send(
+                w => PacketSerializer.WriteJudgment(w, id, j, hit));
         }
 
-        Debug.Log($"Defense Judge / noteId:{note.noteId} type:{note.noteType} → {judgment}");
+        Debug.Log(
+            $"Defense Judge / noteId:{note.noteId} " +
+            $"type:{note.noteType} → {judgment}");
     }
 
     private void EndDefense()

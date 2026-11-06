@@ -52,13 +52,18 @@ public static class PacketSerializer
     }
 
     /// <summary>
-    /// 방어자 노트 판정 결과 실시간 전송. 공격자 화면 동기화에 사용.
+    /// 방어 판정 결과와 타격 여부를 전송한다.
     /// </summary>
-    public static void WriteJudgment(BinaryWriter w, int noteId, Judgment judgment)
+    public static void WriteJudgment(
+        BinaryWriter w,
+        int noteId,
+        Judgment judgment,
+        bool wasHit = true)
     {
         w.Write((byte)PacketType.JUDGMENT);
         w.Write(noteId);
         w.Write((byte)judgment);
+        w.Write(wasHit);
     }
 
     /// <summary>
@@ -114,11 +119,14 @@ public static class PacketSerializer
     /// JUDGMENT 페이로드.
     /// </summary>
     public static JudgmentPacket ReadJudgment(BinaryReader r)
-        => new JudgmentPacket
+    {
+        return new JudgmentPacket
         {
-            noteId   = r.ReadInt32(),
-            judgment = r.ReadByte()
+            noteId = r.ReadInt32(),
+            judgment = r.ReadByte(),
+            wasHit = r.ReadBoolean()
         };
+    }
 
     /// <summary>
     /// SANITY_CHANGE 페이로드.
