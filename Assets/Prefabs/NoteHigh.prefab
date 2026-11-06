@@ -227,6 +227,7 @@ GameObject:
   - component: {fileID: 7346032156741214681}
   - component: {fileID: 4170858638175414843}
   - component: {fileID: 9212949845745713278}
+  - component: {fileID: 4031434215965232473}
   m_Layer: 0
   m_Name: NoteHigh
   m_TagString: Untagged
@@ -322,3 +323,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoteKeyHintView
   keyText: {fileID: 4116929885260938399}
+--- !u!114 &4031434215965232473
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6347329150721557498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0a7aa1f0c85b7847a2427dae9a5ac74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GhostNoteAnimation
+  moveFrames:
+  - {fileID: -3067675236714550316, guid: 5df9288d2648c6b40af1c1d8ba8c67f1, type: 3}
+  - {fileID: 1136355518490169692, guid: 5b37b7307e452be46ac478298d59e7c4, type: 3}
+  - {fileID: -6566662193148009518, guid: 87afb1bbd0da4dd4781d2a3b151fa341, type: 3}
+  - {fileID: -4229090560107947964, guid: ad8a50ef8bd2e1f47aba0d35f641590a, type: 3}
+  - {fileID: -4187515025767665706, guid: 946055f67d6d65c4688e5a6b8c7d80d2, type: 3}
+  - {fileID: 7211195235959334671, guid: 278002148ae029646b258bc0ab82ec52, type: 3}
+  - {fileID: 6965669890000918624, guid: fcf6d333f92b9274da47a0e371e56a0c, type: 3}
+  - {fileID: -6239483505051878664, guid: d8071b67c4b9a4e469e80df95f006bc9, type: 3}
+  - {fileID: 3647800067772449303, guid: 639d5f72e5e727141b9596c311d5dd89, type: 3}
+  - {fileID: -2853059677605232820, guid: b2b37731700866b44bfcfb0945992b15, type: 3}
+  moveFrameTime: 0.05
+  disappearFrames:
+  - {fileID: -5609479314366452075, guid: 177e81526830d2345a56557c97014af6, type: 3}
+  - {fileID: -9172556360338011157, guid: 69bf5f708d440f140b912a2edcac0d22, type: 3}
+  - {fileID: -8179028026773341900, guid: 423ae1eef6d42a346a98fb9e845d578d, type: 3}
+  - {fileID: 7019768618139909714, guid: af6585c5bce1690488c94e6e74e08f95, type: 3}
+  - {fileID: -502039865876729340, guid: 39fdb652facca44469e9dbdad8ff59fe, type: 3}
+  - {fileID: 215299788044412, guid: e7f796d46bae33a4da2d711d1b6bcd53, type: 3}
+  disappearFrameTime: 0.05

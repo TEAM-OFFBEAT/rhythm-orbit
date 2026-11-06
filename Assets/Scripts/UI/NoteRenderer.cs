@@ -12,6 +12,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     private readonly Dictionary<int, (Transform obj, NoteType type)> activeNotes = new();
     private readonly Stack<Transform> poolHigh = new();
     private readonly Stack<Transform> poolLow = new();
+    private readonly Dictionary<int, object> ghostReleaseTokens = new();        // 소멸 완료 후 반환을 기다리는 노트와 요청 식별값.
 
     protected override void Awake()
     {
@@ -44,11 +45,19 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     /// </summary>
     public Transform AcquireNote(int noteId, NoteType noteType)
     {
-        Stack<Transform> pool = noteType == NoteType.HIGH ? poolHigh : poolLow;
+        // 같은 ID의 이전 소멸 모션이 남아 있으면 먼저 회수한다.
+        if (activeNotes.ContainsKey(noteId))
+        {
+            ReleaseNote(noteId);
+        }
+
+        Stack<Transform> pool =
+            noteType == NoteType.HIGH ? poolHigh : poolLow;
 
         if (pool.Count == 0)
         {
-            Debug.LogWarning($"NoteRenderer: {noteType} 풀이 비어 있습니다. initialPoolSize를 늘리세요.");
+            Debug.LogWarning(
+                $"NoteRenderer: {noteType} 풀이 비어 있습니다. initialPoolSize를 늘리세요.");
             return null;
         }
 
@@ -67,7 +76,10 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     /// <summary>
     /// EVT_DEF_01 유령 노트용으로 기존 노트를 가져오되, 알파값을 낮춰 흐리게 표시한다.
     /// </summary>
-    public Transform AcquireGhostNote(int noteId, NoteType noteType, float alpha)
+    public Transform AcquireGhostNote(
+        int noteId,
+        NoteType noteType,
+        float alpha)
     {
         Transform note = AcquireNote(noteId, noteType);
 
@@ -79,6 +91,8 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
         note.name = $"GhostNote_{noteId}";
         SetVisualAlpha(note, alpha);
 
+        note.GetComponent<GhostNoteAnimation>()?.BeginMoving();
+
         return note;
     }
 
@@ -87,6 +101,8 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     /// </summary>
     public void ReleaseNote(int noteId)
     {
+        ghostReleaseTokens.Remove(noteId);
+
         if (!activeNotes.TryGetValue(noteId, out var entry))
         {
             return;
@@ -104,7 +120,9 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
 
         entry.obj.gameObject.SetActive(false);
 
-        Stack<Transform> pool = entry.type == NoteType.HIGH ? poolHigh : poolLow;
+        Stack<Transform> pool =
+            entry.type == NoteType.HIGH ? poolHigh : poolLow;
+
         pool.Push(entry.obj);
     }
 
@@ -113,24 +131,15 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     /// </summary>
     public void ReleaseAll()
     {
-        foreach (var kvp in activeNotes)
+        ghostReleaseTokens.Clear();
+
+        // ReleaseNote에서 목록을 수정하므로 ID를 복사한다.
+        List<int> noteIds = new(activeNotes.Keys);
+
+        foreach (int noteId in noteIds)
         {
-            Transform note = kvp.Value.obj;
-
-            if (note == null)
-            {
-                continue;
-            }
-
-            HideKeyHint(note);
-            SetVisualAlpha(note, 1f);
-            note.gameObject.SetActive(false);
-
-            Stack<Transform> pool = kvp.Value.type == NoteType.HIGH ? poolHigh : poolLow;
-            pool.Push(note);
+            ReleaseNote(noteId);
         }
-
-        activeNotes.Clear();
     }
 
     /// <summary>
@@ -229,6 +238,74 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
             Color color = graphic.color;
             color.a = safeAlpha;
             graphic.color = color;
+        }
+    }
+
+    /// <summary>
+    /// 유령노트의 소멸 애니메이션이 끝나면 풀에 반환한다.
+    /// </summary>
+    public void ReleaseGhostNoteAfterAnimation(int noteId)
+    {
+        if (!activeNotes.TryGetValue(noteId, out var entry))
+        {
+            return;
+        }
+
+        if (ghostReleaseTokens.ContainsKey(noteId))
+        {
+            return;
+        }
+
+        if (entry.obj == null)
+        {
+            ReleaseNote(noteId);
+            return;
+        }
+
+        GhostNoteAnimation animation =
+            entry.obj.GetComponent<GhostNoteAnimation>();
+
+        if (animation == null)
+        {
+            ReleaseNote(noteId);
+            return;
+        }
+
+        object token = new object();
+        ghostReleaseTokens[noteId] = token;
+
+        animation.PlayDisappear(() =>
+        {
+            // 강제 회수되거나 재사용된 노트의 이전 콜백은 무시한다.
+            if (!ghostReleaseTokens.TryGetValue(
+                    noteId, out object currentToken) ||
+                !object.ReferenceEquals(currentToken, token))
+            {
+                return;
+            }
+
+            ghostReleaseTokens.Remove(noteId);
+
+            if (activeNotes.TryGetValue(noteId, out var currentEntry) &&
+                currentEntry.obj == entry.obj)
+            {
+                ReleaseNote(noteId);
+            }
+        });
+    }
+
+    /// <summary>
+    /// 게임 종료·재시작 시 소멸 중인 유령노트를 즉시 회수한다.
+    /// </summary>
+    public void ClearGhostDisappearAnimations()
+    {
+        List<int> noteIds = new(ghostReleaseTokens.Keys);
+
+        ghostReleaseTokens.Clear();
+
+        foreach (int noteId in noteIds)
+        {
+            ReleaseNote(noteId);
         }
     }
 }
