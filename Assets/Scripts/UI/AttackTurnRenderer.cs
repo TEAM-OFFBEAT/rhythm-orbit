@@ -43,6 +43,11 @@ public class AttackTurnRenderer : MonoBehaviour
     private double attackDuration;
     private bool isMoving;
 
+    // 멀티플레이 상대 공격도 이 렌더러에는 현재 턴 정보가 설정된다.
+    public AttackSide CurrentSide => currentSide;
+    public double AttackStartDspTime => attackStartDspTime;
+    public double AttackDuration => attackDuration;
+
     private void Awake()
     {
         if (attackNoteContainer == null)
@@ -318,52 +323,73 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// 방어 전환 시 호출. 각 노트는 SetNoteJudgeTime으로 설정된 judgeTime에서 역산한 출발 시각에 따라 이동 시작한다.
+    /// 방어 전환 시 호출. 각 노트는 SetNoteJudgeTime으로 설정된 judgeTime에서
+    /// 역산한 출발 시각에 따라 이동 시작한다.
     /// </summary>
     public void StartTransfer(float judgeLineX, float speed)
     {
         transferJudgeLineX = judgeLineX;
         transferSpeed = Mathf.Max(0.001f, Mathf.Abs(speed));
         isTransferring = true;
+
+        double now = AudioSettings.dspTime;
+
+        Debug.Log(
+            $"[Transfer] side:{currentSide}, speed:{transferSpeed:F2}, " +
+            $"normal:{spawnedNotes.Count}, ghost:{spawnedGhostNotes.Count}",
+            this);
+
+        foreach (NoteEntry entry in spawnedGhostNotes)
+        {
+            double travelTime =
+                Mathf.Abs(transferJudgeLineX - entry.initialX) / transferSpeed;
+
+            double departureTime = entry.judgeTime - travelTime;
+
+            Debug.Log(
+                $"[GhostTransfer] id:{entry.noteId}, " +
+                $"from:{entry.initialX:F2}, to:{transferJudgeLineX:F2}, " +
+                $"remain:{entry.judgeTime - now:F3}s, " +
+                $"travel:{travelTime:F3}s, " +
+                $"lateBy:{System.Math.Max(0.0, now - departureTime):F3}s",
+                this);
+        }
     }
 
     /// <summary>
-    /// 실제 노트가 없을 때 가장 이른 유령노트를 기준으로 이동 속도를 계산한다.
+    /// 유령 노트가 방어 시작 이후에 출발해 판정 시각까지 도착하는 데
+    /// 필요한 최소 공통 속도를 구한다.
     /// </summary>
     public float GetGhostTransferSpeed(
         float judgeLineX,
         double defenseStartDspTime,
         float fallbackSpeed)
     {
-        double firstRelativeTime = double.MaxValue;
-        float firstInitialX = 0f;
+        float requiredSpeed = 0f;
 
         foreach (NoteEntry entry in spawnedGhostNotes)
         {
-            if (entry.rect == null) continue;
-
-            double relativeTime = entry.judgeTime - defenseStartDspTime;
-
-            if (relativeTime <= 0.0 ||
-                relativeTime >= firstRelativeTime)
+            if (entry.rect == null)
             {
                 continue;
             }
 
-            firstRelativeTime = relativeTime;
-            firstInitialX = entry.initialX;
+            double remainingTime = entry.judgeTime - defenseStartDspTime;
+
+            if (remainingTime <= 0.0)
+            {
+                continue;
+            }
+
+            float distance = Mathf.Abs(judgeLineX - entry.initialX);
+            float speed = (float)(distance / remainingTime);
+
+            requiredSpeed = Mathf.Max(requiredSpeed, speed);
         }
 
-        if (firstRelativeTime == double.MaxValue)
-        {
-            return fallbackSpeed;
-        }
-
-        float speed =
-            Mathf.Abs(judgeLineX - firstInitialX) /
-            (float)firstRelativeTime;
-
-        return speed > 0f ? speed : fallbackSpeed;
+        return requiredSpeed > 0f
+            ? requiredSpeed
+            : fallbackSpeed;
     }
 
     /// <summary>

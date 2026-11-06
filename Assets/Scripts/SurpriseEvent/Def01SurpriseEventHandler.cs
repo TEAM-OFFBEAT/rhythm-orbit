@@ -199,7 +199,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
         int spawnCount = selectedSteps.Count;
 
-        AttackSide attackerSide = attackTurn.CurrentSide;
+        AttackSide attackerSide = attackTurnRenderer.CurrentSide;
 
         float attackStartX = attackTurnRenderer.GetStartX(attackerSide);
         float attackEndX = attackTurnRenderer.GetEndX(attackerSide);
@@ -228,7 +228,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             );
 
             double linePassDspTime =
-                attackTurn.AttackStartDspTime +
+                attackTurnRenderer.AttackStartDspTime +
                 ghostNote.noteRelativeTime +
                 appearAfterLinePassSeconds;
 
@@ -271,7 +271,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             }
         }
 
-        int maxStep = Mathf.FloorToInt((float)(attackTurn.AttackDuration / noteDuration));
+        int maxStep = Mathf.FloorToInt((float)(attackTurnRenderer.AttackDuration / noteDuration));
 
         // 0번째 칸은 시작 경계, maxStep은 종료 경계라 제외.
         // 즉 1 ~ maxStep - 1만 유령 노트 후보.
