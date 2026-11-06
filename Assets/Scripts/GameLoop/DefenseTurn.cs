@@ -214,7 +214,6 @@ public class DefenseTurn : MonoBehaviour
             }
         }
 
-        // 실제 노트가 없어도 유령 이동과 방어 시작 이벤트는 실행한다.
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
         OnDefenseBegan?.Invoke();
     }
@@ -325,7 +324,6 @@ public class DefenseTurn : MonoBehaviour
 
         receivedNotes.Clear();
 
-        // 실제 노트가 없어도 유령 이동과 방어 시작 이벤트는 실행한다.
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
         OnDefenseBegan?.Invoke();
     }
@@ -842,8 +840,8 @@ public class DefenseTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// 일반 노트와 유령 노트를 함께 고려해 이동 속도를 정한다.
-    /// 가장 이른 출발이 방어 시작보다 앞서지 않도록 한다.
+    /// 일반 노트가 있으면 기존처럼 가장 이른 일반 노트로 속도를 정한다.
+    /// 일반 노트가 없는 경우에만 유령을 기준으로 속도를 정한다.
     /// </summary>
     private float CalculateTransferSpeed(
         IReadOnlyList<NoteData> notes,
@@ -853,43 +851,45 @@ public class DefenseTurn : MonoBehaviour
         double attackDuration,
         double defenseStartDspTime)
     {
-        float requiredSpeed = 0f;
-        double safeDuration = System.Math.Max(0.01, attackDuration);
+        double firstRelativeTime = double.MaxValue;
 
         if (notes != null)
         {
             foreach (NoteData note in notes)
             {
-                if (note == null || note.noteRelativeTime <= 0.0)
+                if (note == null) continue;
+
+                if (note.noteRelativeTime < firstRelativeTime)
                 {
-                    continue;
+                    firstRelativeTime = note.noteRelativeTime;
                 }
-
-                float ratio = Mathf.Clamp01(
-                    (float)(note.noteRelativeTime / safeDuration));
-
-                float initialX = Mathf.Lerp(
-                    attackStartX,
-                    attackEndX,
-                    ratio);
-
-                float distance = Mathf.Abs(judgeLineX - initialX);
-                float speed = (float)(distance / note.noteRelativeTime);
-
-                requiredSpeed = Mathf.Max(requiredSpeed, speed);
             }
         }
 
-        // 일반 노트보다 먼저 도착하는 유령도 속도 계산에 포함한다.
-        float ghostSpeed = attackTurnRenderer.GetGhostTransferSpeed(
-            judgeLineX,
-            defenseStartDspTime,
-            0f);
+        if (firstRelativeTime == double.MaxValue)
+        {
+            // 빈 공격 턴에서도 유령 이동을 시작할 수 있도록 한다.
+            return attackTurnRenderer.GetGhostTransferSpeed(
+                judgeLineX,
+                defenseStartDspTime,
+                fallbackTransferSpeed);
+        }
 
-        requiredSpeed = Mathf.Max(requiredSpeed, ghostSpeed);
+        if (firstRelativeTime <= 0.0)
+        {
+            return fallbackTransferSpeed;
+        }
 
-        return requiredSpeed > 0f
-            ? requiredSpeed
-            : fallbackTransferSpeed;
+        double safeDuration = System.Math.Max(0.01, attackDuration);
+
+        float initialX = Mathf.Lerp(
+            attackStartX,
+            attackEndX,
+            (float)(firstRelativeTime / safeDuration));
+
+        return (float)(
+            Mathf.Abs(judgeLineX - initialX) / firstRelativeTime);
     }
+
+    
 }
