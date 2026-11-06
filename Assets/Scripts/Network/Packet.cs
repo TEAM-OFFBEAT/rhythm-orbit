@@ -30,6 +30,7 @@ public struct JudgmentPacket
 {
     public int noteId;
     public byte judgment; // Judgment enum 값
+    public bool wasHit;   // 입력으로 처리한 판정인지 여부
 }
 
 /// <summary>

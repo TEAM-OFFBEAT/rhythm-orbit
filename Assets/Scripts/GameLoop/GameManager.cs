@@ -921,7 +921,12 @@ public class GameManager : MonoBehaviour
 
         // JUDGMENT는 시각 동기화 전용 — 정신력 처리 없음 (SANITY_CHANGE가 별도 처리)
         // 관찰자 메시지는 AdvancePhase에서 remoteJudgmentBuffer로 표시
-        attackTurnRenderer?.RemoveNote(packet.noteId);  // 공격자 관찰 뷰에서 판정된 노트 제거
+        // 상대가 타격한 경우에만 관찰 화면에서도 즉시 제거한다.
+        // 자동 MISS인 노트는 레인 끝까지 이동한다.
+        if (packet.wasHit)
+        {
+            attackTurnRenderer?.RemoveNote(packet.noteId); // 공격자 관찰 뷰에서 판정된 노트 제거
+        }  
         hud?.ShowJudgment(judgment, attackerSide);
         GetDefenseLabel(GetDefenderPlayerId())?.ShowJudgment(judgment);
 

@@ -30,7 +30,25 @@ public class AttackTurnRenderer : MonoBehaviour
     [SerializeField] private Sprite halfHighSprite;
     [SerializeField] private Sprite halfLowSprite;
 
-    private struct NoteEntry { public Transform rect; public int noteId; public float initialX; public double judgeTime; }
+    [Header("Normal Note Exit")]
+    [Tooltip("P1이 공격한 일반 노트가 사라지는 위치. P2 쪽 레인 끝에 배치한다.")]
+    [SerializeField] private Transform p1AttackLaneEnd;
+
+    [Tooltip("P2가 공격한 일반 노트가 사라지는 위치. P1 쪽 레인 끝에 배치한다.")]
+    [SerializeField] private Transform p2AttackLaneEnd;
+
+
+    private struct NoteEntry
+    {
+        public Transform rect;
+        public int noteId;
+        public float initialX;
+        public double judgeTime;
+
+        // 판정 완료로 화면 제거 요청을 받았는지 기록한다.
+        public bool removeRequested;
+    }
+
     private readonly List<NoteEntry> spawnedNotes = new();
     private readonly List<NoteEntry> spawnedGhostNotes = new();
 
@@ -47,6 +65,7 @@ public class AttackTurnRenderer : MonoBehaviour
     public AttackSide CurrentSide => currentSide;
     public double AttackStartDspTime => attackStartDspTime;
     public double AttackDuration => attackDuration;
+    private double lastTransferUpdateDspTime;
 
     private void Awake()
     {
@@ -331,6 +350,7 @@ public class AttackTurnRenderer : MonoBehaviour
         transferJudgeLineX = judgeLineX;
         transferSpeed = Mathf.Max(0.001f, Mathf.Abs(speed));
         isTransferring = true;
+        lastTransferUpdateDspTime = AudioSettings.dspTime;
 
         double now = AudioSettings.dspTime;
 
@@ -393,13 +413,18 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// noteId에 해당하는 노트를 제거한다. DefenseTurn에서 판정 후 호출한다.
+    /// 타격한 일반 노트의 시각 오브젝트를 즉시 반환한다.
+    /// 미입력 노트는 이동 갱신에서 레인 끝 도착 시 반환한다.
     /// </summary>
     public void RemoveNote(int noteId)
     {
         for (int i = spawnedNotes.Count - 1; i >= 0; i--)
         {
-            if (spawnedNotes[i].noteId != noteId) continue;
+            if (spawnedNotes[i].noteId != noteId)
+            {
+                continue;
+            }
+
             NoteRenderer.Instance?.ReleaseNote(noteId);
             spawnedNotes.RemoveAt(i);
             return;
@@ -455,15 +480,33 @@ public class AttackTurnRenderer : MonoBehaviour
 
     private void UpdateTransferMovement()
     {
+        double now = AudioSettings.dspTime;
+        double gap = now - lastTransferUpdateDspTime;
+
+        // 이동 갱신 사이에 50ms 이상 경과한 경우만 기록한다.
+        if (lastTransferUpdateDspTime > 0.0 && gap > 0.05)
+        {
+            Debug.LogWarning(
+                $"[MoveGap] frame:{Time.frameCount}, " +
+                $"gap:{gap * 1000.0:F1}ms, speed:{transferSpeed:F2}",
+                this);
+        }
+
+        lastTransferUpdateDspTime = now;
+
         UpdateTransferMovementFor(spawnedNotes);
         UpdateTransferMovementFor(spawnedGhostNotes, isGhost: true);
     }
 
     private void UpdateTransferMovementFor(
-        List<NoteEntry> noteEntries,
-        bool isGhost = false)
+    List<NoteEntry> noteEntries,
+    bool isGhost = false)
     {
         double now = AudioSettings.dspTime;
+
+        Transform laneEnd = currentSide == AttackSide.P1
+            ? p1AttackLaneEnd
+            : p2AttackLaneEnd;
 
         for (int i = noteEntries.Count - 1; i >= 0; i--)
         {
@@ -486,20 +529,50 @@ public class AttackTurnRenderer : MonoBehaviour
             float dir = Mathf.Sign(transferJudgeLineX - entry.initialX);
             float newX = entry.initialX + dir * transferSpeed * elapsed;
 
-            if (dir > 0f && newX > transferJudgeLineX)
-                newX = transferJudgeLineX;
+            // 유령은 판정선, 일반 노트는 레인 끝을 종점으로 사용한다.
+            float endX = transferJudgeLineX;
 
-            if (dir < 0f && newX < transferJudgeLineX)
-                newX = transferJudgeLineX;
+            if (!isGhost && laneEnd != null)
+            {
+                endX = entry.rect.parent != null
+                    ? entry.rect.parent.InverseTransformPoint(laneEnd.position).x
+                    : laneEnd.position.x;
+            }
+
+            bool reachedEnd = dir > 0f
+                ? newX >= endX
+                : newX <= endX;
+
+            if (reachedEnd)
+            {
+                newX = endX;
+            }
 
             Vector3 pos = entry.rect.localPosition;
             pos.x = newX;
             entry.rect.localPosition = pos;
 
-            // 유령은 입력 여부와 관계없이 판정선 도착 시 소멸한다.
-            if (isGhost && now >= entry.judgeTime)
+            if (isGhost)
             {
-                RemoveGhostNote(entry.noteId, playDisappear: true);
+                if (now >= entry.judgeTime)
+                {
+                    pos.x = transferJudgeLineX;
+                    entry.rect.localPosition = pos;
+
+                    // 이동 목록에서는 제외하되,
+                    // 풀 반환은 소멸 애니메이션이 끝난 뒤 수행한다.
+                    RemoveGhostNote(entry.noteId, playDisappear: true);
+                }
+
+                // 유령은 아래 일반 노트 반환 코드를 실행하지 않는다.
+                continue;
+            }
+
+            // 타격하지 않아 남아 있는 일반 노트만 레인 끝에서 반환한다.
+            if (reachedEnd)
+            {
+                NoteRenderer.Instance?.ReleaseNote(entry.noteId);
+                noteEntries.RemoveAt(i);
             }
         }
     }

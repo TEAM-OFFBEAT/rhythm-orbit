@@ -494,6 +494,11 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1599174042633902264, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
   m_PrefabInstance: {fileID: 914828968}
   m_PrefabAsset: {fileID: 0}
+--- !u!224 &914828973 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 6961152149134197304, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
+  m_PrefabInstance: {fileID: 914828968}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1089659981
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -707,6 +712,10 @@ PrefabInstance:
       propertyPath: spawnX
       value: 420
       objectReference: {fileID: 0}
+    - target: {fileID: 74204857566605106, guid: 7aad988fb5ea5664ba9b9041f7214067, type: 3}
+      propertyPath: laneEnd
+      value: 
+      objectReference: {fileID: 914828973}
     - target: {fileID: 74204857566605106, guid: 7aad988fb5ea5664ba9b9041f7214067, type: 3}
       propertyPath: judgeLine
       value: 

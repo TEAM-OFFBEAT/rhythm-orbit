@@ -2092,15 +2092,19 @@ PrefabInstance:
       objectReference: {fileID: 1569432753}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: forceEventForTest
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventStateDebugText
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: eventDefinitions.Array.data[0].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[1].enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[2].enabled
@@ -2108,7 +2112,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[3].enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[0].entryMessage
@@ -2347,6 +2351,14 @@ PrefabInstance:
       propertyPath: p2DefenseLine
       value: 
       objectReference: {fileID: 1950387379}
+    - target: {fileID: 8940754824742537160, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: p1AttackLaneEnd
+      value: 
+      objectReference: {fileID: 8242475120548370173}
+    - target: {fileID: 8940754824742537160, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: p2AttackLaneEnd
+      value: 
+      objectReference: {fileID: 8242475120548370172}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2865,6 +2877,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e7b78f376e3baf4cb3d1b2481b8fa97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LaneController
+--- !u!4 &8242475120548370172 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2655810857373155925, guid: cd08d864baff41841a37998b7bb73210, type: 3}
+  m_PrefabInstance: {fileID: 8242475120548370170}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8242475120548370173 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1026839950386396046, guid: cd08d864baff41841a37998b7bb73210, type: 3}
+  m_PrefabInstance: {fileID: 8242475120548370170}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
