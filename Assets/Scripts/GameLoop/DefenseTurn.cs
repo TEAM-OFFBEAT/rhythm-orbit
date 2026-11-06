@@ -797,8 +797,8 @@ public class DefenseTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// 실제 노트 기준으로 이동 속도를 계산한다.
-    /// 실제 노트가 없으면 준비된 유령노트를 기준으로 계산한다.
+    /// 일반 노트와 유령 노트를 함께 고려해 이동 속도를 정한다.
+    /// 가장 이른 출발이 방어 시작보다 앞서지 않도록 한다.
     /// </summary>
     private float CalculateTransferSpeed(
         IReadOnlyList<NoteData> notes,
@@ -808,39 +808,43 @@ public class DefenseTurn : MonoBehaviour
         double attackDuration,
         double defenseStartDspTime)
     {
-        double firstRelativeTime = double.MaxValue;
+        float requiredSpeed = 0f;
+        double safeDuration = System.Math.Max(0.01, attackDuration);
 
         if (notes != null)
         {
             foreach (NoteData note in notes)
             {
-                if (note == null) continue;
-
-                if (note.noteRelativeTime < firstRelativeTime)
+                if (note == null || note.noteRelativeTime <= 0.0)
                 {
-                    firstRelativeTime = note.noteRelativeTime;
+                    continue;
                 }
+
+                float ratio = Mathf.Clamp01(
+                    (float)(note.noteRelativeTime / safeDuration));
+
+                float initialX = Mathf.Lerp(
+                    attackStartX,
+                    attackEndX,
+                    ratio);
+
+                float distance = Mathf.Abs(judgeLineX - initialX);
+                float speed = (float)(distance / note.noteRelativeTime);
+
+                requiredSpeed = Mathf.Max(requiredSpeed, speed);
             }
         }
 
-        if (firstRelativeTime == double.MaxValue)
-        {
-            return attackTurnRenderer.GetGhostTransferSpeed(
-                judgeLineX,
-                defenseStartDspTime,
-                fallbackTransferSpeed);
-        }
+        // 일반 노트보다 먼저 도착하는 유령도 속도 계산에 포함한다.
+        float ghostSpeed = attackTurnRenderer.GetGhostTransferSpeed(
+            judgeLineX,
+            defenseStartDspTime,
+            0f);
 
-        double safeDuration = System.Math.Max(0.01, attackDuration);
+        requiredSpeed = Mathf.Max(requiredSpeed, ghostSpeed);
 
-        float firstInitialX = Mathf.Lerp(
-            attackStartX,
-            attackEndX,
-            (float)(firstRelativeTime / safeDuration));
-
-        return firstRelativeTime > 0.0
-            ? Mathf.Abs(judgeLineX - firstInitialX) /
-            (float)firstRelativeTime
+        return requiredSpeed > 0f
+            ? requiredSpeed
             : fallbackTransferSpeed;
     }
 }
