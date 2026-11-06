@@ -576,4 +576,56 @@ public class AttackTurnRenderer : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// 현재 배치 위치에서 지정한 속도로 판정선까지 이동하는 시간을 구한다.
+    /// </summary>
+    public bool TryGetGhostTransferTime(
+        int noteId,
+        float judgeLineX,
+        float speed,
+        out double travelTime)
+    {
+        travelTime = 0.0;
+
+        if (speed <= 0f)
+        {
+            return false;
+        }
+
+        foreach (NoteEntry entry in spawnedGhostNotes)
+        {
+            if (entry.noteId != noteId || entry.rect == null)
+            {
+                continue;
+            }
+
+            travelTime =
+                Mathf.Abs(judgeLineX - entry.initialX) / speed;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 유령의 위치는 유지하고 판정선 도착 시각만 변경한다.
+    /// </summary>
+    public void SetGhostNoteJudgeTime(int noteId, double judgeTime)
+    {
+        for (int i = 0; i < spawnedGhostNotes.Count; i++)
+        {
+            NoteEntry entry = spawnedGhostNotes[i];
+
+            if (entry.noteId != noteId)
+            {
+                continue;
+            }
+
+            entry.judgeTime = judgeTime;
+            spawnedGhostNotes[i] = entry;
+            return;
+        }
+    }
 }
