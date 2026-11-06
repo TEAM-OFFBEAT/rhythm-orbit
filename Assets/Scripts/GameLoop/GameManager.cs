@@ -326,7 +326,8 @@ public class GameManager : MonoBehaviour
     /// 정신력, BPM 단계, 리듬 클락을 초기화한 뒤 첫 공격 phase를 예약한다.
     /// </summary>
     public void StartGame()
-    {
+    {   
+        NoteRenderer.Instance?.ClearGhostDisappearAnimations();
         resultPanelUI?.HideAll();
         sanitySystem?.ResetSanity();
         hud?.ClearAttackProgress();
@@ -1017,6 +1018,7 @@ public class GameManager : MonoBehaviour
     private void EndGameByDefeatedPlayer(int defeatedPlayerId, bool shouldSendNetworkPacket)
     {
         if (currentState == GameState.END) return;
+        NoteRenderer.Instance?.ClearGhostDisappearAnimations();
 
         currentState = GameState.END;
 
@@ -1067,6 +1069,8 @@ public class GameManager : MonoBehaviour
     {
         if (currentState == GameState.END) return;
 
+        NoteRenderer.Instance?.ClearGhostDisappearAnimations();
+
         currentState = GameState.END;
 
         attackTurnRenderer?.ClearAll();
@@ -1101,6 +1105,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StopCurrentMainLoopForSceneChange()
     {
+        NoteRenderer.Instance?.ClearGhostDisappearAnimations();
         currentState = GameState.END;
         nextPhaseDspTime = double.MaxValue;
 

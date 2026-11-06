@@ -155,17 +155,44 @@ public class AttackTurnRenderer : MonoBehaviour
     /// <summary>
     /// noteId에 해당하는 유령 노트를 제거한다.
     /// </summary>
-    public void RemoveGhostNote(int noteId)
+    public void RemoveGhostNote(
+        int noteId,
+        bool playDisappear = false)
     {
         for (int i = spawnedGhostNotes.Count - 1; i >= 0; i--)
         {
-            if (spawnedGhostNotes[i].noteId != noteId)
+            NoteEntry entry = spawnedGhostNotes[i];
+
+            if (entry.noteId != noteId)
             {
                 continue;
             }
 
-            NoteRenderer.Instance?.ReleaseNote(noteId);
             spawnedGhostNotes.RemoveAt(i);
+
+            NoteRenderer pool = NoteRenderer.Instance;
+
+            if (pool == null)
+            {
+                return;
+            }
+
+            if (!playDisappear || entry.rect == null)
+            {
+                pool.ReleaseNote(noteId);
+                return;
+            }
+
+            // 이동 갱신보다 판정 처리가 먼저 실행된 경우에도 위치를 맞춘다.
+            if (isTransferring &&
+                AudioSettings.dspTime >= entry.judgeTime)
+            {
+                Vector3 pos = entry.rect.localPosition;
+                pos.x = transferJudgeLineX;
+                entry.rect.localPosition = pos;
+            }
+
+            pool.ReleaseGhostNoteAfterAnimation(noteId);
             return;
         }
     }
@@ -301,6 +328,45 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
+    /// 실제 노트가 없을 때 가장 이른 유령노트를 기준으로 이동 속도를 계산한다.
+    /// </summary>
+    public float GetGhostTransferSpeed(
+        float judgeLineX,
+        double defenseStartDspTime,
+        float fallbackSpeed)
+    {
+        double firstRelativeTime = double.MaxValue;
+        float firstInitialX = 0f;
+
+        foreach (NoteEntry entry in spawnedGhostNotes)
+        {
+            if (entry.rect == null) continue;
+
+            double relativeTime = entry.judgeTime - defenseStartDspTime;
+
+            if (relativeTime <= 0.0 ||
+                relativeTime >= firstRelativeTime)
+            {
+                continue;
+            }
+
+            firstRelativeTime = relativeTime;
+            firstInitialX = entry.initialX;
+        }
+
+        if (firstRelativeTime == double.MaxValue)
+        {
+            return fallbackSpeed;
+        }
+
+        float speed =
+            Mathf.Abs(judgeLineX - firstInitialX) /
+            (float)firstRelativeTime;
+
+        return speed > 0f ? speed : fallbackSpeed;
+    }
+
+    /// <summary>
     /// noteId에 해당하는 노트를 제거한다. DefenseTurn에서 판정 후 호출한다.
     /// </summary>
     public void RemoveNote(int noteId)
@@ -364,10 +430,12 @@ public class AttackTurnRenderer : MonoBehaviour
     private void UpdateTransferMovement()
     {
         UpdateTransferMovementFor(spawnedNotes);
-        UpdateTransferMovementFor(spawnedGhostNotes);
+        UpdateTransferMovementFor(spawnedGhostNotes, isGhost: true);
     }
 
-    private void UpdateTransferMovementFor(List<NoteEntry> noteEntries)
+    private void UpdateTransferMovementFor(
+        List<NoteEntry> noteEntries,
+        bool isGhost = false)
     {
         double now = AudioSettings.dspTime;
 
@@ -386,17 +454,27 @@ public class AttackTurnRenderer : MonoBehaviour
                 : 0.0;
 
             double departureTime = entry.judgeTime - travelTime;
-            float elapsed = (float)System.Math.Max(0.0, now - departureTime);
+            float elapsed =
+                (float)System.Math.Max(0.0, now - departureTime);
 
             float dir = Mathf.Sign(transferJudgeLineX - entry.initialX);
             float newX = entry.initialX + dir * transferSpeed * elapsed;
 
-            if (dir > 0f && newX > transferJudgeLineX) newX = transferJudgeLineX;
-            if (dir < 0f && newX < transferJudgeLineX) newX = transferJudgeLineX;
+            if (dir > 0f && newX > transferJudgeLineX)
+                newX = transferJudgeLineX;
+
+            if (dir < 0f && newX < transferJudgeLineX)
+                newX = transferJudgeLineX;
 
             Vector3 pos = entry.rect.localPosition;
             pos.x = newX;
             entry.rect.localPosition = pos;
+
+            // 유령은 입력 여부와 관계없이 판정선 도착 시 소멸한다.
+            if (isGhost && now >= entry.judgeTime)
+            {
+                RemoveGhostNote(entry.noteId, playDisappear: true);
+            }
         }
     }
 }

@@ -135,14 +135,22 @@ public class DefenseTurn : MonoBehaviour
     /// isAiDefense = true 이면 judgeTime 도달 시 자동 PERFECT 처리.
     /// remoteAttackStartDspTime이 0이 아닌 경우, AudioSettings.dspTime 대신 이 값을 기반으로 defenseStartDspTime을 결정적으로 계산한다.
     /// </summary>
-    public void Begin(IReadOnlyList<NoteData> notes, float judgeLineX, float attackStartX, float attackEndX,
-        double attackDuration, bool isAiDefense = false, NetworkManager networkManager = null,
-        double remoteAttackStartDspTime = 0.0)
+    public void Begin(
+    IReadOnlyList<NoteData> notes,
+    float judgeLineX,
+    float attackStartX,
+    float attackEndX,
+    double attackDuration,
+    bool isAiDefense = false,
+    NetworkManager networkManager = null,
+    double remoteAttackStartDspTime = 0.0)
     {
         this.networkManager = networkManager;
+
         if (attackTurnRenderer == null)
         {
-            Debug.LogError("DefenseTurn: AttackTurnRenderer가 연결되지 않았습니다.");
+            Debug.LogError(
+                "DefenseTurn: AttackTurnRenderer가 연결되지 않았습니다.");
             return;
         }
 
@@ -151,23 +159,14 @@ public class DefenseTurn : MonoBehaviour
         this.isAiDefense = isAiDefense;
         isRunning = true;
 
-        if (notes.Count == 0) return;
-
-        // 가장 이른 노트 기준으로 transferSpeed 결정 — 이 노트가 defenseStart에 출발해 judgeTime에 도착
-        double firstRelativeTime = double.MaxValue;
-        foreach (var n in notes)
-            if (n.noteRelativeTime < firstRelativeTime) firstRelativeTime = n.noteRelativeTime;
-
-        float firstInitialX = Mathf.Lerp(attackStartX, attackEndX, (float)(firstRelativeTime / attackDuration));
-        float transferSpeed = firstRelativeTime > 0.0
-            ? Mathf.Abs(judgeLineX - firstInitialX) / (float)firstRelativeTime
-            : fallbackTransferSpeed;
-
         double defenseStartDspTime;
+
         if (remoteAttackStartDspTime > 0.0)
-            defenseStartDspTime = remoteAttackStartDspTime + attackDuration;
+            defenseStartDspTime =
+                remoteAttackStartDspTime + attackDuration;
         else
             defenseStartDspTime = AudioSettings.dspTime;
+
         defenseEndDspTime = defenseStartDspTime + attackDuration;
 
         currentDefenseStartDspTime = defenseStartDspTime;
@@ -179,13 +178,31 @@ public class DefenseTurn : MonoBehaviour
 
         ghostNotes.Clear();
 
-        foreach (var note in notes)
+        float transferSpeed = CalculateTransferSpeed(
+            notes,
+            judgeLineX,
+            attackStartX,
+            attackEndX,
+            attackDuration,
+            defenseStartDspTime);
+
+        if (notes != null)
         {
-            note.judgeTime = defenseStartDspTime + note.noteRelativeTime;
-            attackTurnRenderer.SetNoteJudgeTime(note.noteId, note.judgeTime);
-            pendingNotes.Add(note);
+            foreach (NoteData note in notes)
+            {
+                if (note == null) continue;
+
+                note.judgeTime =
+                    defenseStartDspTime + note.noteRelativeTime;
+
+                attackTurnRenderer.SetNoteJudgeTime(
+                    note.noteId, note.judgeTime);
+
+                pendingNotes.Add(note);
+            }
         }
 
+        // 실제 노트가 없어도 유령 이동과 방어 시작 이벤트는 실행한다.
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
         OnDefenseBegan?.Invoke();
     }
@@ -229,21 +246,28 @@ public class DefenseTurn : MonoBehaviour
     /// defense phase 시작 DSP 시각에 GameManager가 호출한다.
     /// receivedNotes는 OnNoteReceived에서 이미 judgeTime이 설정되어 있다.
     /// </summary>
-    public void BeginTransfer(float judgeLineX, float attackStartX, float attackEndX,
-        double attackDuration, NetworkManager networkManager, double defenseStartDspTime)
+    public void BeginTransfer(
+    float judgeLineX,
+    float attackStartX,
+    float attackEndX,
+    double attackDuration,
+    NetworkManager networkManager,
+    double defenseStartDspTime)
     {
         this.networkManager = networkManager;
-        isAiDefense  = false;
+        isAiDefense = false;
 
         if (attackTurnRenderer == null)
         {
-            Debug.LogError("DefenseTurn: AttackTurnRenderer가 연결되지 않았습니다.");
+            Debug.LogError(
+                "DefenseTurn: AttackTurnRenderer가 연결되지 않았습니다.");
             return;
         }
 
         pendingNotes.Clear();
         judgments.Clear();
-        isRunning       = true;
+        isRunning = true;
+
         defenseEndDspTime = defenseStartDspTime + attackDuration;
 
         currentDefenseStartDspTime = defenseStartDspTime;
@@ -255,27 +279,25 @@ public class DefenseTurn : MonoBehaviour
 
         ghostNotes.Clear();
 
-        if (receivedNotes.Count == 0)
-        {
-            receivedNotes.Clear();
-            return;
-        }
-
-        double firstRelativeTime = double.MaxValue;
-        foreach (var n in receivedNotes)
-            if (n.noteRelativeTime < firstRelativeTime) firstRelativeTime = n.noteRelativeTime;
-
-        float firstInitialX  = Mathf.Lerp(attackStartX, attackEndX,
-            (float)(firstRelativeTime / System.Math.Max(0.01, attackDuration)));
-        float transferSpeed  = firstRelativeTime > 0.0
-            ? Mathf.Abs(judgeLineX - firstInitialX) / (float)firstRelativeTime
-            : fallbackTransferSpeed;
+        float transferSpeed = CalculateTransferSpeed(
+            receivedNotes,
+            judgeLineX,
+            attackStartX,
+            attackEndX,
+            attackDuration,
+            defenseStartDspTime);
 
         // judgeTime은 OnNoteReceived에서 이미 계산됨 — 여기서 재계산하지 않는다.
-        foreach (var note in receivedNotes)
+        foreach (NoteData note in receivedNotes)
+        {
+            if (note == null) continue;
+
             pendingNotes.Add(note);
+        }
 
         receivedNotes.Clear();
+
+        // 실제 노트가 없어도 유령 이동과 방어 시작 이벤트는 실행한다.
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
         OnDefenseBegan?.Invoke();
     }
@@ -660,10 +682,12 @@ public class DefenseTurn : MonoBehaviour
             return;
         }
 
-        RemoveGhostNoteInternal(ghostNote);
+        // 중복 감점은 막되, 화면의 유령은 판정선까지 계속 이동한다.
+        ghostNotes.Remove(ghostNote);
         OnGhostNoteHit?.Invoke(ghostNote);
 
-        Debug.Log($"DefenseTurn: Ghost note hit / id:{ghostNote.noteId}, type:{ghostNote.noteType}");
+        Debug.Log(
+            $"DefenseTurn: Ghost note hit / id:{ghostNote.noteId}, type:{ghostNote.noteType}");
     }
 
     /// <summary>
@@ -713,8 +737,11 @@ public class DefenseTurn : MonoBehaviour
             return;
         }
 
-        attackTurnRenderer?.RemoveGhostNote(ghostNote.noteId);
         ghostNotes.Remove(ghostNote);
+
+        attackTurnRenderer?.RemoveGhostNote(
+            ghostNote.noteId,
+            playDisappear: true);
     }
 
     private void ClearGhostNotesInternal()
@@ -767,5 +794,53 @@ public class DefenseTurn : MonoBehaviour
         networkManager = null;
         defenseEndDspTime = 0.0;
         pendingAttackDuration = 0.0;
+    }
+
+    /// <summary>
+    /// 실제 노트 기준으로 이동 속도를 계산한다.
+    /// 실제 노트가 없으면 준비된 유령노트를 기준으로 계산한다.
+    /// </summary>
+    private float CalculateTransferSpeed(
+        IReadOnlyList<NoteData> notes,
+        float judgeLineX,
+        float attackStartX,
+        float attackEndX,
+        double attackDuration,
+        double defenseStartDspTime)
+    {
+        double firstRelativeTime = double.MaxValue;
+
+        if (notes != null)
+        {
+            foreach (NoteData note in notes)
+            {
+                if (note == null) continue;
+
+                if (note.noteRelativeTime < firstRelativeTime)
+                {
+                    firstRelativeTime = note.noteRelativeTime;
+                }
+            }
+        }
+
+        if (firstRelativeTime == double.MaxValue)
+        {
+            return attackTurnRenderer.GetGhostTransferSpeed(
+                judgeLineX,
+                defenseStartDspTime,
+                fallbackTransferSpeed);
+        }
+
+        double safeDuration = System.Math.Max(0.01, attackDuration);
+
+        float firstInitialX = Mathf.Lerp(
+            attackStartX,
+            attackEndX,
+            (float)(firstRelativeTime / safeDuration));
+
+        return firstRelativeTime > 0.0
+            ? Mathf.Abs(judgeLineX - firstInitialX) /
+            (float)firstRelativeTime
+            : fallbackTransferSpeed;
     }
 }
