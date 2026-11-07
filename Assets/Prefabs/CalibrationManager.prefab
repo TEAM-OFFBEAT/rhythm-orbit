@@ -45,7 +45,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -145,5 +145,5 @@ MonoBehaviour:
   audioSource: {fileID: 5087980873428537591}
   metronomeClip: {fileID: 8300000, guid: 3c450153aa5e63540a711757e87d2b19, type: 3}
   spawner: {fileID: 0}
-  fallbackBpm: 106
-  beatsPerNote: 4
+  normalBeatVolume: 0.15
+  lastBeatVolume: 1
