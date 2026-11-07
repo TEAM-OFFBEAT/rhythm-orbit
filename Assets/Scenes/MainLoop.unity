@@ -1619,7 +1619,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1464183710254482676}
   - {fileID: 284292477}
   - {fileID: 6973210026399278951}
   - {fileID: 23928518}
@@ -1724,6 +1723,67 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6754599476164282960, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
   m_PrefabInstance: {fileID: 4572499397756924743}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &9900000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9900000003}
+  - component: {fileID: 9900000002}
+  m_Layer: 5
+  m_Name: BlackoutCanvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!223 &9900000002
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9900000001}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 1
+  m_Camera: {fileID: 519420031}
+  m_PlaneDistance: 10
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 0
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 50
+  m_TargetDisplay: 0
+--- !u!224 &9900000003
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9900000001}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1464183710254482676}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
 --- !u!1001 &1364310759223971703
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1878,7 +1938,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 2025149113}
+    m_TransformParent: {fileID: 9900000003}
     m_Modifications:
     - target: {fileID: 3979135990096328168, guid: 5aa30ca698ca4da45acb08f600132a87, type: 3}
       propertyPath: m_Name
@@ -2092,7 +2152,7 @@ PrefabInstance:
       objectReference: {fileID: 1569432753}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: forceEventForTest
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventStateDebugText
@@ -2100,7 +2160,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[0].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[1].enabled
@@ -2112,7 +2172,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[3].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[0].entryMessage
@@ -2909,3 +2969,4 @@ SceneRoots:
   - {fileID: 1569655914}
   - {fileID: 1311157395}
   - {fileID: 2046189651}
+  - {fileID: 9900000003}

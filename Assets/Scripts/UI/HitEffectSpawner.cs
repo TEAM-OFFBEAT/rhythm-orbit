@@ -11,6 +11,25 @@ public class HitEffectSpawner : SceneSingleton<HitEffectSpawner>
     [SerializeField] private GameObject perfectHighEffectPrefab;
     [SerializeField] private GameObject perfectLowEffectPrefab;
 
+    [SerializeField] private int normalSortingOrder = 3;
+    [SerializeField] private int elevatedSortingOrder = 51;
+
+    private bool _elevated;
+
+    /// <summary>
+    /// true면 이후 생성되는 이펙트를 BlackOut 위로 렌더링한다. EVT_ATK_02 진입/종료 시 호출.
+    /// </summary>
+    public void SetTopLayerMode(bool elevated)
+    {
+        _elevated = elevated;
+        int order = elevated ? elevatedSortingOrder : normalSortingOrder;
+        foreach (Transform child in transform)
+        {
+            foreach (var sr in child.GetComponentsInChildren<SpriteRenderer>())
+                sr.sortingOrder = order;
+        }
+    }
+
     /// <summary>
     /// noteType에 맞는 이펙트를 worldPos에 생성한다. isPerfect가 true이면 Perfect 전용 이펙트를 사용한다.
     /// </summary>
@@ -29,6 +48,11 @@ public class HitEffectSpawner : SceneSingleton<HitEffectSpawner>
         }
 
         GameObject effect = Instantiate(prefab, worldPos, Quaternion.identity, transform);
+
+        int order = _elevated ? elevatedSortingOrder : normalSortingOrder;
+        foreach (var sr in effect.GetComponentsInChildren<SpriteRenderer>())
+            sr.sortingOrder = order;
+
         Destroy(effect, 0.4f);
     }
 }

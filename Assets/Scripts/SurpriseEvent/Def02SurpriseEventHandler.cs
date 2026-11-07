@@ -158,6 +158,7 @@ public class Def02SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler, I
         {
             StopPreludeCoroutine();
             RestoreNotes();
+            HitEffectSpawner.Instance?.SetTopLayerMode(false);
             StartFadeOut();
         }
 
@@ -286,6 +287,7 @@ public class Def02SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler, I
         SetSolidBlackAlpha(defenseBlackAlpha);
 
         HideNotes();
+        HitEffectSpawner.Instance?.SetTopLayerMode(true);
 
         Debug.Log("DEF_02 AudioReception 적용 시작 / 방어 노트 숨김");
     }
