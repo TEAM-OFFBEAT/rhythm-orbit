@@ -79,7 +79,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -1
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7443756053782179069, guid: 84f3a821e867ca14b8265b9d7df7fe98, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -138,10 +138,9 @@ MonoBehaviour:
   transitionClips:
   - {fileID: 32900000, guid: 7a36c1c2b15a53c4982323147c58d64d, type: 3}
   - {fileID: 32900000, guid: 12c7d153f8ed36d4b8785d33e53d068f, type: 3}
-  spaceLayer: {fileID: 5185981406611547677}
-  sparkleLayer: {fileID: 2832677344381121224}
-  planetLayer: {fileID: 5413895493820638655}
-  targetCamera: {fileID: 0}
+  videoSortingLayer: Default
+  videoSortingOrder: 2
+  fadeDuration: 0.5
   cameraCenterThreshold: 0.1
 --- !u!1 &5320493138583289810
 GameObject:
@@ -222,7 +221,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 93db7cdd863c9d54ab9870b563057363, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -313,7 +312,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: b55b68a161b27914ab7419b4c1b0fc23, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
