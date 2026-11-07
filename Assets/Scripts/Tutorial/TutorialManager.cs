@@ -40,6 +40,8 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private JudgmentLabel p1DefenseJudgmentLabel;
     [SerializeField] private JudgmentLabel p2DefenseJudgmentLabel;
     [SerializeField] private TutorialDialoguePlayer dialoguePlayer;
+    [SerializeField] private TutorialExitUI tutorialExitUI;
+
     [Tooltip("랠리 단계에서 처음 표시할 정신력 UI 루트. 비워두면 활성/비활성은 건드리지 않고 HUD 값만 갱신한다.")]
     [SerializeField] private GameObject mySanityUiRoot;
     [SerializeField] private GameObject opponentSanityUiRoot;
@@ -58,9 +60,10 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("공격 시작 예약 지연. 튜토리얼에서는 즉시 입력이 먹도록 0 권장.")]
     [SerializeField] private float attackStartDelay = 0f;
     [SerializeField] private float viewTransitionDelay = 0.15f;
-    [Tooltip("튜토리얼 완료 후 로비 씬으로 자동 이동하기까지 대기 시간(초).")]
-    [SerializeField] private float lobbyTransitionDelay = 3f;
-    
+    //[Tooltip("튜토리얼 완료 후 로비 씬으로 자동 이동하기까지 대기 시간(초).")]
+    //[SerializeField] private float lobbyTransitionDelay = 3f;
+    [Tooltip("튜토리얼 완료 후 선택 창을 자동으로 표시하기까지 대기 시간(초).")]
+    [SerializeField, Min(0f)] private float completionPanelDelay = 5f;
     [Tooltip("4박 경계선을 이 시간만큼 살짝 지난 경우에도 같은 경계선으로 인정한다. 공격 연습 시작 전 긴 공백 방지용.")]
     [SerializeField, Min(0f)] private float guideBoundaryLateGraceSeconds = 0.25f;
 
@@ -191,6 +194,8 @@ public class TutorialManager : MonoBehaviour
     private double lastAttackStartDspTime;
     private double lastAttackDuration;
     private int nextDemoNoteId;
+    public bool IsTutorialCompleted => // 이전 완료 기록이 아니라, 현재 실행 중인 튜토리얼의 완료 여부다.
+        currentStep == TutorialStep.Complete; 
 
     private readonly List<NoteData> lastAttackNotes = new List<NoteData>();
 
@@ -296,11 +301,12 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 인트로 설명 → 공격 설명 → 공격연습 → 방어 설명 → 방어연습 → 랠리 설명 → 랠리연습 순서로 진행한다.
+    /// 인트로 설명 → 공격 설명 → 공격연습 → 방어 설명 → 방어연습
+    /// → 랠리 설명 → 랠리연습 순서로 진행한다.
     /// </summary>
     private IEnumerator RunTutorial()
     {
-         InitializeTutorial();
+        InitializeTutorial();
 
         yield return WaitUntilDspTime(tutorialStartDspTime);
 
@@ -325,8 +331,18 @@ public class TutorialManager : MonoBehaviour
         currentStep = TutorialStep.Complete;
         CompleteTutorial();
 
-        yield return new WaitForSecondsRealtime(lobbyTransitionDelay);
-        GoToLobby();
+        yield return new WaitForSecondsRealtime(
+            Mathf.Max(0f, completionPanelDelay));
+
+        if (tutorialExitUI == null)
+        {
+            Debug.LogError(
+                "TutorialManager: Tutorial Exit UI를 연결해주세요.", this);
+            yield break;
+        }
+
+        // 이미 ESC로 열려 있어도 닫히지 않도록 Toggle 대신 Open을 호출한다.
+        tutorialExitUI.Open();
     }
 
     private void InitializeTutorial()
@@ -1452,6 +1468,8 @@ public class TutorialManager : MonoBehaviour
 
     private void CompleteTutorial()
     {
+        currentStep = TutorialStep.Complete;
+
         StopGuideMetronome();
 
         dialoguePlayer?.Show("튜토리얼 완료다모! 수고했다모!");
@@ -1465,10 +1483,9 @@ public class TutorialManager : MonoBehaviour
         hud?.ClearPanelMessages();
         HidePanelMessages();
 
-        /*if (lobbyButtonRoot != null)
-        {
-            lobbyButtonRoot.SetActive(true);
-        }*/
+        // 이미 창이 열려 있다면 문구와 동작을 완료 상태에 맞춘다.
+        // 이 호출 자체가 창을 열지는 않는다.
+        tutorialExitUI?.RefreshButtons();
 
         Debug.Log("TutorialManager: Complete");
     }
@@ -1815,6 +1832,15 @@ public class TutorialManager : MonoBehaviour
 
         Time.timeScale = 1f;
         SceneManager.LoadScene(lobbySceneName);
+    }
+
+    /// <summary>
+    /// 현재 튜토리얼 씬을 다시 불러와 처음부터 시작한다.
+    /// </summary>
+    public void RestartTutorial()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(gameObject.scene.path);
     }
 
     /// <summary>

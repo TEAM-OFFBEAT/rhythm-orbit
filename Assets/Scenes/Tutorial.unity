@@ -858,6 +858,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 906138569647718315, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1051350156382055919, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1185,6 +1189,10 @@ PrefabInstance:
     - target: {fileID: 6436210740659419106, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6642783317629845261, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -2.4000015
       objectReference: {fileID: 0}
     - target: {fileID: 6731067140535465102, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1725,6 +1733,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2025149113}
     m_Modifications:
+    - target: {fileID: 5381518562031634235, guid: 7702ab36c60f3d34d8133b4258ce3b00, type: 3}
+      propertyPath: m_text
+      value: "\uACC4\uC18D\uD558\uAE30"
+      objectReference: {fileID: 0}
     - target: {fileID: 6520917679983622149, guid: 7702ab36c60f3d34d8133b4258ce3b00, type: 3}
       propertyPath: m_text
       value: "\uD29C\uD1A0\uB9AC\uC5BC\uC744 \uC885\uB8CC\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
@@ -1854,6 +1866,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7134781046097444499, guid: 7702ab36c60f3d34d8133b4258ce3b00, type: 3}
   m_PrefabInstance: {fileID: 1971087626}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1971087631 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5381518562031634235, guid: 7702ab36c60f3d34d8133b4258ce3b00, type: 3}
+  m_PrefabInstance: {fileID: 1971087626}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!114 &1980960818 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6030005440964628210, guid: 4bc8ae8bec6852747a938be1f02e9c05, type: 3}
@@ -2019,6 +2042,10 @@ PrefabInstance:
       propertyPath: tutorialManager
       value: 
       objectReference: {fileID: 314441054}
+    - target: {fileID: 4965338774904747738, guid: 3ca10c069c6fdb749a0e29a0cd299028, type: 3}
+      propertyPath: exitNoButtonLabel
+      value: 
+      objectReference: {fileID: 1971087631}
     - target: {fileID: 6059320210324040769, guid: 3ca10c069c6fdb749a0e29a0cd299028, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

@@ -1,9 +1,10 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 튜토리얼의 로비 나가기 확인창을 관리한다.
-/// ESC 입력은 SceneInputRouter에서 전달받는다.
+/// 튜토리얼의 나가기 창을 관리한다.
+/// 진행 중에는 예/계속하기, 완료 후에는 예/다시하기로 동작한다.
 /// </summary>
 public class TutorialExitUI : MonoBehaviour
 {
@@ -14,28 +15,49 @@ public class TutorialExitUI : MonoBehaviour
     [SerializeField] private GameObject exitPanel;
     [SerializeField] private Button exitYesButton;
     [SerializeField] private Button exitNoButton;
+    [SerializeField] private TMP_Text exitNoButtonLabel;
 
     private bool isLeaving;
 
     private void Awake()
     {
-        exitYesButton?.onClick.AddListener(ConfirmExit);
-        exitNoButton?.onClick.AddListener(Close);
+        if (exitNoButtonLabel == null && exitNoButton != null)
+        {
+            exitNoButtonLabel =
+                exitNoButton.GetComponentInChildren<TMP_Text>(true);
+        }
 
+        exitYesButton?.onClick.AddListener(ConfirmExit);
+        exitNoButton?.onClick.AddListener(HandleNoButton);
+
+        RefreshButtons();
         Close();
     }
 
     private void OnDestroy()
     {
         exitYesButton?.onClick.RemoveListener(ConfirmExit);
-        exitNoButton?.onClick.RemoveListener(Close);
+        exitNoButton?.onClick.RemoveListener(HandleNoButton);
+    }
+
+    public void Toggle()
+    {
+        if (isLeaving) return;
+
+        if (exitPanel != null && exitPanel.activeSelf)
+        {
+            Close();
+        }
+        else
+        {
+            Open();
+        }
     }
 
     /// <summary>
-    /// ESC 입력으로 확인창을 열거나 닫는다.
-    /// 메인 루프와 동일하게 진행을 일시정지하지 않는다.
+    /// 완료 후 자동 표시와 ESC 입력이 함께 사용하는 열기 함수.
     /// </summary>
-    public void Toggle()
+    public void Open()
     {
         if (isLeaving) return;
 
@@ -46,20 +68,12 @@ public class TutorialExitUI : MonoBehaviour
             return;
         }
 
-        bool shouldOpen = !exitPanel.activeSelf;
+        RefreshButtons();
 
-        if (shouldOpen)
-        {
-            // 같은 Canvas의 다른 UI보다 앞에 표시한다.
-            exitPanel.transform.SetAsLastSibling();
-        }
-
-        exitPanel.SetActive(shouldOpen);
+        exitPanel.transform.SetAsLastSibling();
+        exitPanel.SetActive(true);
     }
 
-    /// <summary>
-    /// '아니오' 버튼으로 확인창만 닫는다.
-    /// </summary>
     public void Close()
     {
         if (exitPanel != null)
@@ -69,8 +83,35 @@ public class TutorialExitUI : MonoBehaviour
     }
 
     /// <summary>
-    /// '예' 버튼으로 기존 로비 이동 처리를 실행한다.
+    /// 창의 활성 상태는 유지하면서 두 번째 버튼의 문구만 갱신한다.
     /// </summary>
+    public void RefreshButtons()
+    {
+        if (exitNoButtonLabel == null) return;
+
+        bool completed = tutorialManager != null &&
+            tutorialManager.IsTutorialCompleted;
+
+        exitNoButtonLabel.text = completed
+            ? "다시하기"
+            : "계속하기";
+    }
+
+    private void HandleNoButton()
+    {
+        if (isLeaving) return;
+
+        if (tutorialManager != null &&
+            tutorialManager.IsTutorialCompleted)
+        {
+            ConfirmRestart();
+        }
+        else
+        {
+            Close();
+        }
+    }
+
     private void ConfirmExit()
     {
         if (isLeaving) return;
@@ -84,5 +125,20 @@ public class TutorialExitUI : MonoBehaviour
 
         isLeaving = true;
         tutorialManager.GoToLobby();
+    }
+
+    private void ConfirmRestart()
+    {
+        if (isLeaving) return;
+
+        if (tutorialManager == null)
+        {
+            Debug.LogError(
+                "TutorialExitUI: TutorialManager를 연결해주세요.", this);
+            return;
+        }
+
+        isLeaving = true;
+        tutorialManager.RestartTutorial();
     }
 }
