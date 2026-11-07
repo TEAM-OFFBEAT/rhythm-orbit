@@ -1454,6 +1454,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5880116356930526685, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
   m_PrefabInstance: {fileID: 942637795}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &1414002516 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2655810857373155925, guid: cd08d864baff41841a37998b7bb73210, type: 3}
+  m_PrefabInstance: {fileID: 1028802037}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1513002032
 GameObject:
   m_ObjectHideFlags: 0
@@ -1720,6 +1725,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97d1e4a42eb393b4f8bd60b8da532478, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DefenseTurn
+--- !u!4 &1950048136 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1026839950386396046, guid: cd08d864baff41841a37998b7bb73210, type: 3}
+  m_PrefabInstance: {fileID: 1028802037}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1950387379 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3552384424864583527, guid: feb0289c027318244a2c43727103e4bd, type: 3}
@@ -2484,6 +2494,14 @@ PrefabInstance:
       propertyPath: p2DefenseLine
       value: 
       objectReference: {fileID: 1950387379}
+    - target: {fileID: 8940754824742537160, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: p1AttackLaneEnd
+      value: 
+      objectReference: {fileID: 1950048136}
+    - target: {fileID: 8940754824742537160, guid: 2e558f6d7c18ba64bb4007d6be895a0f, type: 3}
+      propertyPath: p2AttackLaneEnd
+      value: 
+      objectReference: {fileID: 1414002516}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
