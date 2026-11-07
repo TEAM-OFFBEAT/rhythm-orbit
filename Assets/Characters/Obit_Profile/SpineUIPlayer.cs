@@ -4,16 +4,14 @@ using UnityEngine;
 
 /// <summary>
 /// SkeletonGraphic 물리 흔들림이 캔버스/카메라 이동에 반응하지 않도록 고정.
-/// 이 버전 Spine에서 SkeletonGraphic은 AnimationState를 직접 노출하지 않으므로
-/// 같은 GameObject의 SkeletonAnimation에서 가져온다.
 /// </summary>
 public class SpineUIPlayer : MonoBehaviour
 {
+    const string Idle = "default_2";
+
     SkeletonGraphic sg;
     SkeletonAnimation sa;
     bool resetPhysics;
-
-    public Spine.AnimationState AnimationState => sa.AnimationState;
 
     void Awake()
     {
@@ -28,9 +26,17 @@ public class SpineUIPlayer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 지정 애니메이션을 크로스페이드 없이 즉시 재생. loop=false면 한 번 재생 후 정지.
-    /// </summary>
+    /// <summary>idle 무한 루프 재생. 이미 재생 중이면 중단 없이 유지.</summary>
+    public void PlayIdle() => Play(Idle, true);
+
+    /// <summary>지정 애니메이션을 한 번 재생 후 idle로 복귀.</summary>
+    public void PlayOnce(string anim)
+    {
+        Play(anim, false);
+        sa.AnimationState.AddAnimation(0, Idle, true, 0f);
+    }
+
+    /// <summary>지정 애니메이션을 크로스페이드 없이 즉시 재생.</summary>
     public void Play(string anim, bool loop)
     {
         var current = sa.AnimationState.GetTrack(0);

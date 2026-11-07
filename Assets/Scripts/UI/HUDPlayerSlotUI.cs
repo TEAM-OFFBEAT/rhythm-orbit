@@ -5,12 +5,13 @@ using UnityEngine.UI;
 /// <summary>
 /// 플레이어 한 명의 HUD 슬롯을 표시하는 UI 컴포넌트.
 /// 프로필 이미지, 정신력 바, 판정 이미지를 갱신한다.
-/// spineProfile이 연결되면 Spine 애니메이션 기반으로 동작하고, 없으면 스프라이트 폴백.
+/// spineProfile44/34가 연결되면 Spine 애니메이션 기반으로 동작하고, 없으면 스프라이트 폴백.
 /// </summary>
 public class HUDPlayerSlotUI : MonoBehaviour
 {
-    [Header("Profile - Spine (P1)")]
-    [SerializeField] private SpineUIPlayer spineProfile;
+    [Header("Profile - Spine")]
+    [SerializeField] private SpineUIPlayer spineProfile44;
+    [SerializeField] private SpineUIPlayer spineProfile34;
 
     [Header("Profile (4/4 Mode)")]
     [SerializeField] private Image profileImage;
@@ -31,7 +32,6 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     private TimeSignatureMode currentMode;
 
-    private const string SpineIdle    = "default_2";
     private const string SpinePerfect = "perfect";
     private const string SpineGood    = "good";
     private const string SpineMiss    = "miss";
@@ -50,12 +50,20 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [SerializeField] private float pulseSpeed = 2f;
     private Coroutine pulseCoroutine;
 
+    private SpineUIPlayer ActiveSpine =>
+        currentMode == TimeSignatureMode.ThreeFour && spineProfile34 != null
+            ? spineProfile34
+            : spineProfile44;
+
     private void Awake()
     {
-        if (spineProfile != null)
-            spineProfile.Play(SpineIdle, true);
-        else
+        if (spineProfile44 != null) spineProfile44.PlayIdle();
+        if (spineProfile34 != null) spineProfile34.PlayIdle();
+        SyncSpineVisibility();
+
+        if (ActiveSpine == null)
             SetPortrait(defaultPortrait);
+
         SetActiveState(false);
     }
 
@@ -72,11 +80,12 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 박자 모드에 따라 활성 스프라이트 세트를 전환한다. P1은 모드 무관(3/4 슬롯 비워두면 4/4 폴백).
+    /// 박자 모드에 따라 활성 Spine 프로필 또는 스프라이트 세트를 전환한다.
     /// </summary>
     public void SetMode(TimeSignatureMode mode)
     {
         currentMode = mode;
+        SyncSpineVisibility();
         ClearJudgment();
     }
 
@@ -86,9 +95,9 @@ public class HUDPlayerSlotUI : MonoBehaviour
     /// </summary>
     public void ShowJudgment(Judgment judgment)
     {
-        if (spineProfile != null)
+        if (ActiveSpine != null)
         {
-            PlaySpineOnce(judgment switch
+            ActiveSpine.PlayOnce(judgment switch
             {
                 Judgment.PERFECT => SpinePerfect,
                 Judgment.GOOD    => SpineGood,
@@ -109,9 +118,9 @@ public class HUDPlayerSlotUI : MonoBehaviour
     /// </summary>
     public void ClearJudgment()
     {
-        if (spineProfile != null)
+        if (ActiveSpine != null)
         {
-            spineProfile.Play(SpineIdle, true);
+            ActiveSpine.PlayIdle();
             return;
         }
         SetPortrait(GetPortrait(defaultPortrait, defaultPortrait34));
@@ -122,9 +131,9 @@ public class HUDPlayerSlotUI : MonoBehaviour
     /// </summary>
     public void SetGameEndPortrait(bool communicationSuccess)
     {
-        if (spineProfile != null)
+        if (ActiveSpine != null)
         {
-            PlaySpineOnce(communicationSuccess ? SpineSuccess : SpineFail);
+            ActiveSpine.PlayOnce(communicationSuccess ? SpineSuccess : SpineFail);
             return;
         }
         SetPortrait(communicationSuccess
@@ -132,16 +141,6 @@ public class HUDPlayerSlotUI : MonoBehaviour
             : GetPortrait(failPortrait, failPortrait34));
     }
 
-    private void PlaySpineOnce(string animName)
-    {
-        spineProfile.Play(animName, false);
-        spineProfile.AnimationState.AddAnimation(0, SpineIdle, true, 0f);
-    }
-
-    /// <summary>
-    /// 이 플레이어가 현재 턴(공격 또는 방어)을 소유하면 하이라이트 스프라이트로 교체하고 발광 펄스를 시작한다.
-    /// 그렇지 않으면 기본 패널 이미지로 복원한다.
-    /// </summary>
     /// <summary>
     /// 이 플레이어가 현재 턴을 소유하면 하이라이트하고,
     /// 턴을 소유하지 않는 슬롯은 필요할 때 어둡게 덮는다.
@@ -160,9 +159,15 @@ public class HUDPlayerSlotUI : MonoBehaviour
         panelImage.color = Color.white;
 
         if (isActive)
-        {
             pulseCoroutine = StartCoroutine(PulseColor());
-        }
+    }
+
+    private void SyncSpineVisibility()
+    {
+        if (spineProfile44 != null)
+            spineProfile44.gameObject.SetActive(currentMode != TimeSignatureMode.ThreeFour || spineProfile34 == null);
+        if (spineProfile34 != null)
+            spineProfile34.gameObject.SetActive(currentMode == TimeSignatureMode.ThreeFour);
     }
 
     private IEnumerator PulseColor()
