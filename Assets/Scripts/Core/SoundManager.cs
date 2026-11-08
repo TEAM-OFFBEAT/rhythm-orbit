@@ -82,6 +82,18 @@ public class SoundManager : MonoBehaviour
 
     private AudioSource currentBgmSource;
     private AudioSource standbyBgmSource;
+    
+    // 설정 음량과 별개로, 종료 연출 중에만 적용하는 음량 배율.
+    private float bgmFadeMultiplier = 1f;
+
+    /// <summary>
+    /// 사용자 설정값을 바꾸지 않고 두 BGM 소스의 음량을 함께 조절한다.
+    /// </summary>
+    public void SetBgmFadeMultiplier(float multiplier)
+    {
+        bgmFadeMultiplier = Mathf.Clamp01(multiplier);
+        ApplyBgmMasterVolumeToSources();
+    }
 
     private void Awake()
     {
@@ -245,12 +257,14 @@ public class SoundManager : MonoBehaviour
 
         float baseVolume = 1f;
 
-        if (bgmBaseVolumeBySource.TryGetValue(source, out float savedBaseVolume))
+        if (bgmBaseVolumeBySource.TryGetValue(
+                source, out float savedBaseVolume))
         {
             baseVolume = savedBaseVolume;
         }
 
-        source.volume = GetScaledBgmVolume(baseVolume);
+        source.volume =
+            GetScaledBgmVolume(baseVolume) * bgmFadeMultiplier;
     }
 
     /// <summary>
@@ -298,7 +312,12 @@ public class SoundManager : MonoBehaviour
         ScheduleRawBgm(entry.clip, dspTime, entry.volume, entry.loop, stopAt);
     }
 
-    private void ScheduleRawBgm(AudioClip clip, double dspTime, float volume, bool loop, double stopAt = -1)
+    private void ScheduleRawBgm(
+    AudioClip clip,
+    double dspTime,
+    float volume,
+    bool loop,
+    double stopAt = -1)
     {
         if (clip == null)
         {
@@ -313,19 +332,23 @@ public class SoundManager : MonoBehaviour
         nextSource.loop = loop;
 
         bgmBaseVolumeBySource[nextSource] = volume;
-        nextSource.volume = GetScaledBgmVolume(volume);
+
+        nextSource.volume =
+            GetScaledBgmVolume(volume) * bgmFadeMultiplier;
 
         nextSource.PlayScheduled(dspTime);
 
         if (oldSource != null && oldSource.isPlaying)
         {
-            oldSource.SetScheduledEndTime(stopAt >= 0 ? stopAt : dspTime);
+            oldSource.SetScheduledEndTime(
+                stopAt >= 0 ? stopAt : dspTime);
         }
 
         currentBgmSource = nextSource;
         standbyBgmSource = oldSource;
 
-        Debug.Log($"BGM Scheduled / clip:{clip.name}, dspTime:{dspTime:F3}");
+        Debug.Log(
+            $"BGM Scheduled / clip:{clip.name}, dspTime:{dspTime:F3}");
     }
 
     /// <summary>
@@ -453,6 +476,9 @@ public class SoundManager : MonoBehaviour
     {
         bgmSourceA?.Stop();
         bgmSourceB?.Stop();
+
+        // 다음 BGM이 정상 음량으로 재생되도록 복원한다.
+        SetBgmFadeMultiplier(1f);
     }
 
     public void StopAllSfx()

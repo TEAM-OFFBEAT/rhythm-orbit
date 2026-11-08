@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 /// <summary>
 /// 게임 상태 머신 + 컴포넌트 간 이벤트 중계자 역할.
@@ -161,6 +162,20 @@ public class GameManager : MonoBehaviour
     [Header("Communication Success")]
     [SerializeField] private bool onlyHostSendsCommunicationSuccessPacket = true;
 
+    [Header("Game End Presentation")]
+    [SerializeField] private CanvasGroup endFadeGroup;
+    [SerializeField] private MainLoopControlUI mainLoopControlUI;
+    [SerializeField, Min(0f)] private float endFadeDuration = 0.8f;
+    [SerializeField, Min(0.1f)] private float endCameraTimeout = 2f;
+    [SerializeField, Min(0f)] private float endBeforeFadeDelay = 0.5f;
+    
+    private Coroutine gameEndCoroutine;
+    private CanvasGroup resultCanvasGroup;
+    private bool isGameEndPresentationPlaying;
+
+    public bool IsGameEnded => currentState == GameState.END;
+    public bool IsGameEndPresentationPlaying => isGameEndPresentationPlaying;
+
     // DSP 페이즈 루프
     private int    phaseIndex;
     private double nextPhaseDspTime  = double.MaxValue;  // StartGame() 호출 전 루프 실행 방지
@@ -255,7 +270,9 @@ public class GameManager : MonoBehaviour
     /// 오브젝트 제거 시 구독한 이벤트 해제
     /// </summary>
     private void OnDestroy()
-    {
+    {   
+        ResetGameEndPresentation();
+
         if (attackTurn != null)
         {
             attackTurn.OnAttackEnded -= HandleAttackEnded;
@@ -327,6 +344,15 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGame()
     {   
+        ResetGameEndPresentation();
+
+        attackTurn?.CancelAttack();
+        defenseTurn?.CancelDefense();
+
+        attackTurn?.SetPaused(false);
+        defenseTurn?.SetPaused(false);
+        attackTurnRenderer?.SetPaused(false);
+
         NoteRenderer.Instance?.ClearGhostDisappearAnimations();
         resultPanelUI?.HideAll();
         sanitySystem?.ResetSanity();
@@ -859,7 +885,9 @@ public class GameManager : MonoBehaviour
     /// 노트 타입을 캐시에 저장하고, 상대 공격 성공 입력음으로 HitHigh/HitLow를 재생한다.
     /// </summary>
     private void HandleNetworkNoteCreated(NoteCreatedPacket packet)
-    {
+    {   
+        if (currentState == GameState.END) return;
+
         defenseTurn?.OnNoteReceived(packet, localAttackStartDspTime + currentTurnDuration);
 
         RegisterNoteType(packet.noteId, packet.noteType);
@@ -1020,40 +1048,26 @@ public class GameManager : MonoBehaviour
 
     // ── Game End ─────────────────────────────────────────────────────────────────
 
-    private void EndGameByDefeatedPlayer(int defeatedPlayerId, bool shouldSendNetworkPacket)
+    private void EndGameByDefeatedPlayer(
+    int defeatedPlayerId,
+    bool shouldSendNetworkPacket)
     {
-        if (currentState == GameState.END) return;
-        NoteRenderer.Instance?.ClearGhostDisappearAnimations();
-
-        currentState = GameState.END;
-
-        attackTurnRenderer?.ClearAll();
-        hud?.ClearAttackProgress();
-        hud?.ClearJudgments();
-        p1DefenseJudgmentLabel?.ClearJudgment();
-        p2DefenseJudgmentLabel?.ClearJudgment();
-
-        surpriseEventManager?.ResetForNewGame();
+        if (currentState == GameState.END)
+        {
+            return;
+        }
 
         GameResultType resultType = defeatedPlayerId == 1
             ? GameResultType.P2Win
             : GameResultType.P1Win;
 
-        resultPanelUI?.Show(resultType);
+        SfxId resultSfx = defeatedPlayerId != myLocalPlayerId
+            ? SfxId.GameWin
+            : SfxId.GameLose;
 
-        // 승리/패배 종료에서는 코어루프 BGM을 멈춘다.
-        // GameWin/GameLose는 효과음이므로 별개로 재생한다.
-        SoundManager.Instance?.StopBgm();
+        PrepareGameEndPresentation(resultType);
 
-        bool localPlayerWon = defeatedPlayerId != myLocalPlayerId;
-        SoundManager.Instance?.PlaySfx(
-            localPlayerWon
-                ? SfxId.GameWin
-                : SfxId.GameLose
-        );
-
-        Debug.Log($"Game End / P{defeatedPlayerId} sanity depleted. Result: {resultType}");
-
+        // 상대도 즉시 종료하도록 패킷은 연출 완료 전에 전송한다.
         if (shouldSendNetworkPacket && NetworkManager.Instance != null)
         {
             NetworkManager.Instance.Send(writer =>
@@ -1064,33 +1078,28 @@ public class GameManager : MonoBehaviour
                 )
             );
         }
+
+        gameEndCoroutine =
+            StartCoroutine(PlayGameEndPresentation(resultSfx));
+
+        Debug.Log(
+            $"Game End / P{defeatedPlayerId} sanity depleted. " +
+            $"Result: {resultType}");
     }
 
     /// <summary>
-    /// 양쪽 플레이어가 마지막까지 생존하여 교신 성공 조건을 만족했을 때 호출한다.
-    /// 현재는 조건이 확정되지 않았으므로 추후 BGM 종료 또는 목표 달성 조건에서 호출한다.
+    /// 양쪽 플레이어가 교신 성공 조건을 만족했을 때 호출한다.
     /// </summary>
-    private void EndGameByCommunicationSuccess(bool shouldSendNetworkPacket)
+    private void EndGameByCommunicationSuccess(
+        bool shouldSendNetworkPacket)
     {
-        if (currentState == GameState.END) return;
+        if (currentState == GameState.END)
+        {
+            return;
+        }
 
-        NoteRenderer.Instance?.ClearGhostDisappearAnimations();
-
-        currentState = GameState.END;
-
-        attackTurnRenderer?.ClearAll();
-        hud?.ClearAttackProgress();
-        hud?.ClearJudgments();
-        p1DefenseJudgmentLabel?.ClearJudgment();
-        p2DefenseJudgmentLabel?.ClearJudgment();
-
-        surpriseEventManager?.ResetForNewGame();
-
-        resultPanelUI?.Show(GameResultType.CommunicationSuccess);
-
-        SoundManager.Instance?.PlaySfx(SfxId.HappyEnding);
-
-        Debug.Log("Game End / Communication Success.");
+        PrepareGameEndPresentation(
+            GameResultType.CommunicationSuccess);
 
         if (shouldSendNetworkPacket && NetworkManager.Instance != null)
         {
@@ -1102,6 +1111,11 @@ public class GameManager : MonoBehaviour
                 )
             );
         }
+
+        gameEndCoroutine = StartCoroutine(
+            PlayGameEndPresentation(SfxId.HappyEnding));
+
+        Debug.Log("Game End / Communication Success.");
     }
 
     /// <summary>
@@ -1109,7 +1123,9 @@ public class GameManager : MonoBehaviour
     /// 씬을 다시 로드하기 직전에 호출한다.
     /// </summary>
     public void StopCurrentMainLoopForSceneChange()
-    {
+    {   
+        ResetGameEndPresentation();
+
         NoteRenderer.Instance?.ClearGhostDisappearAnimations();
         currentState = GameState.END;
         nextPhaseDspTime = double.MaxValue;
@@ -1387,8 +1403,15 @@ public class GameManager : MonoBehaviour
     /// 공격/방어 입력 결과에 따라 성공 타격음 또는 MISS음을 재생한다.
     /// AttackTurn과 DefenseTurn의 입력 결과 이벤트가 이 함수를 호출한다.
     /// </summary>
-    private void HandleHitResolved(NoteType noteType, bool isSuccess)
+    private void HandleHitResolved(
+    NoteType noteType,
+    bool isSuccess)
     {
+        if (currentState == GameState.END)
+        {
+            return;
+        }
+
         PlayHitResultSfx(noteType, isSuccess);
     }
 
@@ -1699,5 +1722,180 @@ public class GameManager : MonoBehaviour
         }
 
         return count;
+    }
+
+    /// <summary>
+    /// 게임 진행을 멈추고 결과 표시를 준비한다.
+    /// 실제 화면 표시는 카메라 이동과 페이드가 끝난 뒤에 한다.
+    /// </summary>
+    private void PrepareGameEndPresentation(GameResultType resultType)
+    {
+        currentState = GameState.END;
+        nextPhaseDspTime = double.MaxValue;
+        isGameEndPresentationPlaying = true;
+
+        // 판정 콜백 안에서 호출될 수 있으므로
+        // 판정 목록을 비우는 대신 진행을 일시정지한다.
+        attackTurn?.SetPaused(true);
+        defenseTurn?.SetPaused(true);
+        attackTurnRenderer?.SetPaused(true);
+
+        introDialogueController?.Stop();
+        roundTransitionVideoPlayer?.CancelTransition();
+
+        attackTurnRenderer?.ClearAll();
+        NoteRenderer.Instance?.ClearGhostDisappearAnimations();
+
+        hud?.ClearAttackProgress();
+        hud?.ClearJudgments();
+        hud?.ClearPanelMessages();
+
+        p1DefenseJudgmentLabel?.ClearJudgment();
+        p2DefenseJudgmentLabel?.ClearJudgment();
+
+        surpriseEventManager?.ResetForNewGame();
+
+        settingsWindowController?.Close();
+        mainLoopControlUI?.CloseExitPanel();
+
+        SoundManager.Instance?.StopAllSfx();
+        SoundManager.Instance?.SetBgmFadeMultiplier(1f);
+
+        if (endFadeGroup != null)
+        {
+            endFadeGroup.alpha = 0f;
+            endFadeGroup.interactable = false;
+            endFadeGroup.blocksRaycasts = true;
+
+            endFadeGroup.transform.SetAsLastSibling();
+            endFadeGroup.gameObject.SetActive(true);
+        }
+
+        if (resultPanelUI != null)
+        {
+            resultCanvasGroup =
+                resultPanelUI.GetComponent<CanvasGroup>();
+
+            if (resultCanvasGroup == null)
+            {
+                resultCanvasGroup =
+                    resultPanelUI.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            resultCanvasGroup.alpha = 0f;
+            resultCanvasGroup.interactable = false;
+            resultCanvasGroup.blocksRaycasts = false;
+
+            // 숨겨진 활성 상태로 두어 연출 중에도 네트워크 이벤트를 받는다.
+            // 마지막에 Show를 다시 호출하면 재시작 요청 상태가 초기화된다.
+            resultPanelUI.Show(resultType);
+        }
+    }
+
+    private IEnumerator PlayGameEndPresentation(SfxId resultSfx)
+    {
+        // 1. 카메라 중앙 이동.
+        gameCamera?.SetCenterView();
+
+        float elapsed = 0f;
+
+        while (gameCamera != null &&
+            Mathf.Abs(gameCamera.transform.position.x) > 0.05f)
+        {
+            if (elapsed >= endCameraTimeout)
+            {
+                break;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        gameCamera?.SnapToCenterView();
+
+        gameCamera?.SnapToCenterView();
+
+        // 중앙에 도착한 화면을 잠깐 유지한 뒤 페이드를 시작한다.
+        if (endBeforeFadeDelay > 0f)
+        {
+            yield return new WaitForSecondsRealtime(endBeforeFadeDelay);
+        }
+
+        // 2. 화면과 BGM을 함께 페이드 아웃.
+        elapsed = 0f;
+
+        // 2. 화면과 BGM을 함께 페이드 아웃.
+        elapsed = 0f;
+
+        while (elapsed < endFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            float t = Mathf.Clamp01(elapsed / endFadeDuration);
+
+            if (endFadeGroup != null)
+            {
+                endFadeGroup.alpha = t;
+            }
+
+            SoundManager.Instance?.SetBgmFadeMultiplier(1f - t);
+
+            yield return null;
+        }
+
+        if (endFadeGroup != null)
+        {
+            endFadeGroup.alpha = 1f;
+        }
+
+        SoundManager.Instance?.StopBgm();
+
+        // 3. 검은 화면 위에 결과 패널 표시.
+        if (resultPanelUI != null && resultCanvasGroup != null)
+        {
+            resultPanelUI.transform.SetAsLastSibling();
+
+            resultCanvasGroup.alpha = 1f;
+            resultCanvasGroup.interactable = true;
+            resultCanvasGroup.blocksRaycasts = true;
+        }
+
+        SoundManager.Instance?.PlaySfx(resultSfx);
+
+        isGameEndPresentationPlaying = false;
+        gameEndCoroutine = null;
+    }
+
+    /// <summary>
+    /// 재시작 또는 씬 이동 시 종료 연출 상태를 정리한다.
+    /// </summary>
+    private void ResetGameEndPresentation()
+    {
+        if (gameEndCoroutine != null)
+        {
+            StopCoroutine(gameEndCoroutine);
+            gameEndCoroutine = null;
+        }
+
+        if (isGameEndPresentationPlaying)
+        {
+            SoundManager.Instance?.StopBgm();
+        }
+
+        isGameEndPresentationPlaying = false;
+
+        if (endFadeGroup != null)
+        {
+            endFadeGroup.alpha = 0f;
+            endFadeGroup.blocksRaycasts = false;
+            endFadeGroup.gameObject.SetActive(false);
+        }
+
+        if (resultCanvasGroup != null)
+        {
+            resultCanvasGroup.alpha = 1f;
+            resultCanvasGroup.interactable = true;
+            resultCanvasGroup.blocksRaycasts = true;
+        }
     }
 }

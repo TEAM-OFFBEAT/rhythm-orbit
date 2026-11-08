@@ -164,4 +164,25 @@ public class RoundTransitionVideoPlayer : MonoBehaviour
         if (transitionClips == null || index < 0 || index >= transitionClips.Length) return null;
         return transitionClips[index];
     }
+
+    /// <summary>
+    /// 게임 종료 시 라운드 전환 영상과 후속 콜백을 중단한다.
+    /// </summary>
+    public void CancelTransition()
+    {
+        StopAllCoroutines();
+
+        if (videoPlayer != null)
+        {
+            videoPlayer.Stop();
+        }
+
+        if (videoCanvas != null)
+        {
+            videoCanvas.SetActive(false);
+        }
+
+        SetVideoAlpha(0f);
+        isTransitioning = false;
+    }
 }

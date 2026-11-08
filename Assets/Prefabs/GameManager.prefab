@@ -50,12 +50,18 @@ MonoBehaviour:
   noteCountGenerator: {fileID: 0}
   randomMessageProvider: {fileID: 0}
   hud: {fileID: 0}
+  settingsWindowController: {fileID: 0}
   p1DefenseJudgmentLabel: {fileID: 0}
   p2DefenseJudgmentLabel: {fileID: 0}
   gameCamera: {fileID: 0}
   sanitySystem: {fileID: 0}
+  surpriseEventManager: {fileID: 0}
   resultPanelUI: {fileID: 0}
-  roundSettings:
+  introDialogueController: {fileID: 0}
+  parallaxBackground: {fileID: 0}
+  roundTransitionVideoPlayer: {fileID: 0}
+  laneController: {fileID: 0}
+  roundSettings44:
   - roundName: R1
     bpm: 106
     minTargetNoteCount: 2
@@ -63,6 +69,7 @@ MonoBehaviour:
     roundUpSfx: 7
     introTurns: 4
     totalTurns: 12
+    notesPerTurn: 8
   - roundName: R2
     bpm: 120
     minTargetNoteCount: 2
@@ -70,6 +77,7 @@ MonoBehaviour:
     roundUpSfx: 8
     introTurns: 2
     totalTurns: 12
+    notesPerTurn: 8
   - roundName: R3
     bpm: 144
     minTargetNoteCount: 2
@@ -77,6 +85,33 @@ MonoBehaviour:
     roundUpSfx: 9
     introTurns: 4
     totalTurns: 16
+    notesPerTurn: 8
+  timeSignatureMode: 0
+  roundSettings34:
+  - roundName: R1
+    bpm: 108
+    minTargetNoteCount: 1
+    maxTargetNoteCount: 3
+    roundUpSfx: 7
+    introTurns: 4
+    totalTurns: 12
+    notesPerTurn: 6
+  - roundName: R2
+    bpm: 132
+    minTargetNoteCount: 2
+    maxTargetNoteCount: 4
+    roundUpSfx: 8
+    introTurns: 2
+    totalTurns: 12
+    notesPerTurn: 6
+  - roundName: R3
+    bpm: 148
+    minTargetNoteCount: 2
+    maxTargetNoteCount: 5
+    roundUpSfx: 9
+    introTurns: 4
+    totalTurns: 16
+    notesPerTurn: 6
   useMillisecondStartDelay: 1
   gameStartDelayMs: 1000
   useBeatStartDelay: 1
@@ -84,3 +119,8 @@ MonoBehaviour:
   playCoreLoopBgm: 1
   bpmChangeBgmLeadTime: 0.1
   onlyHostSendsCommunicationSuccessPacket: 1
+  endFadeGroup: {fileID: 0}
+  mainLoopControlUI: {fileID: 0}
+  endFadeDuration: 1
+  endCameraTimeout: 2
+  endBeforeFadeDelay: 1

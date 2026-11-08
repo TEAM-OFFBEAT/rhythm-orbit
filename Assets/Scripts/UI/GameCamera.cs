@@ -86,4 +86,19 @@ public class GameCamera : MonoBehaviour
         pos.x = Mathf.SmoothDamp(pos.x, targetX, ref velocityX, smoothTime);
         transform.position = pos;
     }
+
+    /// <summary>
+    /// 중앙 복귀를 마무리하고 이동 관성을 초기화한다.
+    /// </summary>
+    public void SnapToCenterView()
+    {
+        targetX = 0f;
+        velocityX = 0f;
+
+        Vector3 pos = transform.position;
+        pos.x = 0f;
+        transform.position = pos;
+    }
+
+    
 }

@@ -109,11 +109,16 @@ public class MainLoopControlUI : MonoBehaviour
 
     /// <summary>
     /// 나가기 패널을 열고 닫는다.
-    /// 열 때 같은 Canvas의 마지막 자식으로 옮겨 다른 UI보다 앞에 표시한다.
-    /// 진단 로그로 같은 프레임의 중복 호출과 실제 활성 상태를 확인한다.
+    /// 게임이 종료된 상태에서는 열지 않는다.
     /// </summary>
     public void OnToggleEscape()
     {
+        if (gameManager != null && gameManager.IsGameEnded)
+        {
+            CloseExitPanel();
+            return;
+        }
+
         if (exitPanel == null)
         {
             Debug.LogError(
@@ -378,6 +383,17 @@ public class MainLoopControlUI : MonoBehaviour
         if (statusText != null)
         {
             statusText.text = message ?? "";
+        }
+    }
+
+    /// <summary>
+    /// 게임 종료 시 열려 있는 나가기 패널을 닫는다.
+    /// </summary>
+    public void CloseExitPanel()
+    {
+        if (exitPanel != null)
+        {
+            exitPanel.SetActive(false);
         }
     }
 }

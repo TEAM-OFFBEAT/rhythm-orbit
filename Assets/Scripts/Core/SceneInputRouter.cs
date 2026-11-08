@@ -112,12 +112,29 @@ public class SceneInputRouter : MonoBehaviour
         action.Enable();
     }
 
-    private void HandleToggleSettings(InputAction.CallbackContext context)
+    private void HandleToggleSettings(
+    InputAction.CallbackContext context)
     {
-        if (!context.ReadValueAsButton()) return;
+        if (!context.ReadValueAsButton())
+        {
+            return;
+        }
+
+        // 종료 연출이 끝나면 설정창은 다시 사용할 수 있다.
+        if (sceneMode == SceneMode.MainLoop &&
+            gameManager != null &&
+            gameManager.IsGameEndPresentationPlaying)
+        {
+            return;
+        }
 
         var open = FindOpenExclusivePanel();
-        if (open != null && (open as MonoBehaviour) != settingsWindowController) return;
+
+        if (open != null &&
+            (open as MonoBehaviour) != settingsWindowController)
+        {
+            return;
+        }
 
         Trace("Tab → 설정창");
         settingsWindowController?.Toggle();
