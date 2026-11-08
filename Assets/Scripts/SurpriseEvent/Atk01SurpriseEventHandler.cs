@@ -54,9 +54,22 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
     private void ApplyIncompletePenalty()
     {
-        if (activeContext == null) return;
-        sanitySystem.ApplyDirect(activeContext.targetPlayerId, incompletePenalty);
-        NetworkManager.Instance?.Send(w => PacketSerializer.WriteSanityChange(w, (byte)activeContext.targetPlayerId, incompletePenalty));
+        if (activeContext == null || sanitySystem == null)
+        {
+            return;
+        }
+
+        // 피해 적용 중 종료 이벤트가 발생해도 전송 대상을 유지한다.
+        int targetPlayerId = activeContext.targetPlayerId;
+        int penalty = incompletePenalty;
+
+        sanitySystem.ApplyDirect(targetPlayerId, penalty);
+
+        NetworkManager.Instance?.Send(w =>
+            PacketSerializer.WriteSanityChange(
+                w,
+                (byte)targetPlayerId,
+                penalty));
     }
 
     private bool ShouldApplyToThisScreen(SurpriseEventContext context)

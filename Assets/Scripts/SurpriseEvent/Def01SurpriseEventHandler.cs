@@ -462,22 +462,35 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             return;
         }
 
-        if (ghostHitPenalty > 0 && sanitySystem != null)
+        // 피해로 게임이 종료되면 activeContext가 정리될 수 있으므로
+        // 이후에도 사용할 값은 피해 적용 전에 저장한다.
+        int targetPlayerId = activeContext.targetPlayerId;
+        int penalty = ghostHitPenalty;
+
+        if (penalty > 0 && sanitySystem != null)
         {
-            sanitySystem.ApplyDirect(activeContext.targetPlayerId, ghostHitPenalty);
-            NetworkManager.Instance?.Send(w => PacketSerializer.WriteSanityChange(w, (byte)activeContext.targetPlayerId, ghostHitPenalty));
+            sanitySystem.ApplyDirect(targetPlayerId, penalty);
+
+            NetworkManager.Instance?.Send(w =>
+                PacketSerializer.WriteSanityChange(
+                    w,
+                    (byte)targetPlayerId,
+                    penalty));
         }
 
         if (playSfxOnGhostHit)
         {
-            AudioClip clip = ghostHitSfx != null ? ghostHitSfx : ghostSignalSfx;
+            AudioClip clip = ghostHitSfx != null
+                ? ghostHitSfx
+                : ghostSignalSfx;
+
             PlayClip(clip);
         }
 
         Debug.Log(
             $"DEF_01 Ghost hit penalty / " +
-            $"target:P{activeContext.targetPlayerId}, penalty:{ghostHitPenalty}, noteId:{ghostNote?.noteId}"
-        );
+            $"target:P{targetPlayerId}, penalty:{penalty}, " +
+            $"noteId:{ghostNote?.noteId}");
     }
 
     private bool ShouldApplyToThisScreen(SurpriseEventContext context)

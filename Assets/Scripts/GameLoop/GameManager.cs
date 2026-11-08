@@ -219,6 +219,7 @@ public class GameManager : MonoBehaviour
     // 상대 패킷을 반영해서 정신력이 깎이는 중인지 표시.
     // true일 때 발생한 패배는 이미 상대 쪽 흐름에서 온 것이므로 GAME_END를 다시 보내지 않는다.
     private bool isApplyingRemoteGameState;
+    private bool pendingRemoteCommunicationSuccess;
 
     /// <summary>
     /// 필수 참조를 확인하고 각 시스템의 이벤트를 구독한다.
@@ -326,7 +327,24 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (currentState == GameState.END) return;
+        if (currentState == GameState.END)
+        {
+            return;
+        }
+
+        // 상대가 교신 성공을 먼저 알려도, 내 마지막 판정부터 마무리한다.
+        if (pendingRemoteCommunicationSuccess)
+        {
+            if (CanFinishFinalDefense())
+            {
+                pendingRemoteCommunicationSuccess = false;
+
+                EndGameByCommunicationSuccess(
+                    shouldSendNetworkPacket: false);
+            }
+
+            return;
+        }
 
         double now = AudioSettings.dspTime;
 
@@ -344,6 +362,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGame()
     {   
+        pendingRemoteCommunicationSuccess = false;
         ResetGameEndPresentation();
 
         attackTurn?.CancelAttack();
@@ -438,6 +457,17 @@ public class GameManager : MonoBehaviour
 
     private void AdvancePhase()
     {
+        // 예정 시간이 끝나도 오프셋이 적용된 마지막 판정은 남아 있을 수 있다.
+        // 판정이 완료된 뒤 이벤트 정리와 교신 성공 종료를 진행한다.
+        bool isFinalDefenseEnd =
+            phaseIndex % 2 == 0 &&
+            ShouldEndByCommunicationSuccess(phaseIndex / 2);
+
+        if (isFinalDefenseEnd && !CanFinishFinalDefense())
+        {
+            return;
+        }
+        
         // 직전 4박 페이즈에 적용된 기습 이벤트가 있었다면 여기서 복귀 처리
         surpriseEventManager?.EndActiveEvent();
 
@@ -980,21 +1010,33 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 상대 클라이언트에서 전송한 GAME_END 패킷을 처리한다.
-    /// 패킷 내용은 공통이지만, 결과 패널은 각자의 localPlayerId 기준으로 다르게 표시된다.
+    /// 상대의 게임 종료 패킷을 처리한다.
+    /// 교신 성공인 경우 내 마지막 방어 판정이 끝난 뒤 종료한다.
     /// </summary>
     private void HandleNetworkGameEnd(GameEndPacket packet)
     {
-        if (currentState == GameState.END) return;
+        if (currentState == GameState.END)
+        {
+            return;
+        }
 
         switch (packet.reason)
         {
             case GameEndReason.PlayerDefeated:
-                EndGameByDefeatedPlayer(packet.defeatedPlayerId, shouldSendNetworkPacket: false);
+                EndGameByDefeatedPlayer(
+                    packet.defeatedPlayerId,
+                    shouldSendNetworkPacket: false);
                 break;
 
             case GameEndReason.CommunicationSuccess:
-                EndGameByCommunicationSuccess(shouldSendNetworkPacket: false);
+                if (!CanFinishFinalDefense())
+                {
+                    pendingRemoteCommunicationSuccess = true;
+                    return;
+                }
+
+                EndGameByCommunicationSuccess(
+                    shouldSendNetworkPacket: false);
                 break;
         }
     }
@@ -1067,16 +1109,11 @@ public class GameManager : MonoBehaviour
 
         PrepareGameEndPresentation(resultType);
 
-        // 상대도 즉시 종료하도록 패킷은 연출 완료 전에 전송한다.
         if (shouldSendNetworkPacket && NetworkManager.Instance != null)
         {
-            NetworkManager.Instance.Send(writer =>
-                PacketSerializer.WriteGameEnd(
-                    writer,
-                    GameEndReason.PlayerDefeated,
-                    defeatedPlayerId
-                )
-            );
+            StartCoroutine(SendGameEndAfterJudgment(
+                GameEndReason.PlayerDefeated,
+                defeatedPlayerId));
         }
 
         gameEndCoroutine =
@@ -1103,13 +1140,9 @@ public class GameManager : MonoBehaviour
 
         if (shouldSendNetworkPacket && NetworkManager.Instance != null)
         {
-            NetworkManager.Instance.Send(writer =>
-                PacketSerializer.WriteGameEnd(
-                    writer,
-                    GameEndReason.CommunicationSuccess,
-                    defeatedPlayerId: 0
-                )
-            );
+            StartCoroutine(SendGameEndAfterJudgment(
+                GameEndReason.CommunicationSuccess,
+                defeatedPlayerId: 0));
         }
 
         gameEndCoroutine = StartCoroutine(
@@ -1897,5 +1930,50 @@ public class GameManager : MonoBehaviour
             resultCanvasGroup.interactable = true;
             resultCanvasGroup.blocksRaycasts = true;
         }
+    }
+
+    /// <summary>
+    /// 마지막 방어 턴의 실제 판정이 모두 완료됐는지 확인한다.
+    /// 방어자는 DefenseTurn 종료를, 공격자 관찰 화면은 판정 패킷 수신을 기다린다.
+    /// </summary>
+    private bool CanFinishFinalDefense()
+    {
+        NetworkManager net = NetworkManager.Instance;
+
+        bool isLocalDefender =
+            net == null || attackerPlayerId != myLocalPlayerId;
+
+        if (isLocalDefender)
+        {
+            return defenseTurn == null || !defenseTurn.IsRunning;
+        }
+
+        return currentJudgmentIndex >= currentPhaseNoteCount;
+    }
+
+    /// <summary>
+    /// 현재 판정과 체력 감소 패킷 전송이 마무리된 뒤 종료 패킷을 보낸다.
+    /// 사망 이벤트 내부에서 GAME_END가 먼저 전송되는 것을 방지한다.
+    /// </summary>
+    private IEnumerator SendGameEndAfterJudgment(
+        GameEndReason reason,
+        int defeatedPlayerId)
+    {
+        yield return null;
+
+        NetworkManager net = NetworkManager.Instance;
+
+        if (net == null || currentState != GameState.END)
+        {
+            yield break;
+        }
+
+        net.Send(writer =>
+            PacketSerializer.WriteGameEnd(
+                writer,
+                reason,
+                defeatedPlayerId
+            )
+        );
     }
 }
