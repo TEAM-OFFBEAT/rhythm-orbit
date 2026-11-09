@@ -1981,9 +1981,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5519304647491826594, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value:
+      objectReference: {fileID: 456633806}
     - target: {fileID: 6813816902542858557, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
+      value:
       objectReference: {fileID: 456633806}
     - target: {fileID: 7971608759510111601, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: m_IsActive

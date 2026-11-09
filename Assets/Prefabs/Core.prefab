@@ -86,6 +86,18 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 9da99e4dcc886bd4c9337c3bf9d7798a, type: 3}
     volume: 0.7
     loop: 0
+  - id: 7
+    clip: {fileID: 8300000, guid: 3bce92af0feb3454b8d19e32841e2340, type: 3}
+    volume: 0.7
+    loop: 0
+  - id: 8
+    clip: {fileID: 8300000, guid: 1d686228b66a251429949e7b65b45291, type: 3}
+    volume: 0.7
+    loop: 0
+  - id: 9
+    clip: {fileID: 8300000, guid: 826ffdc9ddfe0874bb22bfdf90dbad16, type: 3}
+    volume: 0.7
+    loop: 0
   sfxEntries:
   - id: 0
     clip: {fileID: 8300000, guid: c7b1bd46e34c18749b16716b0e5797df, type: 3}
@@ -154,6 +166,12 @@ MonoBehaviour:
     bgmId: 4
   - bpm: 144
     bgmId: 5
+  - bpm: 108
+    bgmId: 7
+  - bpm: 132
+    bgmId: 8
+  - bpm: 148
+    bgmId: 9
   bgmScheduleLeadTime: 0.1
   masterVolume: 1
   bgmMasterVolume: 0.6

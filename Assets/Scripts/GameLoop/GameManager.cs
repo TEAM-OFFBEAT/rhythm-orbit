@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour
             minTargetNoteCount = 1,
             maxTargetNoteCount = 3,
             roundUpSfx = SfxId.RoundStart1,
-            introTurns = 4,
+            introTurns = 2,
             totalTurns = 12,
             notesPerTurn = 6,
         },
@@ -132,7 +132,7 @@ public class GameManager : MonoBehaviour
             maxTargetNoteCount = 4,
             roundUpSfx = SfxId.RoundStart2,
             introTurns = 2,
-            totalTurns = 12,
+            totalTurns = 20,
             notesPerTurn = 6,
         },
         new RoundSetting
@@ -142,7 +142,7 @@ public class GameManager : MonoBehaviour
             minTargetNoteCount = 2,
             maxTargetNoteCount = 5,
             roundUpSfx = SfxId.RoundStart3,
-            introTurns = 4,
+            introTurns = 2,
             totalTurns = 16,
             notesPerTurn = 6,
         },
@@ -173,7 +173,19 @@ public class GameManager : MonoBehaviour
     private CanvasGroup resultCanvasGroup;
     private bool isGameEndPresentationPlaying;
 
+    // [임시 모드] 로컬 테스트 시 NetworkManager 없이 박자 모드를 지정한다.
+    public static TimeSignatureMode? LocalTestModeOverride;
+
     public bool IsGameEnded => currentState == GameState.END;
+
+    /// <summary>
+    /// [임시 모드] 3/4박자 로컬 테스트용. 모드를 ThreeFour로 고정 후 StartGame을 호출한다.
+    /// </summary>
+    public void StartLocalTest34()
+    {
+        timeSignatureMode = TimeSignatureMode.ThreeFour;
+        StartGame();
+    }
     public bool IsGameEndPresentationPlaying => isGameEndPresentationPlaying;
 
     // DSP 페이즈 루프
@@ -320,6 +332,8 @@ public class GameManager : MonoBehaviour
 
         if (NetworkManager.Instance != null)
             timeSignatureMode = NetworkManager.Instance.SelectedMode;
+        else if (LocalTestModeOverride.HasValue)
+            timeSignatureMode = LocalTestModeOverride.Value;
 
         if (NetworkManager.Instance != null)
             StartGame();

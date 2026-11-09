@@ -26,6 +26,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     [SerializeField] private Button joinRoomButton;
     [SerializeField] private Button goTutorialButton;
     [SerializeField] private Button localTestButton;
+    [SerializeField] private Button localTestButton34; // [임시 모드]
 
     [Header("Host — 대기 화면")]
     [SerializeField] private TMP_Text roomCodeText;
@@ -68,6 +69,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         joinRoomButton.onClick.AddListener(OnJoinRoom);
         goTutorialButton.onClick.AddListener(GoToTutorial);
         localTestButton?.onClick.AddListener(OnLocalTest); // [임시 모드]
+        localTestButton34?.onClick.AddListener(OnLocalTest34); // [임시 모드]
         cancelHostButton.onClick.AddListener(OnCancel);
         connectButton.onClick.AddListener(OnConnect);
         cancelJoinButton.onClick.AddListener(OnCancel);
@@ -255,6 +257,21 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     /// </summary>
     private void OnLocalTest()
     {
+        GameManager.LocalTestModeOverride = TimeSignatureMode.FourFour;
+
+        if (NetworkManager.Instance != null)
+        {
+            NetworkManager.Instance.Disconnect();
+            Destroy(NetworkManager.Instance.gameObject);
+        }
+
+        SceneManager.LoadScene(mainLoopSceneName);
+    }
+
+    private void OnLocalTest34()
+    {
+        GameManager.LocalTestModeOverride = TimeSignatureMode.ThreeFour;
+
         if (NetworkManager.Instance != null)
         {
             NetworkManager.Instance.Disconnect();

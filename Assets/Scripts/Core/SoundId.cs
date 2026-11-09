@@ -3,10 +3,13 @@ public enum BgmId
     MainMenu,
     Lobby,
     Tutorial,
-    CoreLoop106,
-    CoreLoop120,
-    CoreLoop144,
-    Intro
+    CoreLoop44_106,
+    CoreLoop44_120,
+    CoreLoop44_144,
+    Intro,
+    CoreLoop34_108,
+    CoreLoop34_132,
+    CoreLoop34_148,
 }
 
 public enum SfxId
