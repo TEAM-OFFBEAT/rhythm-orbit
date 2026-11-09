@@ -10,9 +10,12 @@ public class IntroDialogueController : MonoBehaviour
 {
     [SerializeField] private TutorialDialoguePlayer dialoguePlayer;
 
-    [Header("Dialogue")]
+    [Header("Dialogue - 4/4")]
     [SerializeField] private IntroGuideLineData[] introLines;
+    [Header("Dialogue - 3/4")]
+    [SerializeField] private IntroGuideLineData[] introLines34;
     [SerializeField, Min(1)] private int beatsPerLine = 4;
+    private bool useThreeFourLines;
 
     [Header("HUD Panel Glow")]
     [SerializeField] private HUDPlayerSlotUI p1Slot;
@@ -59,19 +62,31 @@ public class IntroDialogueController : MonoBehaviour
     }
 
     /// <summary>
-    /// 박자 모드 변경 시 GameManager가 호출해 대사 줄 표시 간격을 갱신한다.
+    /// 박자 모드 변경 시 GameManager가 호출해 대사 줄 표시 간격과 사용 배열을 갱신한다.
     /// </summary>
     public void SetBeatsPerLine(int beats)
     {
         beatsPerLine = Mathf.Max(1, beats);
     }
 
+    /// <summary>
+    /// 3/4박자 여부를 설정한다. true면 introLines34 배열을 사용한다.
+    /// </summary>
+    public void SetThreeFourMode(bool isThreeFour)
+    {
+        useThreeFourLines = isThreeFour;
+    }
+
     private IEnumerator RunIntro(double startDspTime)
     {
-        if (dialoguePlayer == null || introLines == null || introLines.Length == 0)
+        IntroGuideLineData[] activeLines = useThreeFourLines && introLines34?.Length > 0
+            ? introLines34 : introLines;
+
+        if (dialoguePlayer == null || activeLines == null || activeLines.Length == 0)
             yield break;
 
-        TutorialGuideLineData[] dialogueLines = ExtractDialogueLines();
+        currentActiveLines = activeLines;
+        TutorialGuideLineData[] dialogueLines = ExtractDialogueLines(activeLines);
 
         yield return dialoguePlayer.PlayLines(
             dialogueLines,
@@ -86,12 +101,14 @@ public class IntroDialogueController : MonoBehaviour
         introCoroutine = null;
     }
 
+    private IntroGuideLineData[] currentActiveLines;
+
     private void HandleLineStarted(int lineIndex, TutorialGuideLineData _)
     {
-        if (lineIndex < 0 || lineIndex >= introLines.Length)
+        if (currentActiveLines == null || lineIndex < 0 || lineIndex >= currentActiveLines.Length)
             return;
 
-        IntroGuideLineData line = introLines[lineIndex];
+        IntroGuideLineData line = currentActiveLines[lineIndex];
         p1Slot?.SetActiveState(line.highlightP1Panel);
         p2Slot?.SetActiveState(line.highlightP2Panel);
     }
@@ -102,11 +119,11 @@ public class IntroDialogueController : MonoBehaviour
         p2Slot?.SetActiveState(false);
     }
 
-    private TutorialGuideLineData[] ExtractDialogueLines()
+    private TutorialGuideLineData[] ExtractDialogueLines(IntroGuideLineData[] lines)
     {
-        var result = new TutorialGuideLineData[introLines.Length];
-        for (int i = 0; i < introLines.Length; i++)
-            result[i] = introLines[i]?.dialogue;
+        var result = new TutorialGuideLineData[lines.Length];
+        for (int i = 0; i < lines.Length; i++)
+            result[i] = lines[i]?.dialogue;
         return result;
     }
 }

@@ -1268,8 +1268,10 @@ public class GameManager : MonoBehaviour
         hud?.UpdateBpm(bpm);
 
         // 3/4 모드면 3박, 4/4 모드면 4박 단위로 대사 줄 간격을 맞춘다.
-        int beatsPerLine = timeSignatureMode == TimeSignatureMode.ThreeFour ? 3 : 4;
+        bool isThreeFour = timeSignatureMode == TimeSignatureMode.ThreeFour;
+        int beatsPerLine = isThreeFour ? 3 : 4;
         introDialogueController?.SetBeatsPerLine(beatsPerLine);
+        introDialogueController?.SetThreeFourMode(isThreeFour);
 
         if (scheduleBgm)
         {

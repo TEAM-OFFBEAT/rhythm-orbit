@@ -167,6 +167,63 @@ MonoBehaviour:
       manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
+  introLines34:
+  - dialogue:
+      text: "1"
+      rymoPortrait: {fileID: 0}
+      highlightStars: 0
+      highlightAttackJudgeLine: 0
+      highlightDefenseJudgeLine: 0
+      highlightHighBit: 0
+      highlightLowBit: 0
+      playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
+    highlightP1Panel: 0
+    highlightP2Panel: 0
+  - dialogue:
+      text: "2"
+      rymoPortrait: {fileID: 0}
+      highlightStars: 0
+      highlightAttackJudgeLine: 0
+      highlightDefenseJudgeLine: 0
+      highlightHighBit: 0
+      highlightLowBit: 0
+      playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
+    highlightP1Panel: 0
+    highlightP2Panel: 0
+  - dialogue:
+      text: "3"
+      rymoPortrait: {fileID: 0}
+      highlightStars: 0
+      highlightAttackJudgeLine: 0
+      highlightDefenseJudgeLine: 0
+      highlightHighBit: 0
+      highlightLowBit: 0
+      playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
+    highlightP1Panel: 0
+    highlightP2Panel: 0
+  - dialogue:
+      text: "4"
+      rymoPortrait: {fileID: 0}
+      highlightStars: 0
+      highlightAttackJudgeLine: 0
+      highlightDefenseJudgeLine: 0
+      highlightHighBit: 0
+      highlightLowBit: 0
+      playHighThenLowDemo: 0
+      playDefenseTurnDemo: 0
+      lockManualAdvanceUntilVisualCueFinished: 0
+      manualAdvanceUnlockDelayBeats: 1
+    highlightP1Panel: 0
+    highlightP2Panel: 0
   beatsPerLine: 4
   p1Slot: {fileID: 0}
   p2Slot: {fileID: 0}
