@@ -235,12 +235,12 @@ public class AttackTurnRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// EVT_ATK_01 첫 탭 시 호출. 그리드 위치에 반쪽 노트 인디케이터를 표시한다.
+    /// EVT_ATK_01 첫 탭 시 호출. 그리드 위치에 반쪽 노트 인디케이터를 표시하고 월드 좌표를 반환한다.
     /// P1(오른쪽→왼쪽 이동)은 flipX=false, P2(왼쪽→오른쪽)는 flipX=true.
     /// </summary>
-    public void SpawnHalfAttackNote(AttackSide side, NoteType type, double noteRelativeTime, double attackDuration)
+    public Vector3? SpawnHalfAttackNote(AttackSide side, NoteType type, double noteRelativeTime, double attackDuration)
     {
-        if (halfNoteIndicator == null) return;
+        if (halfNoteIndicator == null) return null;
 
         double safeDuration = System.Math.Max(0.01, attackDuration);
         float ratio = Mathf.Clamp01((float)(noteRelativeTime / safeDuration));
@@ -251,6 +251,7 @@ public class AttackTurnRenderer : MonoBehaviour
         halfNoteIndicator.flipX = (side == AttackSide.P1);
         halfNoteIndicator.transform.localScale = UnityEngine.Vector3.one;
         halfNoteIndicator.gameObject.SetActive(true);
+        return halfNoteIndicator.transform.position;
     }
 
     /// <summary>

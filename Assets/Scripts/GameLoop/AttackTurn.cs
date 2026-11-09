@@ -528,7 +528,9 @@ public class AttackTurn : MonoBehaviour
             halfNoteCreatedDspTime = AudioSettings.dspTime;
             pendingGridStep = gridStep;
             pendingNoteType = noteType;
-            attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
+            Vector3? halfPos = attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
+            if (halfPos.HasValue)
+                HitEffectSpawner.Instance?.PlayHalfNote(noteType, halfPos.Value, flipX: currentSide == AttackSide.P2);
         }
         else if (noteType == pendingNoteType)
         {
@@ -560,7 +562,9 @@ public class AttackTurn : MonoBehaviour
                 halfNoteCreatedDspTime = AudioSettings.dspTime;
                 pendingGridStep = gridStep;
                 pendingNoteType = noteType;
-                attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
+                Vector3? halfPos2 = attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
+                if (halfPos2.HasValue)
+                    HitEffectSpawner.Instance?.PlayHalfNote(noteType, halfPos2.Value, flipX: currentSide == AttackSide.P2);
             }
         }
     }

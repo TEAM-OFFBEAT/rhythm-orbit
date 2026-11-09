@@ -1418,6 +1418,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 354355540475222487, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: halfNoteLowEffectPrefab
+      value: 
+      objectReference: {fileID: 2000000000000000001, guid: a2b3c4d5e6f7b8a1b2c3d4e5f6a7b8ca, type: 3}
+    - target: {fileID: 354355540475222487, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
+      propertyPath: halfNoteHighEffectPrefab
+      value: 
+      objectReference: {fileID: 1000000000000000001, guid: f1a2b3c4d5e6f7a1b2c3d4e5f6a7b8c9, type: 3}
     - target: {fileID: 5444053762094501567, guid: fc6e68c749128cc49a902a03e5087579, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.32196
@@ -2280,16 +2288,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: notificationText
-      value:
+      value: 
       objectReference: {fileID: 1569432753}
-    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
-      propertyPath: notificationPanel
-      value:
-      objectReference: {fileID: 1569432754}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: forceEventForTest
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: notificationPanel
+      value: 
+      objectReference: {fileID: 1569432754}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventStateDebugText
       value: 
@@ -2300,7 +2308,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[1].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: eventDefinitions.Array.data[2].enabled

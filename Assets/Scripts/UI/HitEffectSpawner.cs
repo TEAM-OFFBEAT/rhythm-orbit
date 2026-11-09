@@ -10,6 +10,8 @@ public class HitEffectSpawner : SceneSingleton<HitEffectSpawner>
     [SerializeField] private GameObject lowEffectPrefab;
     [SerializeField] private GameObject perfectHighEffectPrefab;
     [SerializeField] private GameObject perfectLowEffectPrefab;
+    [SerializeField] private GameObject halfNoteHighEffectPrefab;
+    [SerializeField] private GameObject halfNoteLowEffectPrefab;
 
     [SerializeField] private int normalSortingOrder = 3;
     [SerializeField] private int elevatedSortingOrder = 51;
@@ -52,6 +54,30 @@ public class HitEffectSpawner : SceneSingleton<HitEffectSpawner>
         int order = _elevated ? elevatedSortingOrder : normalSortingOrder;
         foreach (var sr in effect.GetComponentsInChildren<SpriteRenderer>())
             sr.sortingOrder = order;
+
+        Destroy(effect, 0.4f);
+    }
+
+    /// <summary>
+    /// EVT_ATK_01 반쪽 노트 생성 시 호출. flipX가 true이면 이펙트를 좌우반전한다.
+    /// </summary>
+    public void PlayHalfNote(NoteType noteType, Vector3 worldPos, bool flipX)
+    {
+        GameObject prefab = noteType == NoteType.HIGH ? halfNoteHighEffectPrefab : halfNoteLowEffectPrefab;
+        if (prefab == null)
+        {
+            Debug.LogWarning($"HitEffectSpawner: HalfNote {noteType} 이펙트 프리팹이 연결되지 않음.");
+            return;
+        }
+
+        GameObject effect = Instantiate(prefab, worldPos, Quaternion.identity, transform);
+
+        var sr = effect.GetComponent<SpriteRenderer>();
+        if (sr != null) sr.flipX = flipX;
+
+        int order = _elevated ? elevatedSortingOrder : normalSortingOrder;
+        foreach (var s in effect.GetComponentsInChildren<SpriteRenderer>())
+            s.sortingOrder = order;
 
         Destroy(effect, 0.4f);
     }
