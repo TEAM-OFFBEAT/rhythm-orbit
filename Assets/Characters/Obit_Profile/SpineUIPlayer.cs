@@ -26,12 +26,15 @@ public class SpineUIPlayer : MonoBehaviour
         }
     }
 
+    void OnEnable() => PlayIdle();
+
     /// <summary>idle 무한 루프 재생. 이미 재생 중이면 중단 없이 유지.</summary>
     public void PlayIdle() => Play(Idle, true);
 
     /// <summary>지정 애니메이션을 한 번 재생 후 idle로 복귀.</summary>
     public void PlayOnce(string anim)
     {
+        if (sa == null) return;
         Play(anim, false);
         sa.AnimationState.AddAnimation(0, Idle, true, 0f);
     }
@@ -39,6 +42,7 @@ public class SpineUIPlayer : MonoBehaviour
     /// <summary>지정 애니메이션을 크로스페이드 없이 즉시 재생.</summary>
     public void Play(string anim, bool loop)
     {
+        if (sa == null) return;
         var current = sa.AnimationState.GetTrack(0);
         if (loop && current != null && current.Loop && current.Animation.Name == anim)
             return;

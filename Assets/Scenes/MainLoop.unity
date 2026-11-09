@@ -1160,6 +1160,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1988301842}
     - target: {fileID: 1549251834048446401, guid: 2bcc914ba9c67344cb0e64b1c3ad8ec6, type: 3}
+      propertyPath: spinePanel
+      value: 
+      objectReference: {fileID: 1569432754}
+    - target: {fileID: 1549251834048446401, guid: 2bcc914ba9c67344cb0e64b1c3ad8ec6, type: 3}
       propertyPath: typewriterText
       value: 
       objectReference: {fileID: 1569432755}
@@ -1275,6 +1279,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2025149113}
     m_Modifications:
+    - target: {fileID: 7730000000000003, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
+      propertyPath: wasDeprecatedTransferred
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2073942838198698644, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -1337,11 +1345,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2073942838198698644, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 386
+      value: 735
       objectReference: {fileID: 0}
     - target: {fileID: 2073942838198698644, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -62
+      value: -207
       objectReference: {fileID: 0}
     - target: {fileID: 2073942838198698644, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1380,6 +1388,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &1569432754 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7730000000000002, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
+  m_PrefabInstance: {fileID: 1569432751}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1988301842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78d7c24c30dc2a24387e45d156a94522, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineDialoguePanel
 --- !u!114 &1569432755 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1885899757286219214, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
@@ -1983,11 +2002,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5519304647491826594, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value:
+      value: 
       objectReference: {fileID: 456633806}
     - target: {fileID: 6813816902542858557, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value:
+      value: 
       objectReference: {fileID: 456633806}
     - target: {fileID: 7971608759510111601, guid: 2d3a03cc0fbce7445a4230a38a07104f, type: 3}
       propertyPath: m_IsActive
@@ -2261,8 +2280,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: notificationText
-      value: 
+      value:
       objectReference: {fileID: 1569432753}
+    - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
+      propertyPath: notificationPanel
+      value:
+      objectReference: {fileID: 1569432754}
     - target: {fileID: 7011012030487207089, guid: ae8ec18cbc468494d9dc6d5916bdc7e3, type: 3}
       propertyPath: forceEventForTest
       value: 0

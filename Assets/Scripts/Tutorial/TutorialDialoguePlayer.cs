@@ -53,6 +53,9 @@ public class TutorialDialoguePlayer : MonoBehaviour
     private bool skipTypingRequested;
     private bool nextLineRequested;
 
+    [Header("Spine Panel")]
+    [SerializeField] private SpineDialoguePanel spinePanel;
+
     [Header("Timing")]
     [SerializeField] private float fallbackBpm = 90f;
     [SerializeField] private bool hideOnAwake = true;
@@ -816,7 +819,9 @@ public class TutorialDialoguePlayer : MonoBehaviour
         }
 
         ClearGuideText();
-        SetGuidePanelVisible(false);
+
+        if (spinePanel == null)
+            SetGuidePanelVisible(false);
     }
 
     private bool isPaused;
@@ -850,15 +855,18 @@ public class TutorialDialoguePlayer : MonoBehaviour
     /// </summary>
     private void SetGuidePanelVisible(bool visible)
     {
-        if (guidePanel != null)
+        if (guideText != null)
+            guideText.gameObject.SetActive(visible);
+
+        if (spinePanel != null)
         {
-            guidePanel.SetActive(visible);
+            if (visible) spinePanel.Open();
+            else spinePanel.Close();
+            return;
         }
 
-        if (guideText != null)
-        {
-            guideText.gameObject.SetActive(visible);
-        }
+        if (guidePanel != null)
+            guidePanel.SetActive(visible);
     }
 
     /// <summary>

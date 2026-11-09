@@ -45,6 +45,8 @@ public class SurpriseEventManager : MonoBehaviour
     [Header("UI")]
     [Tooltip("이벤트 알림을 표시할 텍스트 컴포넌트. GameNoticePanel의 GuideText에 연결한다.")]
     [SerializeField] private TMP_Text notificationText;
+    [Tooltip("패널 등장/퇴장 애니메이션을 담당하는 SpineDialoguePanel. 연결 시 SetActive 대신 Open/Close를 사용한다.")]
+    [SerializeField] private SpineDialoguePanel notificationPanel;
 
     [Header("Debug")]
     [Tooltip("테스트용. true면 확률과 관계없이 가능한 전환마다 이벤트를 발생시킨다.")]
@@ -616,18 +618,17 @@ public class SurpriseEventManager : MonoBehaviour
     private void SetNotification(string text)
     {
         if (notificationText == null) return;
-        notificationText.transform.parent.gameObject.SetActive(true);
-        notificationText.gameObject.SetActive(true);
         notificationText.text = text;
         notificationText.maxVisibleCharacters = int.MaxValue;
+        notificationText.gameObject.SetActive(false);
+        notificationPanel.Open(() => notificationText.gameObject.SetActive(true));
     }
 
     private void ClearNotification()
     {
         if (notificationText == null) return;
         notificationText.text = "";
-        notificationText.gameObject.SetActive(false);
-        notificationText.transform.parent.gameObject.SetActive(false);
+        notificationPanel.Close();
     }
 
     private static string GetPlayerPrefix(int playerId)
