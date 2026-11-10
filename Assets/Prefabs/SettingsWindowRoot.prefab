@@ -3481,10 +3481,10 @@ MonoBehaviour:
   audioOffsetValueLabel: {fileID: 6583303913476246001}
   settingsResetButton: {fileID: 871457568374369938}
   offsetResetButton: {fileID: 5231017837833159555}
-  defaultSfxVolume: 0.8
-  defaultBgmVolume: 0.6
-  defaultKeyInputOffsetMs: -15
-  defaultAudioOffsetMs: -185
+  defaultSfxVolume: 0.6
+  defaultBgmVolume: 0.8
+  defaultKeyInputOffsetMs: 0
+  defaultAudioOffsetMs: 0
   minKeyInputOffsetMs: -200
   maxKeyInputOffsetMs: 200
   minOffsetMs: -200
