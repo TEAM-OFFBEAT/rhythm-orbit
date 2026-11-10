@@ -184,4 +184,22 @@ public static class PacketSerializer
             requesterPlayerId = reader.ReadByte()
         };
     }
+
+    /// <summary>씬 로드 완료 신호. 페이로드 없음.</summary>
+    public static void WriteSceneReady(BinaryWriter w)
+        => w.Write((byte)PacketType.SCENE_READY);
+
+    /// <summary>
+    /// 양측 SCENE_READY 후 Host가 계산한 fresh 게임 시작 DSP 시간.
+    /// Host → Guest 단방향 전송.
+    /// </summary>
+    public static void WriteGameClockSet(BinaryWriter w, double gameStartDspTime)
+    {
+        w.Write((byte)PacketType.GAME_CLOCK_SET);
+        w.Write(gameStartDspTime);
+    }
+
+    /// <summary>GAME_CLOCK_SET 페이로드: Host의 게임 시작 DSP 시간.</summary>
+    public static double ReadGameClockSet(BinaryReader r)
+        => r.ReadDouble();
 }

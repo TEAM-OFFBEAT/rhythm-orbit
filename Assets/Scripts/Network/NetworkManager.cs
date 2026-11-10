@@ -53,6 +53,8 @@ public class NetworkManager : Singleton<NetworkManager>
     public event Action<JudgmentPacket> OnJudgmentReceived;
     public event Action<SanityChangePacket> OnSanityChange;
     public event Action<ReplayRequestPacket> OnReplayRequest;
+    public event Action OnSceneReady;
+    public event Action<double> OnGameClockSet;
 
     private readonly ConcurrentQueue<Action> mainThreadQueue = new();
     private TcpListener listener;
@@ -266,6 +268,13 @@ public class NetworkManager : Singleton<NetworkManager>
                             mainThreadQueue.Enqueue(() => OnReplayRequest?.Invoke(packet));
                             break;
                         }
+                    case PacketType.SCENE_READY:
+                        mainThreadQueue.Enqueue(() => OnSceneReady?.Invoke());
+                        break;
+                    case PacketType.GAME_CLOCK_SET:
+                        double clockSetTime = PacketSerializer.ReadGameClockSet(reader);
+                        mainThreadQueue.Enqueue(() => OnGameClockSet?.Invoke(clockSetTime));
+                        break;
                     default:
                         Debug.LogWarning($"NetworkManager: 알 수 없는 패킷 타입 {type}");
                         break;

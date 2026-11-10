@@ -236,6 +236,14 @@ public class GameManager : MonoBehaviour
     private bool isApplyingRemoteGameState;
     private bool pendingRemoteCommunicationSuccess;
 
+    // 양측 씬 로드 완료 핸드쉐이크. 둘 다 true가 되면 StartGame() 진행.
+    private bool sceneSelfReady;
+    private bool scenePeerReady;
+
+    // GAME_CLOCK_SET으로 받은 fresh 게임 시작 DSP 시간 (로컬 클럭 기준).
+    // 0 이하면 미설정 → StartGame()이 LocalGameStartDspTime으로 fallback.
+    private double freshRhythmStart = -1.0;
+
     /// <summary>
     /// 필수 참조를 확인하고 각 시스템의 이벤트를 구독한다.
     /// </summary>
@@ -314,6 +322,8 @@ public class GameManager : MonoBehaviour
         var net = NetworkManager.Instance;
         if (net != null)
         {
+            net.OnSceneReady         -= HandlePeerSceneReady;
+            net.OnGameClockSet       -= HandleGameClockSet;
             net.OnNoteCreated        -= HandleNetworkNoteCreated;
             net.OnJudgmentReceived   -= HandleNetworkJudgment;
             net.OnSanityChange       -= HandleNetworkSanityChange;
@@ -323,13 +333,12 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 네트워크 모드에서 씬 로드 직후 자동으로 게임을 시작한다.
+    /// 씬 로드 직후 초기화. 네트워크 모드에서는 양측 씬 로드 확인 후 StartGame()을 호출한다.
     /// </summary>
     private void Start()
     {
         resultPanelUI?.HideAll();
 
-        //completedTurnCount = 0;
         currentRoundIndex = 0;
         attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
 
@@ -338,8 +347,52 @@ public class GameManager : MonoBehaviour
         else if (LocalTestModeOverride.HasValue)
             timeSignatureMode = LocalTestModeOverride.Value;
 
-        if (NetworkManager.Instance != null)
+        var net = NetworkManager.Instance;
+        if (net != null)
+        {
+            net.OnSceneReady += HandlePeerSceneReady;
+            net.OnGameClockSet += HandleGameClockSet;
+            sceneSelfReady = false;
+            scenePeerReady = false;
+            freshRhythmStart = -1.0;
+            net.Send(w => PacketSerializer.WriteSceneReady(w));
+            sceneSelfReady = true;
+            // scenePeerReady는 항상 false (Update 이후에 도착)
+        }
+    }
+
+    /// <summary>
+    /// 상대방 씬 로드 완료 신호를 수신했을 때 호출된다.
+    /// Host: 양측 준비 완료 → fresh DSP 시간 계산 후 GAME_CLOCK_SET 전송 + StartGame().
+    /// Guest: GAME_CLOCK_SET 대기.
+    /// </summary>
+    private void HandlePeerSceneReady()
+    {
+        scenePeerReady = true;
+        if (!sceneSelfReady) return;
+
+        var net = NetworkManager.Instance;
+        if (net == null) return;
+
+        if (net.IsHost)
+        {
+            double hostStart = AudioSettings.dspTime;
+            freshRhythmStart = hostStart;
+            net.Send(w => PacketSerializer.WriteGameClockSet(w, hostStart));
             StartGame();
+        }
+        // Guest는 GAME_CLOCK_SET 수신 후 HandleGameClockSet에서 StartGame() 호출
+    }
+
+    /// <summary>
+    /// Host가 전송한 GAME_CLOCK_SET 패킷을 수신했을 때 호출된다 (Guest 전용).
+    /// Host의 fresh 게임 시작 DSP 시간을 로컬 클럭 기준으로 변환한 뒤 StartGame()을 호출한다.
+    /// </summary>
+    private void HandleGameClockSet(double hostGameStartDspTime)
+    {
+        double clockOffset = NetworkManager.Instance?.TimeSync?.ClockOffset ?? 0.0;
+        freshRhythmStart = hostGameStartDspTime + clockOffset;
+        StartGame();
     }
 
     private void Update()
@@ -410,7 +463,10 @@ public class GameManager : MonoBehaviour
         currentTurnDuration = GetCurrentTurnDuration();
 
         var net = NetworkManager.Instance;
-        double rhythmStart = net?.LocalGameStartDspTime ?? AudioSettings.dspTime;
+        double rhythmStart = freshRhythmStart > 0
+            ? freshRhythmStart
+            : (net?.LocalGameStartDspTime ?? AudioSettings.dspTime);
+        freshRhythmStart = -1.0;
 
         RhythmClock.Instance?.StartClock(rhythmStart);
 
