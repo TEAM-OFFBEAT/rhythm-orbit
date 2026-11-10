@@ -13,6 +13,8 @@ public class HitEffectSpawner : SceneSingleton<HitEffectSpawner>
     [SerializeField] private GameObject halfNoteHighEffectPrefab;
     [SerializeField] private GameObject halfNoteLowEffectPrefab;
 
+    [SerializeField] private float halfNoteEffectXOffset = 0f;
+
     [SerializeField] private int normalSortingOrder = 3;
     [SerializeField] private int elevatedSortingOrder = 51;
 
@@ -70,6 +72,7 @@ public class HitEffectSpawner : SceneSingleton<HitEffectSpawner>
             return;
         }
 
+        worldPos.x += halfNoteEffectXOffset * (flipX ? -1f : 1f);
         GameObject effect = Instantiate(prefab, worldPos, Quaternion.identity, transform);
 
         var sr = effect.GetComponent<SpriteRenderer>();

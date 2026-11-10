@@ -460,7 +460,7 @@ public class AttackTurn : MonoBehaviour
     /// 공격 노트를 생성하고 렌더러와 진행도 UI에 반영한다.
     /// judgeTime은 방어 턴 전환 시 DefenseTurn에서 설정한다.
     /// </summary>
-    private void CreateAttackNote(double noteRelativeTime, NoteType noteType, bool isInputSuccessForSfx = true)
+    private void CreateAttackNote(double noteRelativeTime, NoteType noteType, bool isInputSuccessForSfx = true, bool withHalfNote = false)
     {
         NoteData note = new NoteData
         {
@@ -483,7 +483,11 @@ public class AttackTurn : MonoBehaviour
         OnAttackProgressChanged?.Invoke(createdNotes.Count, targetTapCount);
         Vector3? spawnPos = attackTurnRenderer?.SpawnAttackNote(currentSide, note, attackDuration);
         if (spawnPos.HasValue)
+        {
             HitEffectSpawner.Instance?.Play(noteType, spawnPos.Value);
+            if (withHalfNote)
+                HitEffectSpawner.Instance?.PlayHalfNote(noteType, spawnPos.Value, flipX: currentSide != AttackSide.P2);
+        }
 
         OnAttackInputResolved?.Invoke(noteType, isInputSuccessForSfx);
         
@@ -538,7 +542,7 @@ public class AttackTurn : MonoBehaviour
             attackTurnRenderer?.ClearHalfNote();
             double snappedTime = pendingGridStep * noteDuration;
             hasPendingHalfNote = false;
-            CreateAttackNote(snappedTime, pendingNoteType, isInputSuccessForSfx: true);
+            CreateAttackNote(snappedTime, pendingNoteType, isInputSuccessForSfx: true, withHalfNote: true);
         }
         else
         {
