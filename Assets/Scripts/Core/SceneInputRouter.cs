@@ -107,8 +107,14 @@ public class SceneInputRouter : MonoBehaviour
             return;
         }
 
-        action.performed += handler;
-        bindings.Add((action, handler));
+        void HandleWhenReady(InputAction.CallbackContext context)
+        {
+            if (!SceneLoadingScreen.IsLoading)
+                handler(context);
+        }
+
+        action.performed += HandleWhenReady;
+        bindings.Add((action, HandleWhenReady));
         action.Enable();
     }
 

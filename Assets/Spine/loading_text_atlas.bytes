@@ -1,0 +1,39 @@
+loading_text.png
+size:121,217
+filter:Linear,Linear
+Layer 4
+bounds:53,2,51,66
+offsets:1,2,53,69
+rotate:90
+Layer 4 Copy
+bounds:2,132,48,60
+offsets:1,1,50,62
+rotate:90
+Layer 4 Copy 2
+bounds:2,7,49,65
+offsets:1,1,51,67
+Layer 4 Copy 3
+bounds:64,119,50,61
+offsets:1,1,52,63
+Layer 4 Copy 4
+bounds:33,182,33,58
+offsets:1,1,36,60
+rotate:90
+Layer 4 Copy 5
+bounds:2,74,58,56
+offsets:1,1,60,59
+Layer 4 Copy 6
+bounds:62,55,54,62
+offsets:1,1,56,64
+Layer 4 Copy 7
+bounds:2,187,28,29
+offsets:1,1,30,31
+rotate:90
+Layer 4 Copy 8
+bounds:2,187,28,29
+offsets:1,1,30,31
+rotate:90
+Layer 4 Copy 9
+bounds:2,187,28,29
+offsets:1,1,30,31
+rotate:90

@@ -170,7 +170,8 @@ public class NetworkManager : Singleton<NetworkManager>
     private void Update()
     {
         // 수신 스레드에서 쌓인 이벤트를 메인 스레드에서 순서대로 발행
-        while (mainThreadQueue.TryDequeue(out var action))
+        // Keep packets queued until the destination scene has subscribed to session events.
+        while (!SceneLoadingScreen.IsLoading && mainThreadQueue.TryDequeue(out var action))
             action?.Invoke();
     }
 
