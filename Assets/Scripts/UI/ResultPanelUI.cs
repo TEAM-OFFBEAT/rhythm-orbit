@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -214,7 +213,7 @@ public class ResultPanelUI : MonoBehaviour
         NetworkManager.Instance?.Disconnect();
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene(lobbySceneName);
+        SceneLoadingScreen.Load(lobbySceneName);
     }
 
     /// <summary>
@@ -326,7 +325,7 @@ public class ResultPanelUI : MonoBehaviour
     private void RestartLocalGame()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(mainLoopSceneName);
+        SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
     /// <summary>
@@ -357,7 +356,7 @@ public class ResultPanelUI : MonoBehaviour
         );
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene(mainLoopSceneName);
+        SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
     /// <summary>
@@ -397,7 +396,7 @@ public class ResultPanelUI : MonoBehaviour
         );
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene(mainLoopSceneName);
+        SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
     private void SetReplayButtonsInteractable(bool interactable)

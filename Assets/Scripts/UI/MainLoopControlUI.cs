@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
@@ -331,7 +330,7 @@ public class MainLoopControlUI : MonoBehaviour
         Time.timeScale = 1f;
         gameManager?.StopCurrentMainLoopForSceneChange();
 
-        SceneManager.LoadScene(mainLoopSceneName);
+        SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
     /// <summary>
@@ -347,7 +346,7 @@ public class MainLoopControlUI : MonoBehaviour
 
         NetworkManager.Instance?.Disconnect();
 
-        SceneManager.LoadScene(lobbySceneName);
+        SceneLoadingScreen.Load(lobbySceneName);
     }
 
     private void HandleNetworkDisconnected()

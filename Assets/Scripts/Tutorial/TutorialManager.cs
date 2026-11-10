@@ -1,5 +1,4 @@
 
-using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -1831,7 +1830,7 @@ public class TutorialManager : MonoBehaviour
         }
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene(lobbySceneName);
+        SceneLoadingScreen.Load(lobbySceneName);
     }
 
     /// <summary>
@@ -1840,7 +1839,7 @@ public class TutorialManager : MonoBehaviour
     public void RestartTutorial()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(gameObject.scene.path);
+        SceneLoadingScreen.Load(gameObject.scene.path);
     }
 
     /// <summary>

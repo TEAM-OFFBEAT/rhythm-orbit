@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 using System.Net.NetworkInformation;
@@ -224,7 +223,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void LoadMainLoop()
     {
-        SceneManager.LoadScene(mainLoopSceneName);
+        SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
     // ── IExclusivePanel ───────────────────────────────────────────────────────
@@ -265,7 +264,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
             Destroy(NetworkManager.Instance.gameObject);
         }
 
-        SceneManager.LoadScene(mainLoopSceneName);
+        SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
     private void OnLocalTest34()
@@ -278,7 +277,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
             Destroy(NetworkManager.Instance.gameObject);
         }
 
-        SceneManager.LoadScene(mainLoopSceneName);
+        SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
     public void GoToTutorial()
@@ -296,7 +295,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         }
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene(tutorialSceneName);
+        SceneLoadingScreen.Load(tutorialSceneName);
     }
 
     // ── 유틸 ─────────────────────────────────────────────────────────────────
