@@ -619,7 +619,7 @@ public class GameManager : MonoBehaviour
                 hud?.ClearAttackProgress();
                 if (profilePlayers != null)
                     foreach (var p in profilePlayers)
-                        p?.PlayOnce("success");
+                        p?.PlayRepeat("success", 2);
                 // phaseIndex를 증가시키지 않고 리턴 — 인트로 후 동일 phaseIndex로 재진입해 attack phase 시작
                 return;
             }

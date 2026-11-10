@@ -42,6 +42,16 @@ public class SpineUIPlayer : MonoBehaviour
         sa.AnimationState.AddAnimation(0, Idle, true, 0f).MixDuration = 0f;
     }
 
+    /// <summary>지정 애니메이션을 count번 연속 재생 후 idle로 복귀.</summary>
+    public void PlayRepeat(string anim, int count)
+    {
+        if (sa == null || count <= 0) return;
+        Play(anim, false);
+        for (int i = 1; i < count; i++)
+            sa.AnimationState.AddAnimation(0, anim, false, 0f).MixDuration = 0f;
+        sa.AnimationState.AddAnimation(0, Idle, true, 0f).MixDuration = 0f;
+    }
+
     /// <summary>지정 애니메이션을 크로스페이드 없이 즉시 재생.</summary>
     public void Play(string anim, bool loop)
     {
