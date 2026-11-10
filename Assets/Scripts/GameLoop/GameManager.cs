@@ -455,6 +455,8 @@ public class GameManager : MonoBehaviour
         lastSurpriseEventPreparePhaseIndex = -1;
         laneController?.SetMode(timeSignatureMode);
         hud?.SetP2Mode(timeSignatureMode);
+        attackTurnRenderer?.SetMode(timeSignatureMode);
+        defenseTurn?.SetMode(timeSignatureMode);
         parallaxBackground?.ApplyRound(0, animate: false);
         roundTransitionVideoPlayer?.PrepareClip(0);
         surpriseEventManager?.ResetForNewGame(NetworkManager.Instance?.SharedSeed ?? 0);

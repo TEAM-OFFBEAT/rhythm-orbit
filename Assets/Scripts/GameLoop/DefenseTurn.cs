@@ -65,6 +65,11 @@ public class DefenseTurn : MonoBehaviour
 
     private readonly List<GhostNoteData> ghostNotes = new();
 
+    [Header("Mode Visuals")]
+    [SerializeField] private SpriteRenderer p2DefenseLineRenderer;
+    [SerializeField] private Sprite p2DefenseLineSprite44;
+    [SerializeField] private Sprite p2DefenseLineSprite34;
+
     [Header("EVT_DEF_01 Ghost Signal")]
     [SerializeField, Min(1)] private int ghostNoteIdBase = 700000;
     [SerializeField, Min(0f)] private double ghostPassDisappearDelayMs = 80.0;
@@ -85,6 +90,15 @@ public class DefenseTurn : MonoBehaviour
     private double pendingAttackDuration;
 
     private bool isPaused;
+
+    /// <summary>
+    /// 박자 모드에 따라 P2 방어 판정선 스프라이트를 전환한다.
+    /// </summary>
+    public void SetMode(TimeSignatureMode mode)
+    {
+        if (p2DefenseLineRenderer == null) return;
+        p2DefenseLineRenderer.sprite = mode == TimeSignatureMode.ThreeFour ? p2DefenseLineSprite34 : p2DefenseLineSprite44;
+    }
 
     /// <summary>
     /// 방어 턴 Update 루프를 일시정지하거나 재개한다.

@@ -54,6 +54,7 @@ MonoBehaviour:
   rhythmClock: {fileID: 0}
   attackTurnRenderer: {fileID: 8940754824742537160}
   networkManager: {fileID: 0}
+  halfNoteTimeoutSeconds: 0.3
 --- !u!114 &8940754824742537160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78,6 +79,10 @@ MonoBehaviour:
   halfNoteIndicator: {fileID: 1412463317426856536}
   halfHighSprite: {fileID: 8827442172285949641, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
   halfLowSprite: {fileID: -1376642177720058434, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
+  p2AttackLineSprite44: {fileID: 7436860926580171409, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
+  p2AttackLineSprite34: {fileID: -1413361136, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
+  p1AttackLaneEnd: {fileID: 0}
+  p2AttackLaneEnd: {fileID: 0}
 --- !u!1 &405628253607505948
 GameObject:
   m_ObjectHideFlags: 0

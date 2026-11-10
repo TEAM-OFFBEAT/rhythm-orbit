@@ -40,6 +40,8 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     [Header("Sanity")]
     [SerializeField] private Image sanityBarFill;
+    [SerializeField] private Sprite sanityBarFillSprite34;
+    private Sprite sanityBarFillDefault;
 
     [Header("Panel")]
     [SerializeField] private Image panelImage;
@@ -57,6 +59,7 @@ public class HUDPlayerSlotUI : MonoBehaviour
 
     private void Awake()
     {
+        sanityBarFillDefault = sanityBarFill?.sprite;
         if (spineProfile44 != null) spineProfile44.PlayIdle();
         if (spineProfile34 != null) spineProfile34.PlayIdle();
         SyncSpineVisibility();
@@ -87,6 +90,8 @@ public class HUDPlayerSlotUI : MonoBehaviour
         currentMode = mode;
         SyncSpineVisibility();
         ClearJudgment();
+        if (sanityBarFill != null && sanityBarFillSprite34 != null)
+            sanityBarFill.sprite = mode == TimeSignatureMode.ThreeFour ? sanityBarFillSprite34 : sanityBarFillDefault;
     }
 
     /// <summary>

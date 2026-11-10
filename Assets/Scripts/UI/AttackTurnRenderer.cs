@@ -30,6 +30,10 @@ public class AttackTurnRenderer : MonoBehaviour
     [SerializeField] private Sprite halfHighSprite;
     [SerializeField] private Sprite halfLowSprite;
 
+    [Header("Mode Visuals")]
+    [SerializeField] private Sprite p2AttackLineSprite44;
+    [SerializeField] private Sprite p2AttackLineSprite34;
+
     [Header("Normal Note Exit")]
     [Tooltip("P1이 공격한 일반 노트가 사라지는 위치. P2 쪽 레인 끝에 배치한다.")]
     [SerializeField] private Transform p1AttackLaneEnd;
@@ -262,6 +266,16 @@ public class AttackTurnRenderer : MonoBehaviour
     {
         if (halfNoteIndicator != null)
             halfNoteIndicator.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 박자 모드에 따라 P2 공격 판정선 스프라이트를 전환한다.
+    /// </summary>
+    public void SetMode(TimeSignatureMode mode)
+    {
+        SpriteRenderer sr = p2AttackLine?.GetComponent<SpriteRenderer>();
+        if (sr == null) return;
+        sr.sprite = mode == TimeSignatureMode.ThreeFour ? p2AttackLineSprite34 : p2AttackLineSprite44;
     }
 
     /// <summary>

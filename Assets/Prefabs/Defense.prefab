@@ -375,6 +375,9 @@ MonoBehaviour:
   attackTurnRenderer: {fileID: 0}
   fallbackTransferSpeed: 5
   subdivisions: 2
+  p2DefenseLineRenderer: {fileID: 1981412202342206068}
+  p2DefenseLineSprite44: {fileID: 7436860926580171409, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
+  p2DefenseLineSprite34: {fileID: -1413361136, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
   ghostNoteIdBase: 700000
   ghostPassDisappearDelayMs: 80
 --- !u!1 &8003745205623763523

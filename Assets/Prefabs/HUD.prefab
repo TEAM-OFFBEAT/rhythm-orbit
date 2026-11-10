@@ -2893,6 +2893,7 @@ MonoBehaviour:
   failPortrait34: {fileID: 0}
   successPortrait34: {fileID: 0}
   sanityBarFill: {fileID: 2726978777307346578}
+  sanityBarFillSprite34: {fileID: 0}
   panelImage: {fileID: 4897033064702728408}
   defaultPanelSprite: {fileID: 5247654415162562235, guid: d273e516d9ccfd24da8b19393c76269c, type: 3}
   highlightPanelSprite: {fileID: 5464961714324258731, guid: cc68ca4077c42f6478714f9aac7dce6c, type: 3}
@@ -3007,6 +3008,7 @@ MonoBehaviour:
   failPortrait34: {fileID: 0}
   successPortrait34: {fileID: 0}
   sanityBarFill: {fileID: 360101682030975484}
+  sanityBarFillSprite34: {fileID: 1281681241, guid: 3f3b41422ad93b44d9b5398ae08be377, type: 3}
   panelImage: {fileID: 7702125488828697384}
   defaultPanelSprite: {fileID: -3978961482574289900, guid: d273e516d9ccfd24da8b19393c76269c, type: 3}
   highlightPanelSprite: {fileID: -3456634472872534739, guid: cc68ca4077c42f6478714f9aac7dce6c, type: 3}
