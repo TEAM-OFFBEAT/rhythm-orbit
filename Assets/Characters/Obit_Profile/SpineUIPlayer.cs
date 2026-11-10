@@ -24,6 +24,9 @@ public class SpineUIPlayer : MonoBehaviour
             sg.PhysicsRotationInheritanceFactor = 0f;
             sg.UpdateComplete += OnUpdateComplete;
         }
+
+        if (sa != null)
+            sa.AnimationState.Start += _ => resetPhysics = true;
     }
 
     void OnEnable() => PlayIdle();
@@ -36,7 +39,7 @@ public class SpineUIPlayer : MonoBehaviour
     {
         if (sa == null) return;
         Play(anim, false);
-        sa.AnimationState.AddAnimation(0, Idle, true, 0f);
+        sa.AnimationState.AddAnimation(0, Idle, true, 0f).MixDuration = 0f;
     }
 
     /// <summary>지정 애니메이션을 크로스페이드 없이 즉시 재생.</summary>
@@ -48,7 +51,6 @@ public class SpineUIPlayer : MonoBehaviour
             return;
         var entry = sa.AnimationState.SetAnimation(0, anim, loop);
         entry.MixDuration = 0f;
-        if (!loop) resetPhysics = true;
     }
 
     void OnUpdateComplete(ISkeletonRenderer _)
