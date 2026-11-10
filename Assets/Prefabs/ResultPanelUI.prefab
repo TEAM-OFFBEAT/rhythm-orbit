@@ -1713,6 +1713,10 @@ MonoBehaviour:
     \uC911..."
   remoteReadyReplayStatusMessage: 
   bothReadyReplayStatusMessage: "\uD55C \uD310 \uB354 \uC2DC\uC791!"
+  p1ProfilePlayer: {fileID: 0}
+  p2ProfilePlayers:
+  - {fileID: 0}
+  - {fileID: 6619304647491826578, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
   lobbySceneName: Lobby
   mainLoopSceneName: MainLoop
   networkReplayLeadTime: 1

@@ -30,6 +30,10 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private string remoteReadyReplayStatusMessage = "상대가 다시하기를 선택했습니다.";
     [SerializeField] private string bothReadyReplayStatusMessage = "양쪽 모두 다시하기를 선택했습니다.";
 
+    [Header("Profile Animations")]
+    [SerializeField] private SpineUIPlayer p1ProfilePlayer;
+    [SerializeField] private SpineUIPlayer[] p2ProfilePlayers;
+
     [Header("Scene")]
     [SerializeField] private string lobbySceneName = "Lobby";
     [SerializeField] private string mainLoopSceneName = "MainLoop";
@@ -71,20 +75,20 @@ public class ResultPanelUI : MonoBehaviour
         SetReplayButtonsInteractable(true);
         SetReplayStatus(defaultReplayStatusMessage);
 
+        bool isSuccess = resultType == GameResultType.CommunicationSuccess;
+        string anim = isSuccess ? "success" : "fail";
+
         switch (resultType)
         {
-            case GameResultType.P1Win:
-                SetActivePanel(p1WinPanel);
-                break;
-
-            case GameResultType.P2Win:
-                SetActivePanel(p2WinPanel);
-                break;
-
-            case GameResultType.CommunicationSuccess:
-                SetActivePanel(successPanel);
-                break;
+            case GameResultType.P1Win:   SetActivePanel(p1WinPanel);  break;
+            case GameResultType.P2Win:   SetActivePanel(p2WinPanel);  break;
+            default:                     SetActivePanel(successPanel); break;
         }
+
+        p1ProfilePlayer?.Play(anim, true);
+        if (p2ProfilePlayers != null)
+            foreach (var p in p2ProfilePlayers)
+                p?.Play(anim, true);
     }
 
     /// <summary>

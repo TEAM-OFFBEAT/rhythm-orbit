@@ -61,6 +61,9 @@ public class GameManager : MonoBehaviour
     [Header("Result UI")]
     [SerializeField] private ResultPanelUI resultPanelUI;
 
+    [Header("Profile Players")]
+    [SerializeField] private SpineUIPlayer[] profilePlayers;
+
     [Header("Intro Dialogue")]
     [SerializeField] private IntroDialogueController introDialogueController;
 
@@ -558,6 +561,9 @@ public class GameManager : MonoBehaviour
                 nextPhaseDspTime = nextRoundStart + introDuration;
                 hud?.ClearJudgments();
                 hud?.ClearAttackProgress();
+                if (profilePlayers != null)
+                    foreach (var p in profilePlayers)
+                        p?.PlayOnce("success");
                 // phaseIndex를 증가시키지 않고 리턴 — 인트로 후 동일 phaseIndex로 재진입해 attack phase 시작
                 return;
             }

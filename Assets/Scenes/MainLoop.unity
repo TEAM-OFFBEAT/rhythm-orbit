@@ -465,9 +465,25 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: profilePlayers.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: roundTransitionVideoPlayer
       value: 
       objectReference: {fileID: 7723943202393023525}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: 'profilePlayers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1887493084}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: 'profilePlayers.Array.data[1]'
+      value: 
+      objectReference: {fileID: 1401926482}
+    - target: {fileID: 8217333366439810507, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
+      propertyPath: 'profilePlayers.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2004322051}
     - target: {fileID: 9217618931380790755, guid: 66466f9428c8e714aac2ebaa322283b8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1187,6 +1203,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b638af21a19b4e142bcbae267b13cfdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurpriseEventManager
+--- !u!114 &1401926482 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8248292158248221497, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+  m_PrefabInstance: {fileID: 942637795}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d811ba91d639fc43a3bca4b44807bf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineUIPlayer
 --- !u!1 &1471236356 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3979135990096328168, guid: 5aa30ca698ca4da45acb08f600132a87, type: 3}
@@ -1508,6 +1535,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75b4cc834a20b4a419f2ea686bd5feba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProfileSlotUI
+--- !u!114 &1887493084 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6619304647491826578, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+  m_PrefabInstance: {fileID: 942637795}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d811ba91d639fc43a3bca4b44807bf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineUIPlayer
 --- !u!1001 &1898389456
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1658,6 +1696,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4757570554385708690, guid: 48be3b5ffebce694fa978dbeb6e21bf3, type: 3}
   m_PrefabInstance: {fileID: 1569432751}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2004322051 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5848349653902868374, guid: f8ba4d9d5636ef24abc7ee7ae3f838db, type: 3}
+  m_PrefabInstance: {fileID: 942637795}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d811ba91d639fc43a3bca4b44807bf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineUIPlayer
 --- !u!1 &2025149109
 GameObject:
   m_ObjectHideFlags: 0
@@ -2937,6 +2986,22 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7481020774762849161, guid: adfa215dfa2b9bc4a82799c3b19f8b39, type: 3}
+      propertyPath: p1ProfilePlayer
+      value: 
+      objectReference: {fileID: 2004322051}
+    - target: {fileID: 7481020774762849161, guid: adfa215dfa2b9bc4a82799c3b19f8b39, type: 3}
+      propertyPath: p2ProfilePlayers.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7481020774762849161, guid: adfa215dfa2b9bc4a82799c3b19f8b39, type: 3}
+      propertyPath: 'p2ProfilePlayers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1401926482}
+    - target: {fileID: 7481020774762849161, guid: adfa215dfa2b9bc4a82799c3b19f8b39, type: 3}
+      propertyPath: 'p2ProfilePlayers.Array.data[1]'
+      value: 
+      objectReference: {fileID: 1887493084}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
