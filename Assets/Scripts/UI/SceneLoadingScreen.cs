@@ -11,16 +11,18 @@ public sealed class SceneLoadingScreen : MonoBehaviour
 {
     private const float MinimumDisplaySeconds = 1.1f;
     private const float ReadyToActivateProgress = 0.9f;
+    private const float EarliestActivationSeconds = 0.45f;
+    private const float MaxProgressWhileActivating = 0.85f;
     private const float FillSpeed = 2f;
     private const float FillWidth = 820f;
-    private const float FadeOutSeconds = 0.16f;
+    private const float FadeOutSeconds = 0.22f;
 
     private static SceneLoadingScreen activeScreen;
     private static LoadingAssets sharedAssets;
     [SerializeField] private LoadingAssets sceneAssets;
     private readonly List<Object> runtimeAssets = new();
+    private readonly List<SkeletonAnimation> loadingAnimations = new();
     private RawImage fill;
-    private Image transitionCover;
 
     public static bool IsLoading => activeScreen != null;
 
@@ -40,7 +42,7 @@ public sealed class SceneLoadingScreen : MonoBehaviour
         }
 
         var root = new GameObject("Scene Loading Screen", typeof(RectTransform), typeof(Canvas),
-            typeof(CanvasScaler), typeof(GraphicRaycaster));
+            typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup));
         activeScreen = root.AddComponent<SceneLoadingScreen>();
         DontDestroyOnLoad(root);
         EventSystem.current?.SetSelectedGameObject(null);
@@ -54,7 +56,6 @@ public sealed class SceneLoadingScreen : MonoBehaviour
         {
             BuildView();
             SetProgress(0f);
-            float shownAt = Time.realtimeSinceStartup;
             yield return null;
 
             // Give the overlay more frame time while Unity integrates scene assets.
@@ -65,48 +66,50 @@ public sealed class SceneLoadingScreen : MonoBehaviour
             if (operation == null) yield break;
             operation.allowSceneActivation = false;
 
+            float displayElapsed = 0f;
             float displayedProgress = 0f;
-            while (displayedProgress < ReadyToActivateProgress)
+            while (displayedProgress < 1f)
             {
-                float elapsed = Time.realtimeSinceStartup - shownAt;
-                float pacedProgress = ReadyToActivateProgress * Mathf.Clamp01(elapsed / MinimumDisplaySeconds);
-                displayedProgress = AdvanceProgress(displayedProgress, Mathf.Min(operation.progress, pacedProgress));
-                yield return null;
+                // Keep a long activation frame from skipping the rest of the visible animation.
+                float frameTime = Mathf.Min(Time.unscaledDeltaTime, 1f / 30f);
+                displayElapsed += frameTime;
+                if (!operation.allowSceneActivation && operation.progress >= ReadyToActivateProgress &&
+                    displayElapsed >= EarliestActivationSeconds)
+                {
+                    operation.allowSceneActivation = true;
+                }
+
+                float availableProgress = operation.isDone ? 1f : Mathf.Min(operation.progress, MaxProgressWhileActivating);
+                float pacedProgress = Mathf.Clamp01(displayElapsed / MinimumDisplaySeconds);
+                float nextProgress = Mathf.MoveTowards(displayedProgress,
+                    Mathf.Min(availableProgress, pacedProgress), FillSpeed * frameTime);
+                if (nextProgress != displayedProgress)
+                {
+                    displayedProgress = nextProgress;
+                    SetProgress(displayedProgress);
+                }
+                if (displayedProgress < 1f)
+                    yield return null;
             }
 
-            // The scene data is ready. Cover the animated UI before Unity activates the scene.
+            CanvasGroup panel = GetComponent<CanvasGroup>();
+            foreach (SkeletonAnimation animation in loadingAnimations)
+                animation.timeScale = 0f;
+
             float fadeElapsed = 0f;
             while (fadeElapsed < FadeOutSeconds)
             {
                 fadeElapsed += Mathf.Min(Time.unscaledDeltaTime, 1f / 30f);
                 float fadeProgress = Mathf.Clamp01(fadeElapsed / FadeOutSeconds);
-                SetProgress(Mathf.Lerp(ReadyToActivateProgress, 1f, fadeProgress));
-                Color coverColor = transitionCover.color;
-                coverColor.a = Mathf.SmoothStep(0f, 1f, fadeProgress);
-                transitionCover.color = coverColor;
+                panel.alpha = Mathf.SmoothStep(1f, 0f, fadeProgress);
                 yield return null;
             }
-
-            operation.allowSceneActivation = true;
-            yield return operation;
-
-            // Let the destination scene's Start methods register their network callbacks.
-            yield return null;
         }
         finally
         {
             Application.backgroundLoadingPriority = previousPriority;
             Destroy(gameObject);
         }
-    }
-
-    private float AdvanceProgress(float current, float target)
-    {
-        float frameTime = Mathf.Min(Time.unscaledDeltaTime, 1f / 30f);
-        float next = Mathf.MoveTowards(current, target, FillSpeed * frameTime);
-        if (next != current)
-            SetProgress(next);
-        return next;
     }
 
     private void BuildView()
@@ -137,16 +140,6 @@ public sealed class SceneLoadingScreen : MonoBehaviour
 
         AddAnimation(assets.obit, "animation", new Vector2(0f, 40f), assets.material);
         AddAnimation(assets.text, "ani2", new Vector2(0f, -312f), assets.material);
-
-        transitionCover = new GameObject("Transition Cover", typeof(RectTransform)).AddComponent<Image>();
-        RectTransform coverRect = transitionCover.rectTransform;
-        coverRect.SetParent(transform, false);
-        coverRect.anchorMin = Vector2.zero;
-        coverRect.anchorMax = Vector2.one;
-        coverRect.offsetMin = Vector2.zero;
-        coverRect.offsetMax = Vector2.zero;
-        transitionCover.color = new Color32(8, 8, 22, 0);
-        transitionCover.raycastTarget = false;
     }
 
     private RawImage AddImage(string name, Texture2D texture, Vector2 position, Vector2 size)
@@ -182,6 +175,7 @@ public sealed class SceneLoadingScreen : MonoBehaviour
         components.skeletonRenderer.raycastTarget = false;
         components.skeletonAnimation.unscaledTime = true;
         components.skeletonAnimation.AnimationState?.SetAnimation(0, animation, true);
+        loadingAnimations.Add(components.skeletonAnimation);
     }
 
     private void SetProgress(float progress)
