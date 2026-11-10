@@ -307,6 +307,31 @@ public class TutorialManager : MonoBehaviour
     {
         InitializeTutorial();
 
+        if (playTutorialBgmOnStart && tutorialBgmClip != null &&
+            tutorialBgmClip.loadState == AudioDataLoadState.Unloaded)
+        {
+            tutorialBgmClip.LoadAudioData();
+        }
+
+        while (SceneLoadingScreen.IsLoading)
+            yield return null;
+
+        if (playTutorialBgmOnStart && tutorialBgmClip != null)
+        {
+            float audioDeadline = Time.realtimeSinceStartup + 10f;
+            while (tutorialBgmClip.loadState == AudioDataLoadState.Loading &&
+                   Time.realtimeSinceStartup < audioDeadline)
+            {
+                yield return null;
+            }
+        }
+
+        // Use the same scheduled start for the music and gameplay after the scene reveal.
+        tutorialStartDspTime = AudioSettings.dspTime + Mathf.Max(0.05f, tutorialStartLeadTime);
+        RhythmClock.Instance?.StartClock(tutorialStartDspTime);
+        StartTutorialBgm(tutorialStartDspTime);
+        StartGuideMetronome(tutorialStartDspTime);
+
         yield return WaitUntilDspTime(tutorialStartDspTime);
 
         currentStep = TutorialStep.IntroDialogue;
@@ -354,15 +379,9 @@ public class TutorialManager : MonoBehaviour
             hud.gameObject.SetActive(true);
             Debug.LogWarning("TutorialManager: HUD 루트가 비활성화되어 있어 강제로 활성화함.");
         }
-        tutorialStartDspTime = AudioSettings.dspTime + Mathf.Max(0f, tutorialStartLeadTime);
-
         RhythmClock.Instance?.SetBpm(tutorialBpm);
-        RhythmClock.Instance?.StartClock(tutorialStartDspTime);
 
         SoundManager.Instance?.StopBgm();
-        
-        StartTutorialBgm(tutorialStartDspTime);
-        StartGuideMetronome(tutorialStartDspTime);
         PrepareDirectHitSources();
 
         dialoguePlayer?.SetBpm(tutorialBpm);
@@ -1717,6 +1736,12 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        if (tutorialBgmClip.loadState != AudioDataLoadState.Loaded)
+        {
+            Debug.LogWarning($"TutorialManager: BGM audio data unavailable ({tutorialBgmClip.loadState}).");
+            return;
+        }
+
         if (tutorialBgmSource == null)
         {
             GameObject sourceObject = new GameObject("TutorialBgmSource");
@@ -1734,13 +1759,12 @@ public class TutorialManager : MonoBehaviour
         tutorialBgmSource.spatialBlend = 0f;
         tutorialBgmSource.outputAudioMixerGroup = null;
 
-        double safeStartDspTime = Math.Max(startDspTime, AudioSettings.dspTime + 0.05);
         ApplyTutorialSoundVolumes();
-        tutorialBgmSource.PlayScheduled(safeStartDspTime);
+        tutorialBgmSource.PlayScheduled(startDspTime);
 
         Debug.Log(
             $"TutorialManager: 튜토리얼 BGM 예약 재생 / " +
-            $"clip:{tutorialBgmClip.name}, start:{safeStartDspTime:0.000}, loop:{loopTutorialBgm}"
+            $"clip:{tutorialBgmClip.name}, start:{startDspTime:0.000}, loop:{loopTutorialBgm}"
         );
     }
 

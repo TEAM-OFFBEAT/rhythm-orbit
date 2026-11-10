@@ -109,7 +109,7 @@ public class SceneInputRouter : MonoBehaviour
 
         void HandleWhenReady(InputAction.CallbackContext context)
         {
-            if (!SceneLoadingScreen.IsLoading)
+            if (!SceneLoadingScreen.IsLoading && !SynopsisVideoPlayer.IsPlaying)
                 handler(context);
         }
 

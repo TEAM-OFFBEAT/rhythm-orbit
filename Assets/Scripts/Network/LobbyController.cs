@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.Video;
 using TMPro;
 using System.Net.NetworkInformation;
 
@@ -46,12 +48,54 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     [SerializeField] private string mainLoopSceneName = "MainLoop";
     [SerializeField] private string tutorialSceneName = "Tutorial";
+    [SerializeField] private VideoClip synopsisClip;
+
+    private const string SynopsisSeenKey = "RhythmOrbit.SynopsisSeen";
 
     private TimeSignatureMode pendingMode;
 
     private void Start()
     {
+#if !UNITY_EDITOR
+        if (synopsisClip != null && PlayerPrefs.GetInt(SynopsisSeenKey, 0) == 0)
+        {
+            PlaySynopsisAndTutorial();
+            return;
+        }
+#endif
         PlayLobbyBgmOnEnter();
+    }
+
+    private void Update()
+    {
+        if (mainMenuPanel.activeInHierarchy && !SceneLoadingScreen.IsLoading &&
+            !SynopsisVideoPlayer.IsPlaying && Keyboard.current?.f1Key.wasPressedThisFrame == true)
+        {
+            PlaySynopsisAndTutorial();
+        }
+    }
+
+    private void PlaySynopsisAndTutorial()
+    {
+        if (synopsisClip == null)
+        {
+            Debug.LogWarning("LobbyController: Synopsis Clip is missing. Opening the tutorial.");
+            GoToTutorial();
+            return;
+        }
+
+        SoundManager.Instance?.StopBgm();
+        SynopsisVideoPlayer.Play(synopsisClip, completed =>
+        {
+#if !UNITY_EDITOR
+            if (completed)
+            {
+                PlayerPrefs.SetInt(SynopsisSeenKey, 1);
+                PlayerPrefs.Save();
+            }
+#endif
+            GoToTutorial();
+        });
     }
     
     private void Awake()

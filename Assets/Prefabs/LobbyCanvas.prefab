@@ -143,6 +143,7 @@ MonoBehaviour:
   modeSelectStatusText: {fileID: 4155276796645999053}
   mainLoopSceneName: MainLoop
   tutorialSceneName: Tutorial
+  synopsisClip: {fileID: 32900000, guid: 2e9c8eec77424bf58d085ca4a27cf3d0, type: 3}
 --- !u!114 &6882870843936337364
 MonoBehaviour:
   m_ObjectHideFlags: 0
