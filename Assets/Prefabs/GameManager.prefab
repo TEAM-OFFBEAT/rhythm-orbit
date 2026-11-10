@@ -94,14 +94,14 @@ MonoBehaviour:
     maxTargetNoteCount: 3
     roundUpSfx: 7
     introTurns: 2
-    totalTurns: 12
+    totalTurns: 13
     notesPerTurn: 6
   - roundName: R2
     bpm: 132
     minTargetNoteCount: 2
     maxTargetNoteCount: 4
     roundUpSfx: 8
-    introTurns: 2
+    introTurns: 4
     totalTurns: 20
     notesPerTurn: 6
   - roundName: R3
@@ -109,7 +109,7 @@ MonoBehaviour:
     minTargetNoteCount: 2
     maxTargetNoteCount: 5
     roundUpSfx: 9
-    introTurns: 2
+    introTurns: 4
     totalTurns: 16
     notesPerTurn: 6
   useMillisecondStartDelay: 1
