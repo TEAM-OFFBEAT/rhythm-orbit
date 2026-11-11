@@ -44,7 +44,13 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     [SerializeField] private GameObject modeSelectPanel;
     [SerializeField] private Button modeButton44;
     [SerializeField] private Button modeButton34;
-    [SerializeField] private TMP_Text modeSelectStatusText;
+    [SerializeField] private Button cancelModeButton;
+    // [SerializeField] private TMP_Text modeSelectStatusText;
+
+    [Header("Log Panel")]
+    [SerializeField] private LobbyExitUI lobbyExitUI;
+    [SerializeField] private GameObject logPanel;
+    [SerializeField] private Button logReturnButton;
 
     [SerializeField] private string mainLoopSceneName = "MainLoop";
     [SerializeField] private string tutorialSceneName = "Tutorial";
@@ -118,6 +124,10 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         cancelJoinButton.onClick.AddListener(OnCancel);
         modeButton44?.onClick.AddListener(() => OnModeButtonClicked(TimeSignatureMode.FourFour));
         modeButton34?.onClick.AddListener(() => OnModeButtonClicked(TimeSignatureMode.ThreeFour));
+        cancelModeButton?.onClick.AddListener(() => lobbyExitUI?.ToggleModeExit());
+        logReturnButton?.onClick.AddListener(ShowMainMenu);
+        // modeExitYesButton: LobbyExitUI가 아닌 여기서 연결 (앱 종료가 아닌 메인 메뉴 복귀)
+        lobbyExitUI?.SetModeExitConfirmAction(OnCancel);
 
         networkManager.OnConnected += HandleConnected;
         networkManager.OnConnectionFailed += HandleConnectionFailed;
@@ -197,6 +207,12 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void HandleLobbyDisconnected()
     {
+        if (modeSelectPanel != null && modeSelectPanel.activeSelf && logPanel != null)
+        {
+            logPanel.SetActive(true);
+            return;
+        }
+
         ShowMainMenu();
     }
 
@@ -213,7 +229,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         pendingMode = mode;
         if (modeButton44 != null) modeButton44.interactable = false;
         if (modeButton34 != null) modeButton34.interactable = false;
-        if (modeSelectStatusText != null) modeSelectStatusText.text = "최종 동기화 중...";
+        // if (modeSelectStatusText != null) modeSelectStatusText.text = "최종 동기화 중...";
         networkManager.TimeSync.StartSync(OnFinalSyncComplete);
     }
 
@@ -260,7 +276,10 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         modeSelectPanel?.SetActive(true);
         if (modeButton44 != null) modeButton44.interactable = enableButtons;
         if (modeButton34 != null) modeButton34.interactable = enableButtons;
-        if (modeSelectStatusText != null) modeSelectStatusText.text = statusText;
+        // if (modeSelectStatusText != null) modeSelectStatusText.text = statusText;
+
+        SetModeButtonEnabled(modeButton44?.gameObject, enableButtons);
+        SetModeButtonEnabled(modeButton34?.gameObject, enableButtons);
     }
 
     // ── 씬 전환 ──────────────────────────────────────────────────────────────
@@ -281,9 +300,19 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         (modeSelectPanel  != null && modeSelectPanel.activeSelf);
 
     /// <summary>
-    /// ESC 입력으로 현재 서브패널을 닫고 메인 메뉴로 돌아간다.
+    /// ESC 입력으로 현재 서브패널을 닫는다.
+    /// 모드 선택 중이면 종료 확인창을 열고, 그 외엔 메인 메뉴로 돌아간다.
     /// </summary>
-    public void Close() => OnCancel();
+    public void Close()
+    {
+        if (modeSelectPanel != null && modeSelectPanel.activeSelf)
+        {
+            lobbyExitUI?.ToggleModeExit();
+            return;
+        }
+
+        OnCancel();
+    }
 
     private void ShowMainMenu()
     {
@@ -291,6 +320,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         hostWaitingPanel.SetActive(false);
         joinPanel.SetActive(false);
         modeSelectPanel?.SetActive(false);
+        logPanel?.SetActive(false);
 
         connectButton.interactable = true;
     }
@@ -322,6 +352,15 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         }
 
         SceneLoadingScreen.Load(mainLoopSceneName);
+    }
+
+    private void SetModeButtonEnabled(GameObject btn, bool enabled)
+    {
+        if (btn == null) return;
+        var cg = btn.GetComponent<CanvasGroup>();
+        if (cg == null) return;
+        cg.interactable = enabled;
+        cg.blocksRaycasts = enabled;
     }
 
     public void GoToTutorial()

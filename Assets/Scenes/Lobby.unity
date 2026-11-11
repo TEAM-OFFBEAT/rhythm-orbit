@@ -884,10 +884,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: LobbyCanvas
       objectReference: {fileID: 0}
-    - target: {fileID: 7013398977548277012, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 914828969}
     - target: {fileID: 7101178437244378350, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: m_Camera
       value: 
