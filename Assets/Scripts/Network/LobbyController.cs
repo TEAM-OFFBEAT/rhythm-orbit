@@ -31,14 +31,12 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     [Header("Host — 대기 화면")]
     [SerializeField] private TMP_Text roomCodeText;
-    [SerializeField] private TMP_Text waitingStatusText;
     [SerializeField] private Button cancelHostButton;
 
     [Header("Join Room")]
     [SerializeField] private TMP_InputField codeInputField;
     [SerializeField] private Button connectButton;
     [SerializeField] private Button cancelJoinButton;
-    [SerializeField] private TMP_Text joinStatusText;
 
     [Header("Mode Select Panel")]
     [SerializeField] private GameObject modeSelectPanel;
@@ -168,14 +166,12 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         mainMenuPanel.SetActive(false);
         hostWaitingPanel.SetActive(true);
         roomCodeText.text = localIP;
-        waitingStatusText.text = "플레이어 대기 중...";
     }
 
     private void OnJoinRoom()
     {
         mainMenuPanel.SetActive(false);
         joinPanel.SetActive(true);
-        joinStatusText.text = "";
     }
 
     private void OnConnect()
@@ -184,7 +180,6 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         if (string.IsNullOrEmpty(ip)) return;
 
         connectButton.interactable = false;
-        joinStatusText.text = "연결 중...";
         networkManager.Connect(ip);
     }
 
@@ -200,7 +195,6 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void HandleConnectionFailed()
     {
-        joinStatusText.text = "연결에 실패했습니다. IP 주소를 확인해 주세요.";
         connectButton.interactable = true;
     }
 
