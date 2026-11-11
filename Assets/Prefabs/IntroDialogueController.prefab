@@ -169,7 +169,8 @@ MonoBehaviour:
     highlightP2Panel: 0
   introLines34:
   - dialogue:
-      text: "1"
+      text: "새로운 신호를 가진 <b><color=#FFBE00>HAMO</color></b>가
+        나타났습니다!"
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
@@ -183,7 +184,7 @@ MonoBehaviour:
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
-      text: "2"
+      text: "이웃 행성에서 찾아온 친구죠."
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
@@ -197,7 +198,8 @@ MonoBehaviour:
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
-      text: "3"
+      text: "<b><color=#FFBE00>HAMO</color></b>는 조금 다른 세
+        박자의 리듬으로 소통합니다."
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
@@ -211,7 +213,7 @@ MonoBehaviour:
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
-      text: "4"
+      text: "새로운 <b>3/4 교신</b>을 이어가 보세요!"
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
