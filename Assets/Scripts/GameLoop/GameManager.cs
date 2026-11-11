@@ -220,6 +220,7 @@ public class GameManager : MonoBehaviour
     // 패널 메세지 표시에 필요한 턴 상태 캐시
     private string currentAttackMessage = "";
     private string defendingMessage = "";
+    private int currentDefenderPlayerId;
     private bool currentAttackSuccess;
     private int currentJudgmentIndex;
     private int currentPhaseNoteCount; // 네트워크 공격자 클라이언트에서 방어 종료 판단에 사용
@@ -736,6 +737,7 @@ public class GameManager : MonoBehaviour
     {
         currentJudgmentIndex = 0;
         defendingMessage = currentAttackMessage;
+        currentDefenderPlayerId = GetDefenderPlayerId();
         hud?.ResetCombo();
 
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
@@ -877,7 +879,14 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleAttackBadTimingInput()
     {
-        sanitySystem?.ApplyDirect(attackerPlayerId, sanitySystem.BadTimingInputPenalty);
+        if (sanitySystem == null) return;
+        int penalty = sanitySystem.BadTimingInputPenalty;
+        sanitySystem.ApplyDirect(attackerPlayerId, penalty);
+        if (NetworkManager.Instance != null && penalty > 0)
+        {
+            byte targetId = (byte)attackerPlayerId;
+            NetworkManager.Instance.Send(w => PacketSerializer.WriteSanityChange(w, targetId, penalty));
+        }
     }
 
     /// <summary>
@@ -980,7 +989,7 @@ public class GameManager : MonoBehaviour
         Judgment[] judgments = result.Judgments ?? new Judgment[0];
         string msg = randomMessageProvider?.GetDefenderPanelMessage(
             defendingMessage, judgments, attackSuccess: judgments.Length == 0 || result.MissCount <= 0) ?? "";
-        if (myLocalPlayerId == 1)
+        if (currentDefenderPlayerId == 1)
             hud?.ShowP1PanelMessage(msg);
         else
             hud?.ShowP2PanelMessage(msg);

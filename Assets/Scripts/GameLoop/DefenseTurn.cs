@@ -741,6 +741,8 @@ public class DefenseTurn : MonoBehaviour
 
         // 중복 감점은 막되, 화면의 유령은 판정선까지 계속 이동한다.
         ghostNotes.Remove(ghostNote);
+        judgments.Add(Judgment.MISS);
+        OnJudgment?.Invoke(Judgment.MISS);
         OnGhostNoteHit?.Invoke(ghostNote);
 
         Debug.Log(
