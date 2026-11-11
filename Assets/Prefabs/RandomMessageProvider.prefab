@@ -45,6 +45,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RandomMessageProvider
   messageGroups:
+  - characterCount: 1
+    messages:
+    - "별"
+    - "응"
+    - "얍"
+    - "쿵"
+    - "빛"
   - characterCount: 2
     messages:
     - "안녕"
