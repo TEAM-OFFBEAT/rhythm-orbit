@@ -11,6 +11,7 @@ public enum PacketType
     JUDGMENT,          // 방어 판정 결과 — 공격자 미러뷰 시각 동기화 전용 (정신력 처리 없음)
     SANITY_CHANGE,     // 정신력 변화량 — 공격 패널티 + 방어 미스 수치 동기화
     REPLAY_REQUEST,    // 다시하기 요청
+    RETURN_TO_LOBBY,   // 양측 다시하기 동의 후 로비 모드 선택 창으로 복귀
     SCENE_READY,       // 양측 MainLoop 씬 로드 완료 확인
     GAME_CLOCK_SET     // Host → Guest: 양측 SCENE_READY 후 Host가 계산한 fresh 게임 시작 DSP 시간
 }

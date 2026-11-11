@@ -130,7 +130,10 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         networkManager.OnDisconnected += HandleLobbyDisconnected;
         networkManager.OnGameStart += HandleGameStart;
 
-        ShowMainMenu();
+        if (networkManager.IsConnected)
+            ShowModeSelect(enableButtons: networkManager.IsHost, "");
+        else
+            ShowMainMenu();
     }
 
     private void OnDestroy()

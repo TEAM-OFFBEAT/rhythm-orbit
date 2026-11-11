@@ -53,6 +53,7 @@ public class NetworkManager : Singleton<NetworkManager>
     public event Action<JudgmentPacket> OnJudgmentReceived;
     public event Action<SanityChangePacket> OnSanityChange;
     public event Action<ReplayRequestPacket> OnReplayRequest;
+    public event Action OnReturnToLobby;
     public event Action OnSceneReady;
     public event Action<double> OnGameClockSet;
 
@@ -269,6 +270,9 @@ public class NetworkManager : Singleton<NetworkManager>
                             mainThreadQueue.Enqueue(() => OnReplayRequest?.Invoke(packet));
                             break;
                         }
+                    case PacketType.RETURN_TO_LOBBY:
+                        mainThreadQueue.Enqueue(() => OnReturnToLobby?.Invoke());
+                        break;
                     case PacketType.SCENE_READY:
                         mainThreadQueue.Enqueue(() => OnSceneReady?.Invoke());
                         break;

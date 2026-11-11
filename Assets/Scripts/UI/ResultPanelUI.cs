@@ -37,9 +37,6 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private string lobbySceneName = "Lobby";
     [SerializeField] private string mainLoopSceneName = "MainLoop";
 
-    [Header("Network Replay")]
-    [SerializeField, Min(0.1f)] private float networkReplayLeadTime = 1.0f;
-
     private bool localReplayRequested;
     private bool remoteReplayRequested;
     private bool isOpponentDisconnected;
@@ -186,7 +183,7 @@ public class ResultPanelUI : MonoBehaviour
         }
 
         net.OnReplayRequest += HandleReplayRequest;
-        net.OnGameStart += HandleNetworkGameStart;
+        net.OnReturnToLobby += HandleReturnToLobby;
         net.OnDisconnected += HandleNetworkDisconnected;
     }
 
@@ -200,7 +197,7 @@ public class ResultPanelUI : MonoBehaviour
         }
 
         net.OnReplayRequest -= HandleReplayRequest;
-        net.OnGameStart -= HandleNetworkGameStart;
+        net.OnReturnToLobby -= HandleReturnToLobby;
         net.OnDisconnected -= HandleNetworkDisconnected;
     }
 
@@ -329,74 +326,23 @@ public class ResultPanelUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Host가 새 세션 데이터를 만들고 Guest에게 GAME_START 패킷을 보내 다시 시작한다.
+    /// Host가 양측 다시하기 동의를 확인하고 로비 모드 선택 창으로 복귀 신호를 보낸다.
     /// </summary>
     private void StartNetworkReplayAsHost(NetworkManager net)
     {
-        double hostGameStartDspTime = AudioSettings.dspTime + networkReplayLeadTime;
-        double clockOffset = net.TimeSync != null ? net.TimeSync.ClockOffset : 0.0;
-        int sharedSeed = new System.Random().Next();
-
-        net.SetSessionData(
-            localPlayerId: 1,
-            firstAttackerId: 1,
-            localGameStartDspTime: hostGameStartDspTime,
-            sharedSeed: sharedSeed
-        );
-
-        net.Send(writer =>
-            PacketSerializer.WriteGameStart(
-                writer,
-                myPlayerId: 2,
-                firstAttackerId: 1,
-                clockOffset: clockOffset,
-                gameStartDspTime: hostGameStartDspTime,
-                sharedSeed: sharedSeed
-            )
-        );
-
+        net.Send(PacketSerializer.WriteReturnToLobby);
         Time.timeScale = 1f;
-        SceneLoadingScreen.Load(mainLoopSceneName);
+        SceneLoadingScreen.Load(lobbySceneName);
     }
 
     /// <summary>
-    /// Guest가 Host의 GAME_START 패킷을 받았을 때 MainLoop로 재진입한다.
+    /// Guest가 Host의 RETURN_TO_LOBBY 패킷을 받았을 때 로비로 복귀한다.
     /// </summary>
-    private void HandleNetworkGameStart(GameStartPacket packet)
+    private void HandleReturnToLobby()
     {
-        if (!gameObject.activeInHierarchy)
-        {
-            return;
-        }
-
-        NetworkManager net = NetworkManager.Instance;
-
-        if (net == null)
-        {
-            return;
-        }
-
-        if (net.IsHost)
-        {
-            return;
-        }
-
-        if (net.TimeSync != null)
-        {
-            net.TimeSync.SetGuestOffset(packet.clockOffset);
-        }
-
-        double guestGameStartDspTime = packet.gameStartDspTime + packet.clockOffset;
-
-        net.SetSessionData(
-            localPlayerId: packet.myPlayerId,
-            firstAttackerId: packet.firstAttackerId,
-            localGameStartDspTime: guestGameStartDspTime,
-            sharedSeed: packet.sharedSeed
-        );
-
+        if (!gameObject.activeInHierarchy) return;
         Time.timeScale = 1f;
-        SceneLoadingScreen.Load(mainLoopSceneName);
+        SceneLoadingScreen.Load(lobbySceneName);
     }
 
     private void SetReplayButtonsInteractable(bool interactable)

@@ -171,6 +171,10 @@ public static class PacketSerializer
         return (byte)playerId;
     }    
 
+    /// <summary>양측 다시하기 동의 후 로비 모드 선택 창으로 복귀. 페이로드 없음.</summary>
+    public static void WriteReturnToLobby(BinaryWriter w)
+        => w.Write((byte)PacketType.RETURN_TO_LOBBY);
+
     public static void WriteReplayRequest(BinaryWriter writer, byte requesterPlayerId)
     {
         writer.Write((byte)PacketType.REPLAY_REQUEST);
