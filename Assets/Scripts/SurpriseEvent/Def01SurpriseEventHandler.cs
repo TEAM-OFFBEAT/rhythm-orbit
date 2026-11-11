@@ -176,7 +176,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
         double noteDuration = GetNoteDurationSeconds();
 
-        if (noteDuration <= 0.0 || attackTurn.AttackDuration <= 0.0)
+        if (noteDuration <= 0.0 || attackTurnRenderer.AttackDuration <= 0.0)
         {
             Debug.LogWarning("DEF_01: 노트 길이 또는 공격 턴 길이가 올바르지 않음.");
             return;
@@ -445,6 +445,10 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             return;
         }
 
+        foreach (NoteData note in defenseTurn.PendingAttackNotes)
+            realNoteSteps.Add(GetGridStep(note.noteRelativeTime, cachedNoteDuration));
+
+        ReconcileGhostSlots(allowRelocation: true);
         defenseTurn.SetGhostSignalNotes(preparedGhostNotes);
 
         ghostSignalActivated = true;
@@ -621,17 +625,13 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             return;
         }
 
-        int realStep = GetGridStep(
-            note.noteRelativeTime,
-            cachedNoteDuration);
+        realNoteSteps.Add(GetGridStep(note.noteRelativeTime, cachedNoteDuration));
+        if (removeGhostIfRealNoteAppearsOnSameStep || ghostSignalActivated)
+            ReconcileGhostSlots(allowRelocation: !ghostSignalActivated);
+    }
 
-        realNoteSteps.Add(realStep);
-
-        if (!removeGhostIfRealNoteAppearsOnSameStep)
-        {
-            return;
-        }
-
+    private void ReconcileGhostSlots(bool allowRelocation)
+    {
         for (int i = preparedGhostNotes.Count - 1; i >= 0; i--)
         {
             GhostNoteData ghostNote = preparedGhostNotes[i];
@@ -646,22 +646,20 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
                 ghostNote.noteRelativeTime,
                 cachedNoteDuration);
 
-            if (ghostStep != realStep)
-            {
+            if (!realNoteSteps.Contains(ghostStep))
                 continue;
-            }
 
-            bool relocated = TryRelocateGhostNote(ghostNote);
+            if (allowRelocation && TryRelocateGhostNote(ghostNote))
+                continue;
 
-            if (!relocated)
-            {
+            if (ghostSignalActivated)
+                defenseTurn.RemoveGhostSignalNote(ghostNote);
+            else
                 attackTurnRenderer?.RemoveGhostNote(ghostNote.noteId);
-                ghostFadeStartTimes.Remove(ghostNote.noteId);
-                preparedGhostNotes.RemoveAt(i);
+            ghostFadeStartTimes.Remove(ghostNote.noteId);
+            preparedGhostNotes.RemoveAt(i);
 
-                Debug.Log(
-                    $"DEF_01: 옮길 빈 칸이 없어 유령 노트 제거 / step:{realStep}");
-            }
+            Debug.Log($"DEF_01: 실제 노트와 겹친 유령 노트 제거 / step:{ghostStep}");
         }
     }
 

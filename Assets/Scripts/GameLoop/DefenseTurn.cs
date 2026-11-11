@@ -50,6 +50,7 @@ public class DefenseTurn : MonoBehaviour
 
     // 공격 중 수신한 노트 목록. 외부에서는 읽기만 한다.
     public IReadOnlyList<NoteData> ReceivedAttackNotes => receivedNotes;
+    internal IReadOnlyList<NoteData> PendingAttackNotes => pendingNotes;
 
     /// <summary>
     /// 현재 방어 턴이 진행 중인지 외부에서 읽기 위한 값.
@@ -259,7 +260,10 @@ public class DefenseTurn : MonoBehaviour
             judgeTime = localDefenseStart + packet.noteRelativeTime
         };
 
-        receivedNotes.Add(note);
+        if (isRunning && networkManager != null && localDefenseStart == currentDefenseStartDspTime)
+            pendingNotes.Add(note);
+        else
+            receivedNotes.Add(note);
 
         if (attackTurnRenderer != null)
         {
@@ -787,6 +791,12 @@ public class DefenseTurn : MonoBehaviour
 
             ResolveGhostNotePassed(ghostNote);
         }
+    }
+
+    internal void RemoveGhostSignalNote(GhostNoteData ghostNote)
+    {
+        ghostNotes.Remove(ghostNote);
+        attackTurnRenderer?.RemoveGhostNote(ghostNote.noteId);
     }
 
     private void RemoveGhostNoteInternal(GhostNoteData ghostNote)
