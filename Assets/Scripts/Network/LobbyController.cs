@@ -62,14 +62,11 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void Start()
     {
+        PlayLobbyBgmOnEnter();
 #if !UNITY_EDITOR
         if (synopsisClip != null && PlayerPrefs.GetInt(SynopsisSeenKey, 0) == 0)
-        {
             PlaySynopsisAndTutorial();
-            return;
-        }
 #endif
-        PlayLobbyBgmOnEnter();
     }
 
     private void Update()
@@ -90,7 +87,6 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
             return;
         }
 
-        SoundManager.Instance?.StopBgm();
         SynopsisVideoPlayer.Play(synopsisClip, completed =>
         {
 #if !UNITY_EDITOR
