@@ -21,6 +21,11 @@ public class IntroDialogueController : MonoBehaviour
     [SerializeField] private HUDPlayerSlotUI p1Slot;
     [SerializeField] private HUDPlayerSlotUI p2Slot;
 
+    [Header("Player Label")]
+    [SerializeField] private Sprite meSprite;
+    [SerializeField] private Sprite youSprite;
+    private int localPlayerId = 1;
+
     private Coroutine introCoroutine;
 
     private void OnDisable()
@@ -77,6 +82,15 @@ public class IntroDialogueController : MonoBehaviour
         useThreeFourLines = isThreeFour;
     }
 
+    /// <summary>
+    /// 로컬 플레이어 ID(1 또는 2)를 설정한다. ME/YOU 라벨 배치에 사용한다.
+    /// GameManager.Awake()에서 호출한다.
+    /// </summary>
+    public void SetLocalPlayerId(int id)
+    {
+        localPlayerId = id;
+    }
+
     private IEnumerator RunIntro(double startDspTime)
     {
         IntroGuideLineData[] activeLines = useThreeFourLines && introLines34?.Length > 0
@@ -87,6 +101,8 @@ public class IntroDialogueController : MonoBehaviour
 
         currentActiveLines = activeLines;
         TutorialGuideLineData[] dialogueLines = ExtractDialogueLines(activeLines);
+
+        ShowPlayerLabels();
 
         yield return dialoguePlayer.PlayLines(
             dialogueLines,
@@ -117,6 +133,20 @@ public class IntroDialogueController : MonoBehaviour
     {
         p1Slot?.SetActiveState(false);
         p2Slot?.SetActiveState(false);
+        HidePlayerLabels();
+    }
+
+    private void ShowPlayerLabels()
+    {
+        bool localIsP1 = localPlayerId == 1;
+        p1Slot?.ShowLabel(localIsP1 ? meSprite : youSprite);
+        p2Slot?.ShowLabel(localIsP1 ? youSprite : meSprite);
+    }
+
+    private void HidePlayerLabels()
+    {
+        p1Slot?.HideLabel();
+        p2Slot?.HideLabel();
     }
 
     private TutorialGuideLineData[] ExtractDialogueLines(IntroGuideLineData[] lines)

@@ -288,6 +288,8 @@ public class GameManager : MonoBehaviour
         {
             hud.SetupPlayerPerspective(myLocalPlayerId);
         }
+
+        introDialogueController?.SetLocalPlayerId(myLocalPlayerId);
     }
 
     /// <summary>

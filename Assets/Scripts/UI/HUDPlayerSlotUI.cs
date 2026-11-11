@@ -52,6 +52,10 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [SerializeField] private float pulseSpeed = 2f;
     private Coroutine pulseCoroutine;
 
+    [Header("Player Label")]
+    [SerializeField] private Image playerLabelImage;
+    private Coroutine labelPulseCoroutine;
+
     private SpineUIPlayer ActiveSpine =>
         currentMode == TimeSignatureMode.ThreeFour && spineProfile34 != null
             ? spineProfile34
@@ -68,6 +72,7 @@ public class HUDPlayerSlotUI : MonoBehaviour
             SetPortrait(defaultPortrait);
 
         SetActiveState(false);
+        HideLabel();
     }
 
     /// <summary>
@@ -147,6 +152,35 @@ public class HUDPlayerSlotUI : MonoBehaviour
     }
 
     /// <summary>
+    /// 인트로 구간에 ME/YOU 라벨 스프라이트를 표시하고 알파 펄스를 시작한다.
+    /// </summary>
+    public void ShowLabel(Sprite sprite)
+    {
+        if (playerLabelImage == null) return;
+        playerLabelImage.sprite = sprite;
+        playerLabelImage.enabled = sprite != null;
+        if (sprite != null)
+        {
+            if (labelPulseCoroutine != null) StopCoroutine(labelPulseCoroutine);
+            labelPulseCoroutine = StartCoroutine(PulseLabel());
+        }
+    }
+
+    /// <summary>
+    /// ME/YOU 라벨을 숨기고 펄스를 중단한다.
+    /// </summary>
+    public void HideLabel()
+    {
+        if (playerLabelImage == null) return;
+        if (labelPulseCoroutine != null)
+        {
+            StopCoroutine(labelPulseCoroutine);
+            labelPulseCoroutine = null;
+        }
+        playerLabelImage.enabled = false;
+    }
+
+    /// <summary>
     /// 이 플레이어가 현재 턴을 소유하면 하이라이트하고,
     /// 턴을 소유하지 않는 슬롯은 필요할 때 어둡게 덮는다.
     /// </summary>
@@ -181,6 +215,16 @@ public class HUDPlayerSlotUI : MonoBehaviour
         {
             float t = (Mathf.Sin(Time.time * pulseSpeed * Mathf.PI) + 1f) * 0.5f;
             panelImage.color = Color.Lerp(pulseColorMin, pulseColorMax, t);
+            yield return null;
+        }
+    }
+
+    private IEnumerator PulseLabel()
+    {
+        while (true)
+        {
+            float t = (Mathf.Sin(Time.time * pulseSpeed * Mathf.PI) + 1f) * 0.5f;
+            playerLabelImage.color = new Color(1f, 1f, 1f, t);
             yield return null;
         }
     }

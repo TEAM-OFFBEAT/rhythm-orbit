@@ -57,6 +57,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -72,6 +73,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -87,6 +89,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -103,6 +106,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -118,6 +122,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -133,6 +138,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -147,6 +153,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -162,6 +169,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -169,8 +177,8 @@ MonoBehaviour:
     highlightP2Panel: 0
   introLines34:
   - dialogue:
-      text: "새로운 신호를 가진 <b><color=#FFBE00>HAMO</color></b>가
-        나타났습니다!"
+      text: "\uC0C8\uB85C\uC6B4 \uC2E0\uD638\uB97C \uAC00\uC9C4 <b><color=#FFBE00>HAMO</color></b>\uAC00
+        \uB098\uD0C0\uB0AC\uC2B5\uB2C8\uB2E4!"
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
@@ -178,13 +186,14 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
-      text: "이웃 행성에서 찾아온 친구죠."
+      text: "\uC774\uC6C3 \uD589\uC131\uC5D0\uC11C \uCC3E\uC544\uC628 \uCE5C\uAD6C\uC8E0."
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
@@ -192,14 +201,15 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
-      text: "<b><color=#FFBE00>HAMO</color></b>는 조금 다른 세
-        박자의 리듬으로 소통합니다."
+      text: "<b><color=#FFBE00>HAMO</color></b>\uB294 \uC870\uAE08 \uB2E4\uB978 \uC138
+        \uBC15\uC790\uC758 \uB9AC\uB4EC\uC73C\uB85C \uC18C\uD1B5\uD569\uB2C8\uB2E4."
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
@@ -207,13 +217,15 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
     highlightP1Panel: 0
     highlightP2Panel: 0
   - dialogue:
-      text: "새로운 <b>3/4 교신</b>을 이어가 보세요!"
+      text: "\uC0C8\uB85C\uC6B4 <b>3/4 \uAD50\uC2E0</b>\uC744 \uC774\uC5B4\uAC00
+        \uBCF4\uC138\uC694!"
       rymoPortrait: {fileID: 0}
       highlightStars: 0
       highlightAttackJudgeLine: 0
@@ -221,6 +233,7 @@ MonoBehaviour:
       highlightHighBit: 0
       highlightLowBit: 0
       playHighThenLowDemo: 0
+      playAttackTurnDemo: 0
       playDefenseTurnDemo: 0
       lockManualAdvanceUntilVisualCueFinished: 0
       manualAdvanceUnlockDelayBeats: 1
@@ -229,6 +242,8 @@ MonoBehaviour:
   beatsPerLine: 4
   p1Slot: {fileID: 0}
   p2Slot: {fileID: 0}
+  meSprite: {fileID: 6691276168098189968, guid: 9e9030531c721174f802ccb49a4741aa, type: 3}
+  youSprite: {fileID: -5847292940319249463, guid: 9e9030531c721174f802ccb49a4741aa, type: 3}
 --- !u!114 &1549251834048446401
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -259,6 +274,7 @@ MonoBehaviour:
   defaultManualAdvanceLockBeats: 1
   minimumManualAdvanceDelaySeconds: 0.5
   allowSkipTypingWithManualAdvance: 1
+  spinePanel: {fileID: 0}
   fallbackBpm: 90
   hideOnAwake: 1
   useBlinkBetweenLines: 1
