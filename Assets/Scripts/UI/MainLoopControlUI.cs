@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -52,6 +53,34 @@ public class MainLoopControlUI : MonoBehaviour
         RegisterButtons();
         SubscribeNetworkEvents();
         SetStatus(defaultStatusMessage);
+    }
+
+    private void Update()
+    {
+        var keyboard = Keyboard.current;
+        if (keyboard == null || gameManager == null || NetworkManager.Instance != null ||
+            isRestarting || SceneLoadingScreen.IsLoading)
+            return;
+
+        if (keyboard.f3Key.wasPressedThisFrame)
+            StartLocalMode(TimeSignatureMode.ThreeFour);
+        else if (keyboard.f4Key.wasPressedThisFrame)
+            StartLocalMode(TimeSignatureMode.FourFour);
+        else if (keyboard.f10Key.wasPressedThisFrame)
+            StartLocalMode(gameManager.CurrentTimeSignatureMode);
+    }
+
+    private void StartLocalMode(TimeSignatureMode mode)
+    {
+        if (gameManager.IsWaitingForLocalTestStart)
+        {
+            gameManager.StartLocalTest(mode);
+            return;
+        }
+
+        GameManager.LocalTestModeOverride = mode;
+        GameManager.LocalTestAutoStart = true;
+        RestartLocalMainLoop();
     }
 
     private void OnDestroy()

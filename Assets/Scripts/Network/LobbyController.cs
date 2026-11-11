@@ -69,11 +69,19 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void Update()
     {
-        if (mainMenuPanel.activeInHierarchy && !SceneLoadingScreen.IsLoading &&
-            !SynopsisVideoPlayer.IsPlaying && Keyboard.current?.f1Key.wasPressedThisFrame == true)
-        {
+        var keyboard = Keyboard.current;
+        if (keyboard == null || !mainMenuPanel.activeInHierarchy ||
+            SceneLoadingScreen.IsLoading || SynopsisVideoPlayer.IsPlaying)
+            return;
+
+        if (keyboard.f1Key.wasPressedThisFrame)
             PlaySynopsisAndTutorial();
-        }
+        else if (keyboard.f2Key.wasPressedThisFrame)
+            OnLocalTest();
+        else if (keyboard.f3Key.wasPressedThisFrame)
+            LoadLocalTest(TimeSignatureMode.ThreeFour, autoStart: true);
+        else if (keyboard.f4Key.wasPressedThisFrame)
+            LoadLocalTest(TimeSignatureMode.FourFour, autoStart: true);
     }
 
     private void PlaySynopsisAndTutorial()
@@ -279,6 +287,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void LoadMainLoop()
     {
+        SoundManager.Instance?.StopBgm();
         SceneLoadingScreen.Load(mainLoopSceneName);
     }
 
@@ -321,9 +330,13 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     /// <summary>
     /// [임시 모드] 네트워크 없이 로컬 1인 테스트 모드로 MainLoop를 시작한다.
     /// </summary>
-    private void OnLocalTest()
+    private void OnLocalTest() => LoadLocalTest(TimeSignatureMode.FourFour);
+    private void OnLocalTest34() => LoadLocalTest(TimeSignatureMode.ThreeFour);
+
+    private void LoadLocalTest(TimeSignatureMode mode, bool autoStart = false)
     {
-        GameManager.LocalTestModeOverride = TimeSignatureMode.FourFour;
+        GameManager.LocalTestModeOverride = mode;
+        GameManager.LocalTestAutoStart = autoStart;
 
         if (NetworkManager.Instance != null)
         {
@@ -331,20 +344,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
             Destroy(NetworkManager.Instance.gameObject);
         }
 
-        SceneLoadingScreen.Load(mainLoopSceneName);
-    }
-
-    private void OnLocalTest34()
-    {
-        GameManager.LocalTestModeOverride = TimeSignatureMode.ThreeFour;
-
-        if (NetworkManager.Instance != null)
-        {
-            NetworkManager.Instance.Disconnect();
-            Destroy(NetworkManager.Instance.gameObject);
-        }
-
-        SceneLoadingScreen.Load(mainLoopSceneName);
+        LoadMainLoop();
     }
 
     private void SetModeButtonEnabled(GameObject btn, bool enabled)

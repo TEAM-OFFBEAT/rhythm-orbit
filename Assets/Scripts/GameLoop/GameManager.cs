@@ -178,15 +178,24 @@ public class GameManager : MonoBehaviour
 
     // [임시 모드] 로컬 테스트 시 NetworkManager 없이 박자 모드를 지정한다.
     public static TimeSignatureMode? LocalTestModeOverride;
+    internal static bool LocalTestAutoStart;
+    internal TimeSignatureMode CurrentTimeSignatureMode => timeSignatureMode;
+    internal bool IsWaitingForLocalTestStart => nextPhaseDspTime == double.MaxValue && !IsGameEnded;
 
     public bool IsGameEnded => currentState == GameState.END;
 
     /// <summary>
     /// [임시 모드] 3/4박자 로컬 테스트용. 모드를 ThreeFour로 고정 후 StartGame을 호출한다.
     /// </summary>
-    public void StartLocalTest34()
+    public void StartLocalTest34() => StartLocalTest(TimeSignatureMode.ThreeFour);
+
+    internal void StartLocalTest(TimeSignatureMode mode)
     {
-        timeSignatureMode = TimeSignatureMode.ThreeFour;
+        if (NetworkManager.Instance != null)
+            return;
+
+        LocalTestModeOverride = mode;
+        timeSignatureMode = mode;
         StartGame();
     }
     public bool IsGameEndPresentationPlaying => isGameEndPresentationPlaying;
@@ -341,6 +350,8 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         resultPanelUI?.HideAll();
+        bool autoStartLocalTest = LocalTestAutoStart;
+        LocalTestAutoStart = false;
 
         currentRoundIndex = 0;
         attackerPlayerId = NetworkManager.Instance?.FirstAttackerId ?? 1;
@@ -362,6 +373,19 @@ public class GameManager : MonoBehaviour
             sceneSelfReady = true;
             // scenePeerReady는 항상 false (Update 이후에 도착)
         }
+        else if (autoStartLocalTest)
+        {
+            StartCoroutine(StartLocalTestAfterLoading());
+        }
+    }
+
+    private IEnumerator StartLocalTestAfterLoading()
+    {
+        while (SceneLoadingScreen.IsLoading)
+            yield return null;
+
+        if (IsWaitingForLocalTestStart)
+            StartLocalTest(timeSignatureMode);
     }
 
     /// <summary>
