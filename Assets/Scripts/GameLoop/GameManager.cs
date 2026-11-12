@@ -727,6 +727,7 @@ public class GameManager : MonoBehaviour
         noteCount = Mathf.Min(noteCount, maxPlayable);
 
         string msg = randomMessageProvider.GetRandomMessage(noteCount, rng);
+        currentAttackMessage = msg;
 
         bool isLocalAttacker = (attackerPlayerId == myLocalPlayerId ||
                                 NetworkManager.Instance == null);
@@ -736,11 +737,6 @@ public class GameManager : MonoBehaviour
         if (isLocalAttacker)
         {
             attackTurn.StartLocalPlayerAttack(attackerSide, noteCount, msg, phaseStartDspTime, notesPerTurn);
-            hud?.UpdateAttackProgress(0, noteCount);
-        }
-        else if (NetworkManager.Instance == null)
-        {
-            attackTurn.StartOpponentAttackDemo(msg);
             hud?.UpdateAttackProgress(0, noteCount);
         }
         else
@@ -1012,7 +1008,7 @@ public class GameManager : MonoBehaviour
 
         Judgment[] judgments = result.Judgments ?? new Judgment[0];
         string msg = randomMessageProvider?.GetDefenderPanelMessage(
-            defendingMessage, judgments, attackSuccess: judgments.Length == 0 || result.MissCount <= 0) ?? "";
+            defendingMessage, judgments, currentAttackSuccess) ?? "";
         if (currentDefenderPlayerId == 1)
             hud?.ShowP1PanelMessage(msg);
         else
