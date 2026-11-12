@@ -43,6 +43,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     [SerializeField] private Button modeButton44;
     [SerializeField] private Button modeButton34;
     [SerializeField] private Button cancelModeButton;
+    [SerializeField] private GameObject guestOverlay;
     // [SerializeField] private TMP_Text modeSelectStatusText;
 
     [Header("Log Panel")]
@@ -281,6 +282,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
         SetModeButtonEnabled(modeButton44?.gameObject, enableButtons);
         SetModeButtonEnabled(modeButton34?.gameObject, enableButtons);
+        guestOverlay?.SetActive(!enableButtons);
     }
 
     // ── 씬 전환 ──────────────────────────────────────────────────────────────

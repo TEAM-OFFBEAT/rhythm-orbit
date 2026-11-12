@@ -143,6 +143,7 @@ MonoBehaviour:
   modeButton44: {fileID: 7464003647000719069}
   modeButton34: {fileID: 2776979546309226808}
   cancelModeButton: {fileID: 2378979638455611527}
+  guestOverlay: {fileID: 8800000000000000001}
   lobbyExitUI: {fileID: 6882870843936337364}
   logPanel: {fileID: 868712396181123184}
   logReturnButton: {fileID: 7037395817318681174}
@@ -1151,6 +1152,11 @@ CanvasGroup:
 --- !u!1 &3909678373396794859 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7024921595293412316, guid: 03b789f60546cb743a453fa83785fb5f, type: 3}
+  m_PrefabInstance: {fileID: 6286039077963228727}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8800000000000000001 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6600000000000000001, guid: 03b789f60546cb743a453fa83785fb5f, type: 3}
   m_PrefabInstance: {fileID: 6286039077963228727}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &7464003647000719069 stripped
