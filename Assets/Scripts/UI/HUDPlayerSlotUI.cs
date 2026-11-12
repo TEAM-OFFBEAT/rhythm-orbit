@@ -47,6 +47,9 @@ public class HUDPlayerSlotUI : MonoBehaviour
     [SerializeField] private Image panelImage;
     [SerializeField] private Sprite defaultPanelSprite;
     [SerializeField] private Sprite highlightPanelSprite;
+    [SerializeField] private Image bubbleImage;
+    [SerializeField] private Sprite bubbleSprite34;
+    private Sprite bubbleDefault;
     [SerializeField] private Color pulseColorMin = new Color(1f, 1f, 1f, 0.5f);
     [SerializeField] private Color pulseColorMax = Color.white;
     [SerializeField] private float pulseSpeed = 2f;
@@ -64,6 +67,7 @@ public class HUDPlayerSlotUI : MonoBehaviour
     private void Awake()
     {
         sanityBarFillDefault = sanityBarFill?.sprite;
+        bubbleDefault = bubbleImage?.sprite;
         if (spineProfile44 != null) spineProfile44.PlayIdle();
         if (spineProfile34 != null) spineProfile34.PlayIdle();
         SyncSpineVisibility();
@@ -97,6 +101,8 @@ public class HUDPlayerSlotUI : MonoBehaviour
         ClearJudgment();
         if (sanityBarFill != null && sanityBarFillSprite34 != null)
             sanityBarFill.sprite = mode == TimeSignatureMode.ThreeFour ? sanityBarFillSprite34 : sanityBarFillDefault;
+        if (bubbleImage != null && bubbleSprite34 != null)
+            bubbleImage.sprite = mode == TimeSignatureMode.ThreeFour ? bubbleSprite34 : bubbleDefault;
     }
 
     /// <summary>
