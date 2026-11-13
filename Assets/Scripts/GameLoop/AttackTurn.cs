@@ -115,6 +115,7 @@ public class AttackTurn : MonoBehaviour
     [SerializeField, Range(0.05f, 1f)] private float halfNoteTimeoutSeconds = 0.3f;
 
     private bool doubleTapModeActive;
+    private int doubleTapMaxNoteCount;
     private bool hasPendingHalfNote;
     private double halfNoteCreatedDspTime;
     private int pendingGridStep;
@@ -513,6 +514,12 @@ public class AttackTurn : MonoBehaviour
 
         if (!hasPendingHalfNote)
         {
+            if (doubleTapMaxNoteCount > 0 && createdNotes.Count >= doubleTapMaxNoteCount)
+            {
+                extraNoteCount++;
+                return;
+            }
+
             int gridStep = GetNearestPlayableGridStep(relativeTime, noteDuration);
 
             if (createdGridSteps.Contains(gridStep))
@@ -689,10 +696,12 @@ public class AttackTurn : MonoBehaviour
 
     /// <summary>
     /// EVT_ATK_01 진입 시 호출. 이후 OnTap()이 더블탭 모드로 동작한다.
+    /// maxNoteCount가 0보다 크면 해당 수까지만 노트 입력을 허용한다.
     /// </summary>
-    public void ActivateDoubleTapMode()
+    public void ActivateDoubleTapMode(int maxNoteCount = 0)
     {
         doubleTapModeActive = true;
+        doubleTapMaxNoteCount = maxNoteCount;
         hasPendingHalfNote = false;
     }
 

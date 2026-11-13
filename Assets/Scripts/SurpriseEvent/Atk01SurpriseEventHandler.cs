@@ -10,8 +10,15 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     [Tooltip("반쪽 노트 파괴 1회당 정신력 감소량.")]
     [SerializeField] private int incompletePenalty = 2;
 
+    [Tooltip("4/4박자에서 허용되는 최대 입력 노트 수.")]
+    [SerializeField] private int maxNoteCount44 = 5;
+
+    [Tooltip("3/4박자에서 허용되는 최대 입력 노트 수.")]
+    [SerializeField] private int maxNoteCount34 = 3;
+
     private AttackTurn attackTurn;
     private SanitySystem sanitySystem;
+    private GameManager gameManager;
 
     private SurpriseEventContext activeContext;
 
@@ -19,6 +26,7 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     {
         attackTurn = FindAnyObjectByType<AttackTurn>();
         sanitySystem = FindAnyObjectByType<SanitySystem>();
+        gameManager = FindAnyObjectByType<GameManager>();
     }
 
     public SurpriseEventId EventId => SurpriseEventId.EVT_ATK_01_IncompleteTransmission;
@@ -36,7 +44,9 @@ public class Atk01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         activeContext = context;
         if (!ShouldApplyToThisScreen(context)) return;
         attackTurn.OnHalfNoteIncomplete += ApplyIncompletePenalty;
-        attackTurn.ActivateDoubleTapMode();
+        bool isThreeFour = gameManager != null &&
+            gameManager.CurrentTimeSignatureMode == TimeSignatureMode.ThreeFour;
+        attackTurn.ActivateDoubleTapMode(isThreeFour ? maxNoteCount34 : maxNoteCount44);
     }
 
     /// <summary>
