@@ -173,7 +173,7 @@ MonoBehaviour:
     maxSimultaneous: 0
   - id: 18
     clip: {fileID: 8300000, guid: c93498628afdd354fb210d91a5387ccc, type: 3}
-    volume: 1
+    volume: 0.8
     maxSimultaneous: 1
   - id: 19
     clip: {fileID: 8300000, guid: 2464e92d5b977db478da10f244f84e18, type: 3}
