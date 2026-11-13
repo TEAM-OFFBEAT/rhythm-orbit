@@ -130,6 +130,8 @@ MonoBehaviour:
   createRoomButton: {fileID: 4261969321139006133}
   joinRoomButton: {fileID: 8193390957821974497}
   goTutorialButton: {fileID: 2956076464602378932}
+  settingsButton: {fileID: 6744881337232595244}
+  settingsWindowController: {fileID: 0}
   localTestButton: {fileID: 2558368150366400339}
   localTestButton34: {fileID: 0}
   roomCodeText: {fileID: 4266033788141260108}
@@ -1308,6 +1310,17 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!114 &6744881337232595244 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6744881337232595243, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
+  m_PrefabInstance: {fileID: 8647114666271464897}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!224 &7777458409462735279 stripped
 RectTransform:

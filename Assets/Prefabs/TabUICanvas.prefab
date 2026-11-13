@@ -297,6 +297,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f4d4623b0fa26c547b8f92a9e41aae52, type: 3}
+--- !u!114 &1691806476691869320 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3532887781271809600, guid: f4d4623b0fa26c547b8f92a9e41aae52, type: 3}
+  m_PrefabInstance: {fileID: 2773610160699646152}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cef56c987964cea41ab67eecf6e95a26, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SettingsWindowController
 --- !u!224 &5515468500409146896 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7707689622789488344, guid: f4d4623b0fa26c547b8f92a9e41aae52, type: 3}

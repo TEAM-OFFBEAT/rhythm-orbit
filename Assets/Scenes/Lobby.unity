@@ -199,10 +199,6 @@ PrefabInstance:
       value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 1691806476691869320, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
-      propertyPath: windowRoot
-      value: 
-      objectReference: {fileID: 612824871}
-    - target: {fileID: 1691806476691869320, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: calibrationManager
       value: 
       objectReference: {fileID: 844497181}
@@ -800,6 +796,10 @@ PrefabInstance:
       propertyPath: networkManager
       value: 
       objectReference: {fileID: 2418609264229539059}
+    - target: {fileID: 1554401159041933509, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: settingsWindowController
+      value:
+      objectReference: {fileID: 914828969}
     - target: {fileID: 1632688872164463062, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: m_Pivot.x
       value: 0

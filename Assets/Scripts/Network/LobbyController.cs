@@ -26,6 +26,8 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     [SerializeField] private Button createRoomButton;
     [SerializeField] private Button joinRoomButton;
     [SerializeField] private Button goTutorialButton;
+    [SerializeField] private Button settingsButton;
+    [SerializeField] private SettingsWindowController settingsWindowController;
     [SerializeField] private Button localTestButton;
     [SerializeField] private Button localTestButton34; // [임시 모드]
 
@@ -124,6 +126,8 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         createRoomButton.onClick.AddListener(OnCreateRoom);
         joinRoomButton.onClick.AddListener(OnJoinRoom);
         goTutorialButton.onClick.AddListener(GoToTutorial);
+        if (settingsButton != null && settingsWindowController != null)
+            settingsButton.onClick.AddListener(settingsWindowController.Toggle);
         localTestButton?.onClick.AddListener(OnLocalTest); // [임시 모드]
         localTestButton34?.onClick.AddListener(OnLocalTest34); // [임시 모드]
         cancelHostButton.onClick.AddListener(OnCancel);
@@ -149,6 +153,9 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void OnDestroy()
     {
+        if (settingsButton != null && settingsWindowController != null)
+            settingsButton.onClick.RemoveListener(settingsWindowController.Toggle);
+
         if (networkManager == null) return;
         networkManager.OnConnected -= HandleConnected;
         networkManager.OnConnectionFailed -= HandleConnectionFailed;
