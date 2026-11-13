@@ -555,22 +555,11 @@ public class SurpriseEventManager : MonoBehaviour
 
     /// <summary>
     /// 이벤트 진입 효과음을 재생한다.
-    /// 현재는 큰 틀 테스트용으로 AudioSource.PlayClipAtPoint를 사용한다.
-    /// 나중에 SoundManager나 전용 AudioSource 방식으로 바꿀 수 있다.
     /// </summary>
     private void PlayEntrySfx(SurpriseEventDefinition definition)
     {
-        if (definition == null || definition.entrySfx == null)
-        {
-            return;
-        }
-
-        float volume = SoundManager.Instance != null
-            ? SoundManager.Instance.GetScaledSfxVolume(1f)
-            : 1f;
-
-        AudioSource.PlayClipAtPoint(
-            definition.entrySfx, Vector3.zero, volume);
+        if ((int)definition.entrySfxId >= 0)
+            SoundManager.Instance?.PlaySfx(definition.entrySfxId);
     }
 
     // ─────────────────────────────────────────────────────────

@@ -47,6 +47,8 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     private Coroutine fadeInCoroutine;
     private bool isSubscribed;
     private bool ghostSignalActivated;
+    private bool arrivalSoundPlayed;
+    private NetworkManager arrivalSoundNetwork;
     private int nextGhostNoteId;
     private double cachedNoteDuration;
 
@@ -79,6 +81,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
     private void OnDisable()
     {
+        UnsubscribeArrivalSound();
         StopFadeIn();
         Unsubscribe();
 
@@ -101,8 +104,14 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     {
         activeContext = context;
         ghostSignalActivated = false;
+        arrivalSoundPlayed = false;
 
-        if (!ShouldApplyToThisScreen(context)) return;
+        if (!ShouldApplyToThisScreen(context))
+        {
+            arrivalSoundNetwork = NetworkManager.Instance;
+            arrivalSoundNetwork.OnGhostSignalArrived += HandleRemoteGhostArrival;
+            return;
+        }
 
         eventEnteredDspTime = AudioSettings.dspTime;
         ghostFadeStartTimes.Clear();
@@ -140,6 +149,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     /// </summary>
     public void EndEvent(SurpriseEventContext context)
     {
+        UnsubscribeArrivalSound();
         StopFadeIn();
 
         defenseTurn?.DeactivateGhostSignal();
@@ -156,6 +166,39 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         ghostFadeStartTimes.Clear();
 
         Debug.Log("DEF_01 GhostSignal 종료");
+    }
+
+    private void HandleGhostArrival()
+    {
+        if (!ghostSignalActivated || arrivalSoundPlayed || activeContext == null)
+            return;
+
+        PlayArrivalSound();
+        double phaseStart = activeContext.phaseStartDspTime;
+        NetworkManager.Instance?.Send(writer => PacketSerializer.WriteGhostSignalArrived(writer, phaseStart));
+    }
+
+    private void HandleRemoteGhostArrival(double remotePhaseStart)
+    {
+        if (activeContext == null || arrivalSoundPlayed)
+            return;
+
+        double localPhaseStart = arrivalSoundNetwork.TimeSync?.CorrectTime(remotePhaseStart) ?? remotePhaseStart;
+        if (System.Math.Abs(localPhaseStart - activeContext.phaseStartDspTime) < 0.1)
+            PlayArrivalSound();
+    }
+
+    private void PlayArrivalSound()
+    {
+        arrivalSoundPlayed = true;
+        SoundManager.Instance?.PlaySfx(SfxId.Def01Entry);
+    }
+
+    private void UnsubscribeArrivalSound()
+    {
+        if (arrivalSoundNetwork != null)
+            arrivalSoundNetwork.OnGhostSignalArrived -= HandleRemoteGhostArrival;
+        arrivalSoundNetwork = null;
     }
 
     private void PrepareGhostPreviewNotes(SurpriseEventContext context)
@@ -400,6 +443,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         }
 
         defenseTurn.OnGhostNoteHit += HandleGhostNoteHit;
+        defenseTurn.OnGhostReachedJudgeLine += HandleGhostArrival;
         defenseTurn.OnDefenseBegan += HandleDefenseBegan;
         isSubscribed = true;
     }
@@ -412,6 +456,7 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         }
 
         defenseTurn.OnGhostNoteHit -= HandleGhostNoteHit;
+        defenseTurn.OnGhostReachedJudgeLine -= HandleGhostArrival;
         defenseTurn.OnDefenseBegan -= HandleDefenseBegan;
         isSubscribed = false;
     }

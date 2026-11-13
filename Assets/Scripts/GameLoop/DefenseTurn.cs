@@ -35,6 +35,7 @@ public class DefenseTurn : MonoBehaviour
     /// EVT_DEF_01 유령 노트가 판정선을 지나 자동 소멸했을 때 발행한다.
     /// </summary>
     public event System.Action<GhostNoteData> OnGhostNotePassed;
+    internal event System.Action OnGhostReachedJudgeLine;
 
     /// <summary>
     /// 방어 턴이 실제로 시작되어 pendingNotes와 transfer 정보가 준비되면 발행한다.
@@ -56,6 +57,7 @@ public class DefenseTurn : MonoBehaviour
     /// 현재 방어 턴이 진행 중인지 외부에서 읽기 위한 값.
     /// </summary>
     public bool IsRunning => isRunning;
+
     
     [SerializeField] private AttackTurnRenderer attackTurnRenderer;
     [SerializeField] private float fallbackTransferSpeed = 5f;
@@ -783,6 +785,9 @@ public class DefenseTurn : MonoBehaviour
                 ghostNotes.RemoveAt(i);
                 continue;
             }
+
+            if (now >= ghostNote.judgeTime)
+                OnGhostReachedJudgeLine?.Invoke();
 
             if (now < ghostNote.judgeTime + disappearDelaySeconds)
             {

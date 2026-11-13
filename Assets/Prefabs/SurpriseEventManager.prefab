@@ -143,22 +143,22 @@ MonoBehaviour:
   - eventId: 1
     displayName: "\uBD88\uC644\uC804 \uC1A1\uC2E0"
     applicablePhase: 1
-    entrySfx: {fileID: 0}
+    entrySfxId: 18
     enabled: 1
   - eventId: 2
     displayName: "\uD384\uC2A4 \uAC04\uC12D"
     applicablePhase: 1
-    entrySfx: {fileID: 0}
+    entrySfxId: 19
     enabled: 1
   - eventId: 3
     displayName: "\uC720\uB839 \uC2E0\uD638"
     applicablePhase: 2
-    entrySfx: {fileID: 8300000, guid: 6eafc7c325aaf864e9c9350108b41d81, type: 3}
+    entrySfxId: 20
     enabled: 1
   - eventId: 4
     displayName: "\uC74C\uD5A5 \uC218\uC2E0"
     applicablePhase: 2
-    entrySfx: {fileID: 0}
+    entrySfxId: 21
     enabled: 1
   baseTriggerChance: 0.2
   minEventCount: 6

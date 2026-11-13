@@ -53,7 +53,7 @@ public class SurpriseEventDefinition
     public string entryMessage;
 
     [Tooltip("이벤트 진입 시 1회 재생할 효과음.")]
-    public AudioClip entrySfx;
+    public SfxId entrySfxId = (SfxId)(-1);
 
     [Header("Temporary")]
     [Tooltip("false면 이벤트 풀에서 제외한다. 테스트 중 특정 이벤트를 잠깐 끄고 싶을 때 사용한다.")]

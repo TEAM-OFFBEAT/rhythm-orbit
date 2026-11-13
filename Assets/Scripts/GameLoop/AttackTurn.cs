@@ -489,7 +489,10 @@ public class AttackTurn : MonoBehaviour
                 HitEffectSpawner.Instance?.PlayHalfNote(noteType, spawnPos.Value, flipX: currentSide != AttackSide.P2);
         }
 
-        OnAttackInputResolved?.Invoke(noteType, isInputSuccessForSfx);
+        if (withHalfNote)
+            SoundManager.Instance?.PlaySfx(SfxId.CompletedTransmission);
+        else
+            OnAttackInputResolved?.Invoke(noteType, isInputSuccessForSfx);
         
         OnAttackNoteCreated?.Invoke(note);
         
@@ -532,6 +535,7 @@ public class AttackTurn : MonoBehaviour
             halfNoteCreatedDspTime = AudioSettings.dspTime;
             pendingGridStep = gridStep;
             pendingNoteType = noteType;
+            SoundManager.Instance?.PlaySfx(SfxId.IncompleteSignal);
             Vector3? halfPos = attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
             if (halfPos.HasValue)
                 HitEffectSpawner.Instance?.PlayHalfNote(noteType, halfPos.Value, flipX: currentSide == AttackSide.P2);
@@ -566,6 +570,7 @@ public class AttackTurn : MonoBehaviour
                 halfNoteCreatedDspTime = AudioSettings.dspTime;
                 pendingGridStep = gridStep;
                 pendingNoteType = noteType;
+                SoundManager.Instance?.PlaySfx(SfxId.IncompleteSignal);
                 Vector3? halfPos2 = attackTurnRenderer?.SpawnHalfAttackNote(currentSide, noteType, snappedTime, attackDuration);
                 if (halfPos2.HasValue)
                     HitEffectSpawner.Instance?.PlayHalfNote(noteType, halfPos2.Value, flipX: currentSide == AttackSide.P2);

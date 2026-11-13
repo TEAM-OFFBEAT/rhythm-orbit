@@ -34,5 +34,11 @@ public enum SfxId
     SceneTransition,
     GameStart,
 
-    CountInTick
+    CountInTick,
+    IncompleteSignal,
+    CompletedTransmission,
+    Atk01Entry,
+    Atk02Entry,
+    Def01Entry,
+    Def02Entry,
 }
