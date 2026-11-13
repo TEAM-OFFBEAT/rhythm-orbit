@@ -514,7 +514,10 @@ public class AttackTurn : MonoBehaviour
 
         if (!hasPendingHalfNote)
         {
-            if (doubleTapMaxNoteCount > 0 && createdNotes.Count >= doubleTapMaxNoteCount)
+            int doubleTapCap = doubleTapMaxNoteCount > 0
+                ? System.Math.Min(doubleTapMaxNoteCount, targetTapCount)
+                : targetTapCount;
+            if (createdNotes.Count >= doubleTapCap)
             {
                 extraNoteCount++;
                 return;
