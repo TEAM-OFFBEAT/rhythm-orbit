@@ -13,10 +13,20 @@ public class GameCamera : MonoBehaviour
 
     private float targetX;
     private float velocityX;
+    private int lastScreenWidth;
+    private int lastScreenHeight;
+
+    public static event System.Action<Rect> LetterboxChanged;
+    public static Rect CurrentLetterboxRect { get; private set; } = new Rect(0f, 0f, 1f, 1f);
+
+    private static GameObject letterboxOverlay;
+    private static float lastOverlayScale = -1f;
 
     private void Awake()
     {
         targetX = transform.position.x;
+        lastScreenWidth = Screen.width;
+        lastScreenHeight = Screen.height;
         EnforceAspectRatio(GetComponent<Camera>());
     }
 
@@ -40,10 +50,63 @@ public class GameCamera : MonoBehaviour
             cam.rect = new Rect((1f - w) / 2f, 0f, w, 1f);
         }
 
+        CurrentLetterboxRect = cam.rect;
+        LetterboxChanged?.Invoke(cam.rect);
+
         // CanvasScaler가 Screen 전체 크기를 기준으로 스케일을 계산하므로,
         // 레터박스(상하 바)이면 너비 기준, 필라박스(좌우 바)이면 높이 기준으로 맞춰야 Canvas가 왜곡되지 않음
         foreach (var scaler in UnityEngine.Object.FindObjectsByType<UnityEngine.UI.CanvasScaler>())
             scaler.matchWidthOrHeight = isLetterbox ? 0f : 1f;
+
+        UpdateLetterboxOverlay(scale, isLetterbox);
+    }
+
+    // cam.rect는 뷰포트 밖 영역을 클리어하지 않아 씬 전환 후 이전 프레임버퍼가 남는다.
+    // DontDestroyOnLoad ScreenSpaceOverlay로 바 영역을 항상 덮어 이 문제를 해결한다.
+    // bar 오브젝트를 Destroy/재생성하면 1프레임 공백이 생길 수 있으므로
+    // 4개를 고정으로 유지하고 anchor만 갱신한다.
+    private static void UpdateLetterboxOverlay(float scale, bool isLetterbox)
+    {
+        if (letterboxOverlay != null && Mathf.Abs(scale - lastOverlayScale) < 0.001f) return;
+        lastOverlayScale = scale;
+
+        if (letterboxOverlay == null)
+        {
+            letterboxOverlay = new GameObject("LetterboxOverlay");
+            var canvas = letterboxOverlay.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = short.MaxValue - 1;
+            UnityEngine.Object.DontDestroyOnLoad(letterboxOverlay);
+
+            for (int i = 0; i < 4; i++) // top, bottom, left, right
+            {
+                var bar = new GameObject("Bar", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                bar.transform.SetParent(letterboxOverlay.transform, false);
+                var img = bar.GetComponent<UnityEngine.UI.Image>();
+                img.color = Color.black;
+                img.raycastTarget = false;
+            }
+        }
+
+        var t = letterboxOverlay.transform;
+        bool needsBars = Mathf.Abs(scale - 1f) >= 0.001f;
+        float barFrac = needsBars ? (isLetterbox ? (1f - scale) / 2f : (1f - 1f / scale) / 2f) : 0f;
+        float tb = isLetterbox ? barFrac : 0f;   // 상하 바 높이 비율
+        float lr = isLetterbox ? 0f : barFrac;   // 좌우 바 너비 비율
+
+        // letterbox: 상하 바 활성, 좌우 비활성 / pillarbox: 좌우 바 활성, 상하 비활성
+        SetBar(t.GetChild(0), new Vector2(0f, 1f - tb), Vector2.one);        // top
+        SetBar(t.GetChild(1), Vector2.zero, new Vector2(1f, tb));             // bottom
+        SetBar(t.GetChild(2), Vector2.zero, new Vector2(lr, 1f));             // left
+        SetBar(t.GetChild(3), new Vector2(1f - lr, 0f), Vector2.one);        // right
+    }
+
+    private static void SetBar(Transform bar, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        var rect = (RectTransform)bar;
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
     }
 
     /// <summary>
@@ -82,6 +145,13 @@ public class GameCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight)
+        {
+            lastScreenWidth = Screen.width;
+            lastScreenHeight = Screen.height;
+            EnforceAspectRatio(GetComponent<Camera>());
+        }
+
         Vector3 pos = transform.position;
         pos.x = Mathf.SmoothDamp(pos.x, targetX, ref velocityX, smoothTime);
         transform.position = pos;

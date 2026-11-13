@@ -140,6 +140,41 @@ public sealed class SceneLoadingScreen : MonoBehaviour
 
         AddAnimation(assets.obit, "animation", new Vector2(0f, 40f), assets.material);
         AddAnimation(assets.text, "ani2", new Vector2(0f, -312f), assets.material);
+
+        AddLetterboxBars();
+    }
+
+    private void AddLetterboxBars()
+    {
+        float scale = ((float)Screen.width / Screen.height) / (16f / 9f);
+        if (Mathf.Approximately(scale, 1f)) return;
+
+        if (scale < 1f)
+        {
+            float bar = (1f - scale) / 2f;
+            AddBar(new Vector2(0f, 1f - bar), Vector2.one);
+            AddBar(Vector2.zero, new Vector2(1f, bar));
+        }
+        else
+        {
+            float bar = (1f - 1f / scale) / 2f;
+            AddBar(Vector2.zero, new Vector2(bar, 1f));
+            AddBar(new Vector2(1f - bar, 0f), Vector2.one);
+        }
+    }
+
+    private void AddBar(Vector2 anchorMin, Vector2 anchorMax)
+    {
+        var bar = new GameObject("LetterboxBar", typeof(RectTransform), typeof(Image));
+        bar.transform.SetParent(transform, false);
+        var rect = bar.GetComponent<RectTransform>();
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        var img = bar.GetComponent<Image>();
+        img.color = Color.black;
+        img.raycastTarget = false;
     }
 
     private RawImage AddImage(string name, Texture2D texture, Vector2 position, Vector2 size)

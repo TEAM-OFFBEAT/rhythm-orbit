@@ -60,6 +60,8 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     private const string SynopsisSeenKey = "RhythmOrbit.SynopsisSeen";
 
     private TimeSignatureMode pendingMode;
+    private int lastScreenWidth;
+    private int lastScreenHeight;
 
     private void Start()
     {
@@ -75,6 +77,13 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void Update()
     {
+        if (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight)
+        {
+            lastScreenWidth = Screen.width;
+            lastScreenHeight = Screen.height;
+            GameCamera.EnforceAspectRatio(Camera.main);
+        }
+
         var keyboard = Keyboard.current;
         if (keyboard == null || !mainMenuPanel.activeInHierarchy ||
             SceneLoadingScreen.IsLoading || SynopsisVideoPlayer.IsPlaying)
@@ -115,6 +124,8 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     
     private void Awake()
     {
+        lastScreenWidth = Screen.width;
+        lastScreenHeight = Screen.height;
         GameCamera.EnforceAspectRatio(Camera.main);
         //StopGameplayBgmOnLobbyEnter();
 
