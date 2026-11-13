@@ -622,8 +622,15 @@ public class SurpriseEventManager : MonoBehaviour
 
     private static string GetPlayerPrefix(int playerId)
     {
-        return playerId == 1
-            ? "<b><color=#FF66BF>OBIT</color></b>,"
+        if (playerId == 1)
+            return "<b><color=#FF66BF>OBIT</color></b>,";
+
+        TimeSignatureMode mode = NetworkManager.Instance?.SelectedMode
+                               ?? GameManager.LocalTestModeOverride
+                               ?? TimeSignatureMode.FourFour;
+        bool isThreeFour = mode == TimeSignatureMode.ThreeFour;
+        return isThreeFour
+            ? "<b><color=#FFBE00>HAMO</color></b>,"
             : "<b><color=#59FF73>RYMO</color></b>,";
     }
 }
