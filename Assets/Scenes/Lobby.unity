@@ -364,7 +364,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5362505146524167884, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5409820360813185038, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -392,11 +392,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5932368347210672480, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 5932368347210672480, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6442117107292597778, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -416,15 +416,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8008601452218507335, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 8008601452218507335, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8008601452218507335, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 8008601452218507335, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMin.y
@@ -432,15 +432,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8143261877311975490, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 8143261877311975490, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8143261877311975490, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 8143261877311975490, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMin.y
@@ -448,11 +448,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8381875471106440566, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 8381875471106440566, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 4350454905010383236, guid: 3aa1943ff94571a4cba81527c9494e5d, type: 3}
@@ -798,7 +798,7 @@ PrefabInstance:
       objectReference: {fileID: 2418609264229539059}
     - target: {fileID: 1554401159041933509, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: settingsWindowController
-      value:
+      value: 
       objectReference: {fileID: 914828969}
     - target: {fileID: 1632688872164463062, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: m_Pivot.x
@@ -880,9 +880,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1694430312914309489, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3993113794728134481, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4800277175747543720, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5501738816694032748, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: m_Name
       value: LobbyCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 6654132736061787679, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7101178437244378350, guid: 0a92c7badd732ae4fb0dcee3de0f40eb, type: 3}
       propertyPath: m_Camera
