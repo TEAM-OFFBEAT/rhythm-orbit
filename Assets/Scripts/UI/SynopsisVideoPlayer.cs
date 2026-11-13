@@ -11,42 +11,45 @@ public sealed class SynopsisVideoPlayer : MonoBehaviour
     private const float PrepareTimeoutSeconds = 15f;
     private static SynopsisVideoPlayer activePlayer;
 
+    [SerializeField] private RawImage videoImage;
+    [SerializeField] private AspectRatioFitter aspectFitter;
+    [SerializeField] private Button skipButton;
+
     private VideoPlayer player;
-    private RawImage videoImage;
     private Action<bool> onFinished;
     private bool finished;
 
     public static bool IsPlaying => activePlayer != null;
 
-    public static void Play(VideoClip clip, Action<bool> onFinished)
+    /// <summary>지정된 프리팹을 인스턴스화해 시놉시스를 재생한다.</summary>
+    public static void Play(SynopsisVideoPlayer prefab, VideoClip clip, Action<bool> onFinished)
     {
         if (IsPlaying) return;
 
-        var root = new GameObject("Synopsis Video", typeof(RectTransform), typeof(Canvas),
-            typeof(GraphicRaycaster));
-        activePlayer = root.AddComponent<SynopsisVideoPlayer>();
+        activePlayer = Instantiate(prefab);
+        var canvas = activePlayer.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = short.MaxValue - 1;
+        }
         activePlayer.onFinished = onFinished;
         EventSystem.current?.SetSelectedGameObject(null);
         activePlayer.StartCoroutine(activePlayer.PlayClip(clip));
     }
 
+    private void Awake()
+    {
+        skipButton?.onClick.AddListener(() => Finish(true));
+    }
+
     private IEnumerator PlayClip(VideoClip clip)
     {
-        Canvas canvas = GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = short.MaxValue - 1;
+        if (aspectFitter != null)
+            aspectFitter.aspectRatio = clip.height > 0 ? (float)clip.width / clip.height : 16f / 9f;
 
-        var background = new GameObject("Background", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-        Stretch(background.rectTransform);
-        background.color = Color.black;
-
-        videoImage = new GameObject("Video", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
-        Stretch(videoImage.rectTransform);
-        videoImage.raycastTarget = false;
-        videoImage.enabled = false;
-        var aspect = videoImage.gameObject.AddComponent<AspectRatioFitter>();
-        aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        aspect.aspectRatio = clip.height > 0 ? (float)clip.width / clip.height : 16f / 9f;
+        if (videoImage != null)
+            videoImage.enabled = false;
 
         player = gameObject.AddComponent<VideoPlayer>();
         player.playOnAwake = false;
@@ -74,22 +77,13 @@ public sealed class SynopsisVideoPlayer : MonoBehaviour
         SoundManager.Instance?.PlayBgm(BgmId.Synopsis);
         while (!finished)
         {
-            if (!videoImage.enabled && player.texture != null)
+            if (videoImage != null && !videoImage.enabled && player.texture != null)
             {
                 videoImage.texture = player.texture;
                 videoImage.enabled = true;
             }
             yield return null;
         }
-    }
-
-    private void Stretch(RectTransform rect)
-    {
-        rect.SetParent(transform, false);
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
     }
 
     private void HandleEnd(VideoPlayer source) => Finish(true);

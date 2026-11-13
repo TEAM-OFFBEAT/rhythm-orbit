@@ -56,6 +56,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     [SerializeField] private string mainLoopSceneName = "MainLoop";
     [SerializeField] private string tutorialSceneName = "Tutorial";
     [SerializeField] private VideoClip synopsisClip;
+    [SerializeField] private SynopsisVideoPlayer synopsisPlayerPrefab;
 
     private const string SynopsisSeenKey = "RhythmOrbit.SynopsisSeen";
 
@@ -101,15 +102,15 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void PlaySynopsisAndTutorial()
     {
-        if (synopsisClip == null)
+        if (synopsisClip == null || synopsisPlayerPrefab == null)
         {
-            Debug.LogWarning("LobbyController: Synopsis Clip is missing. Opening the tutorial.");
+            Debug.LogWarning("LobbyController: Synopsis Clip or Player Prefab is missing. Opening the tutorial.");
             GoToTutorial();
             return;
         }
 
         SoundManager.Instance?.StopBgm();
-        SynopsisVideoPlayer.Play(synopsisClip, completed =>
+        SynopsisVideoPlayer.Play(synopsisPlayerPrefab, synopsisClip, completed =>
         {
 #if !UNITY_EDITOR
             if (completed)
