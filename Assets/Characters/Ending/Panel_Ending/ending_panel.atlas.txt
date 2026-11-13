@@ -1,0 +1,41 @@
+ending_panel.png
+size:2002,1604
+filter:Linear,Linear
+DECODE FAILED
+bounds:1521,60,335,192
+offsets:1,1,337,194
+HELLO, UNIVERSE!
+bounds:1084,159,435,193
+offsets:1,1,437,195
+NO SIGNAL
+bounds:1809,1118,316,191
+offsets:1,1,318,193
+rotate:90
+bg1
+bounds:2,53,621,1080
+offsets:1,1,623,1082
+rotate:90
+bg2
+bounds:1084,354,723,1080
+offsets:1,1,725,1082
+bg3
+bounds:2,676,758,1080
+offsets:1,1,760,1082
+rotate:90
+eff
+bounds:2,1436,1920,166
+offsets:1,1,1922,168
+text1
+bounds:1084,2,353,155
+offsets:1,1,355,157
+text2
+bounds:1809,763,353,155
+offsets:1,1,355,157
+rotate:90
+text3
+bounds:1521,254,453,98
+offsets:1,1,455,100
+text4
+bounds:1809,408,353,155
+offsets:0,7,362,165
+rotate:90

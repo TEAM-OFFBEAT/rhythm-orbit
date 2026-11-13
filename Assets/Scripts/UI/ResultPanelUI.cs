@@ -1,4 +1,5 @@
-using TMPro;
+using System.Collections;
+using Spine.Unity;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -21,17 +22,18 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private Button[] lobbyButtons;
     [SerializeField] private Button[] replayButtons;
 
-    [Header("Replay Status")]
-    [SerializeField] private TMP_Text[] replayStatusTexts;
-    [SerializeField] private string opponentDisconnectedStatusMessage = "상대가 나갔습니다.";
-    [SerializeField] private string defaultReplayStatusMessage = "";
-    [SerializeField] private string waitingReplayStatusMessage = "상대의 다시하기 선택을 기다리는 중...";
-    [SerializeField] private string remoteReadyReplayStatusMessage = "상대가 다시하기를 선택했습니다.";
-    [SerializeField] private string bothReadyReplayStatusMessage = "양쪽 모두 다시하기를 선택했습니다.";
 
-    [Header("Profile Animations")]
-    [SerializeField] private SpineUIPlayer p1ProfilePlayer;
-    [SerializeField] private SpineUIPlayer[] p2ProfilePlayers;
+    [Header("Ending Panel (공통 중앙 스파인)")]
+    [SerializeField] private SpineUIPlayer endingPanelPlayer;
+    [SerializeField] private float resultDelaySeconds = 3f;
+
+    [Header("P2 Characters (mode-dependent)")]
+    [SerializeField] private SpineUIPlayer p1WinP2_44;   // rymo_p1  (4/4)
+    [SerializeField] private SpineUIPlayer p1WinP2_34;   // hamo_p1  (3/4)
+    [SerializeField] private SpineUIPlayer p2WinP2_44;   // rymo_p2  (4/4)
+    [SerializeField] private SpineUIPlayer p2WinP2_34;   // hamo_p2  (3/4)
+    [SerializeField] private SpineUIPlayer successP2_44; // rymo_success (4/4)
+    [SerializeField] private SpineUIPlayer successP2_34; // hamo_success (3/4)
 
     [Header("Scene")]
     [SerializeField] private string lobbySceneName = "Lobby";
@@ -40,13 +42,13 @@ public class ResultPanelUI : MonoBehaviour
     private bool localReplayRequested;
     private bool remoteReplayRequested;
     private bool isOpponentDisconnected;
+    private Coroutine resultSequenceCoroutine;
 
     private void Awake()
     {
         RegisterButtons();
         SubscribeNetworkEvents();
         HideChildPanels();
-        SetReplayStatus(defaultReplayStatusMessage);
     }
 
     private void OnDestroy()
@@ -69,22 +71,84 @@ public class ResultPanelUI : MonoBehaviour
         isOpponentDisconnected = false;
 
         SetReplayButtonsInteractable(true);
-        SetReplayStatus(defaultReplayStatusMessage);
 
-        bool isSuccess = resultType == GameResultType.CommunicationSuccess;
-        string anim = isSuccess ? "success" : "fail";
+        if (resultSequenceCoroutine != null)
+            StopCoroutine(resultSequenceCoroutine);
+        resultSequenceCoroutine = StartCoroutine(PlayResultSequence(resultType));
+    }
 
-        switch (resultType)
+    private IEnumerator PlayResultSequence(GameResultType resultType)
+    {
+        yield return new WaitForSeconds(resultDelaySeconds);
+
+        TimeSignatureMode mode = NetworkManager.Instance?.SelectedMode
+                               ?? GameManager.LocalTestModeOverride
+                               ?? TimeSignatureMode.FourFour;
+        bool isThreeFour = mode == TimeSignatureMode.ThreeFour;
+
+        // 1. EndingPanel 활성화 + 즉시 change 재생 (idle 노출 없음)
+        if (endingPanelPlayer != null)
         {
-            case GameResultType.P1Win:   SetActivePanel(p1WinPanel);  break;
-            case GameResultType.P2Win:   SetActivePanel(p2WinPanel);  break;
-            default:                     SetActivePanel(successPanel); break;
+            endingPanelPlayer.gameObject.SetActive(true);
+            endingPanelPlayer.Play("change", false);
         }
 
-        p1ProfilePlayer?.Play(anim, true);
-        if (p2ProfilePlayers != null)
-            foreach (var p in p2ProfilePlayers)
-                p?.Play(anim, true);
+        yield return new WaitForSeconds(GetAnimDuration("change"));
+
+        // change 종료 후: 결과 패널 열기 (EndingPanel 뒤에 렌더링)
+        switch (resultType)
+        {
+            case GameResultType.P1Win:
+                SetP2Mode(p1WinP2_44, p1WinP2_34);
+                SetActivePanel(p1WinPanel);
+                break;
+            case GameResultType.P2Win:
+                SetP2Mode(p2WinP2_44, p2WinP2_34);
+                SetActivePanel(p2WinPanel);
+                break;
+            default:
+                SetP2Mode(successP2_44, successP2_34);
+                SetActivePanel(successPanel);
+                break;
+        }
+
+        // 2. init 재생
+        string initAnim = GetInitAnimName(resultType, isThreeFour);
+        endingPanelPlayer?.Play(initAnim, false);
+        yield return new WaitForSeconds(GetAnimDuration(initAnim));
+
+        // 3. loop 재생 (무한 루프) + 버튼 표시
+        endingPanelPlayer?.Play(GetLoopAnimName(resultType, isThreeFour), true);
+        SetButtonsActive(true);
+    }
+
+    private float GetAnimDuration(string animName)
+    {
+        if (endingPanelPlayer == null) return 0f;
+        var sg = endingPanelPlayer.GetComponent<SkeletonGraphic>();
+        if (sg?.skeletonDataAsset == null) return 0f;
+        var anim = sg.skeletonDataAsset.GetSkeletonData(false)?.FindAnimation(animName);
+        return anim != null ? anim.Duration : 0f;
+    }
+
+    private string GetInitAnimName(GameResultType resultType, bool isThreeFour)
+    {
+        switch (resultType)
+        {
+            case GameResultType.P1Win: return isThreeFour ? "init_p1_hamo" : "init_p1_rymo";
+            case GameResultType.P2Win: return "init_p2";
+            default:                   return "init_success";
+        }
+    }
+
+    private string GetLoopAnimName(GameResultType resultType, bool isThreeFour)
+    {
+        switch (resultType)
+        {
+            case GameResultType.P1Win: return isThreeFour ? "loop_p1_hamo" : "loop_p1_rymo";
+            case GameResultType.P2Win: return "loop_p2";
+            default:                   return "loop_success";
+        }
     }
 
     /// <summary>
@@ -93,8 +157,23 @@ public class ResultPanelUI : MonoBehaviour
     /// </summary>
     public void HideAll()
     {
+        if (resultSequenceCoroutine != null)
+        {
+            StopCoroutine(resultSequenceCoroutine);
+            resultSequenceCoroutine = null;
+        }
         HideChildPanels();
         gameObject.SetActive(false);
+    }
+
+    private void SetP2Mode(SpineUIPlayer player44, SpineUIPlayer player34)
+    {
+        TimeSignatureMode mode = NetworkManager.Instance?.SelectedMode
+                               ?? GameManager.LocalTestModeOverride
+                               ?? TimeSignatureMode.FourFour;
+        bool isThreeFour = mode == TimeSignatureMode.ThreeFour;
+        player44?.gameObject.SetActive(!isThreeFour);
+        player34?.gameObject.SetActive(isThreeFour);
     }
 
     private void HideChildPanels()
@@ -102,6 +181,16 @@ public class ResultPanelUI : MonoBehaviour
         if (p1WinPanel != null) p1WinPanel.SetActive(false);
         if (p2WinPanel != null) p2WinPanel.SetActive(false);
         if (successPanel != null) successPanel.SetActive(false);
+        endingPanelPlayer?.gameObject.SetActive(false);
+        SetButtonsActive(false);
+    }
+
+    private void SetButtonsActive(bool active)
+    {
+        if (lobbyButtons != null)
+            foreach (var b in lobbyButtons) b?.gameObject.SetActive(active);
+        if (replayButtons != null)
+            foreach (var b in replayButtons) b?.gameObject.SetActive(active);
     }
 
     private void SetActivePanel(GameObject panel)
@@ -221,11 +310,8 @@ public class ResultPanelUI : MonoBehaviour
     private void RequestReplay()
     {
         if (isOpponentDisconnected)
-        {
-            SetReplayStatus(opponentDisconnectedStatusMessage);
             return;
-        }
-        
+
         if (localReplayRequested)
         {
             return;
@@ -248,15 +334,6 @@ public class ResultPanelUI : MonoBehaviour
             PacketSerializer.WriteReplayRequest(writer, requesterId)
         );
 
-        if (remoteReplayRequested)
-        {
-            SetReplayStatus(bothReadyReplayStatusMessage);
-        }
-        else
-        {
-            SetReplayStatus(waitingReplayStatusMessage);
-        }
-
         TryStartNetworkReplay();
     }
 
@@ -273,16 +350,6 @@ public class ResultPanelUI : MonoBehaviour
         }
 
         remoteReplayRequested = true;
-
-        if (localReplayRequested)
-        {
-            SetReplayStatus(bothReadyReplayStatusMessage);
-        }
-        else
-        {
-            SetReplayStatus(remoteReadyReplayStatusMessage);
-        }
-
         TryStartNetworkReplay();
     }
 
@@ -293,17 +360,12 @@ public class ResultPanelUI : MonoBehaviour
     private void TryStartNetworkReplay()
     {   
         if (isOpponentDisconnected)
-        {
-            SetReplayStatus(opponentDisconnectedStatusMessage);
             return;
-        }
-        
+
         NetworkManager net = NetworkManager.Instance;
 
         if (net == null || !net.IsConnected)
-        {
             return;
-        }
 
         if (!localReplayRequested || !remoteReplayRequested)
         {
@@ -363,24 +425,6 @@ public class ResultPanelUI : MonoBehaviour
         }
     }
 
-    private void SetReplayStatus(string message)
-    {
-        if (replayStatusTexts == null)
-        {
-            return;
-        }
-
-        foreach (TMP_Text text in replayStatusTexts)
-        {
-            if (text == null)
-            {
-                continue;
-            }
-
-            text.text = message;
-        }
-    }
-
     /// <summary>
     /// 상대가 결과 화면 또는 게임 중 연결을 종료했을 때 호출된다.
     /// 같은 replay 상태 텍스트에 안내를 표시하고 다시하기 버튼을 비활성화한다.
@@ -394,8 +438,6 @@ public class ResultPanelUI : MonoBehaviour
 
         isOpponentDisconnected = true;
         remoteReplayRequested = false;
-
-        SetReplayStatus(opponentDisconnectedStatusMessage);
         SetReplayButtonsInteractable(false);
 
         Debug.Log("ResultPanelUI: 상대 연결 종료 감지. 다시하기 비활성화.");
