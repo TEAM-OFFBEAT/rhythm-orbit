@@ -243,7 +243,7 @@ MonoBehaviour:
   p1Slot: {fileID: 0}
   p2Slot: {fileID: 0}
   meSprite: {fileID: 6691276168098189968, guid: 9e9030531c721174f802ccb49a4741aa, type: 3}
-  youSprite: {fileID: -5847292940319249463, guid: 9e9030531c721174f802ccb49a4741aa, type: 3}
+  youSprite: {fileID: 0}
 --- !u!114 &1549251834048446401
 MonoBehaviour:
   m_ObjectHideFlags: 0
