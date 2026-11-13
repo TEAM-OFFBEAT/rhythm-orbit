@@ -53,7 +53,7 @@ public sealed class SynopsisVideoPlayer : MonoBehaviour
         player.source = VideoSource.VideoClip;
         player.clip = clip;
         player.renderMode = VideoRenderMode.APIOnly;
-        player.audioOutputMode = VideoAudioOutputMode.Direct;
+        player.audioOutputMode = VideoAudioOutputMode.None;
         player.loopPointReached += HandleEnd;
         player.errorReceived += HandleError;
         player.Prepare();
@@ -71,6 +71,7 @@ public sealed class SynopsisVideoPlayer : MonoBehaviour
         }
 
         player.Play();
+        SoundManager.Instance?.PlayBgm(BgmId.Synopsis);
         while (!finished)
         {
             if (!videoImage.enabled && player.texture != null)

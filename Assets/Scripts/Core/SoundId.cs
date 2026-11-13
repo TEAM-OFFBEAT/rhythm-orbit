@@ -10,6 +10,7 @@ public enum BgmId
     CoreLoop34_108,
     CoreLoop34_132,
     CoreLoop34_148,
+    Synopsis,
 }
 
 public enum SfxId

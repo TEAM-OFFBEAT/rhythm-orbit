@@ -98,6 +98,10 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 826ffdc9ddfe0874bb22bfdf90dbad16, type: 3}
     volume: 0.7
     loop: 0
+  - id: 10
+    clip: {fileID: 8300000, guid: a80915da59824b13a0269461ec26769d, type: 3}
+    volume: 0.7
+    loop: 0
   sfxEntries:
   - id: 0
     clip: {fileID: 8300000, guid: c7b1bd46e34c18749b16716b0e5797df, type: 3}
