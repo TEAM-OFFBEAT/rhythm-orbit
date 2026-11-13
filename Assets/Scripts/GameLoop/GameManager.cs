@@ -1898,6 +1898,13 @@ public class GameManager : MonoBehaviour
         hud?.ClearJudgments();
         hud?.ClearPanelMessages();
 
+        if (profilePlayers != null)
+        {
+            string anim = resultType == GameResultType.CommunicationSuccess ? "success" : "fail";
+            foreach (var p in profilePlayers)
+                p?.Play(anim, true);
+        }
+
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
 
