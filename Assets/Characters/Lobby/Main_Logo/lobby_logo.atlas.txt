@@ -1,0 +1,6 @@
+lobby_logo.png
+size:791,420
+filter:Linear,Linear
+logo
+bounds:2,2,787,416
+offsets:1,1,789,418

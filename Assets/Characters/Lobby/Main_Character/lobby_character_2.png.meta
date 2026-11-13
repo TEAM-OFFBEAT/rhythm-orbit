@@ -1,0 +1,186 @@
+fileFormatVersion: 2
+guid: e4e08433bccf12248a7f76c1eaeeb4b9
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5510015915308177784
+    second: lobby_character_2_0
+  - first:
+      213: 8405258352627667444
+    second: lobby_character_2_1
+  - first:
+      213: 5313841693169215198
+    second: lobby_character_2_2
+  - first:
+      213: 1624674249670193272
+    second: lobby_character_2_3
+  - first:
+      213: -5603743113542005907
+    second: lobby_character_2_4
+  - first:
+      213: -8446502351817466151
+    second: lobby_character_2_5
+  - first:
+      213: 5528390808314139157
+    second: lobby_character_2_6
+  - first:
+      213: -2587192599607100281
+    second: lobby_character_2_7
+  - first:
+      213: 4882571110383814265
+    second: lobby_character_2_8
+  - first:
+      213: 6144761460257503129
+    second: lobby_character_2_9
+  - first:
+      213: 3841265461653330432
+    second: lobby_character_2_10
+  - first:
+      213: 8380766333647906762
+    second: lobby_character_2_11
+  - first:
+      213: 6098504601437144341
+    second: lobby_character_2_12
+  - first:
+      213: -6344621302131102718
+    second: lobby_character_2_13
+  - first:
+      213: -6704306261356453225
+    second: lobby_character_2_14
+  - first:
+      213: 8803760170519359488
+    second: lobby_character_2_15
+  - first:
+      213: 612371857861055887
+    second: lobby_character_2_16
+  - first:
+      213: 6620052023951206169
+    second: lobby_character_2_17
+  - first:
+      213: 6580366397945471799
+    second: lobby_character_2_18
+  - first:
+      213: -7269793560312943860
+    second: lobby_character_2_19
+  - first:
+      213: -9215446967227554694
+    second: lobby_character_2_20
+  - first:
+      213: -5501981603359050728
+    second: lobby_character_2_21
+  - first:
+      213: 7434039315884724071
+    second: lobby_character_2_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 0
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable: {}
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

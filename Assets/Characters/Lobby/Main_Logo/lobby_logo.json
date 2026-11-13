@@ -1,0 +1,80 @@
+{
+"skeleton": {
+	"hash": "HGyWIInZmCs",
+	"spine": "4.3.26",
+	"x": -394.9293,
+	"y": -207.1965,
+	"width": 789,
+	"height": 418,
+	"images": "../lobby_background/",
+	"audio": "./audio"
+},
+"bones": [
+	{ "name": "root" },
+	{ "name": "logo", "parent": "root", "x": 5.019287, "y": 14.551697 }
+],
+"slots": [
+	{ "name": "logo", "bone": "logo", "attachment": "logo" }
+],
+"skins": [
+	{
+		"name": "default",
+		"attachments": {
+			"logo": {
+				"logo": { "x": -5.448547, "y": -12.7482, "width": 789, "height": 418 }
+			}
+		}
+	}
+],
+"animations": {
+	"animation": {
+		"slots": {
+			"logo": {
+				"attachment": [
+					{ "name": "logo" },
+					{ "time": 4, "name": "logo" }
+				]
+			}
+		},
+		"bones": {
+			"logo": {
+				"rotate": [
+					{ "curve": "stepped" },
+					{ "time": 4 }
+				],
+				"translate": [
+					{ "curve": "stepped" },
+					{ "time": 4 }
+				],
+				"scale": [
+					{ "x": 1.0206103, "y": 1.0206103 },
+					{ "time": 2, "x": 0.9697201, "y": 0.9697201 },
+					{ "time": 4, "x": 1.0206103, "y": 1.0206103 }
+				],
+				"shear": [
+					{ "curve": "stepped" },
+					{ "time": 4 }
+				]
+			},
+			"root": {
+				"rotate": [
+					{ "curve": "stepped" },
+					{ "time": 4 }
+				],
+				"translate": [
+					{ "curve": "stepped" },
+					{ "time": 4 }
+				],
+				"scale": [
+					{ "curve": "stepped" },
+					{ "time": 4 }
+				],
+				"shear": [
+					{ "curve": "stepped" },
+					{ "time": 4 }
+				]
+			}
+		}
+	}
+}
+}

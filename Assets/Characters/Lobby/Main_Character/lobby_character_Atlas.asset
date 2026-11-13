@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6b194f808b1af6499c93410e504af42, type: 3}
+  m_Name: lobby_character_Atlas
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SpineAtlasAsset
+  serializedMaterialOverrides: []
+  textureLoadingMode: 0
+  onDemandTextureLoader: {fileID: 0}
+  atlasFile: {fileID: 4900000, guid: e0981ae7dd36e254a9efa9d9d07ea968, type: 3}
+  materials:
+  - {fileID: 2100000, guid: 4087ece2825888d4d9bb6d4496a4c97a, type: 2}
+  - {fileID: 2100000, guid: ada652a51a4a29b4b90e3c83a3954ec7, type: 2}
+  - {fileID: 2100000, guid: eb8291968e75e7f4c9c46457ce5d77df, type: 2}
+  - {fileID: 2100000, guid: a458dcf63f832dd47b9a3e8ece97cf42, type: 2}
+  - {fileID: 2100000, guid: 88a78531f6cc64e4c93d70895f3b4403, type: 2}
+  - {fileID: 2100000, guid: e8d886a98b25650458f3fb70ac0d2077, type: 2}

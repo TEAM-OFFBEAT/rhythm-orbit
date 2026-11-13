@@ -1,0 +1,198 @@
+fileFormatVersion: 2
+guid: 0dba57cf2ca60094f9d5f4c84db01702
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7221665194743653310
+    second: lobby_background_2_0
+  - first:
+      213: -5194279636029781826
+    second: lobby_background_2_1
+  - first:
+      213: -6067309345566162733
+    second: lobby_background_2_2
+  - first:
+      213: -1676119754625519464
+    second: lobby_background_2_3
+  - first:
+      213: -4427315621675058020
+    second: lobby_background_2_4
+  - first:
+      213: -2298047768394966565
+    second: lobby_background_2_5
+  - first:
+      213: -952498602115253391
+    second: lobby_background_2_6
+  - first:
+      213: 7526493861563308141
+    second: lobby_background_2_7
+  - first:
+      213: 7182754245454286858
+    second: lobby_background_2_8
+  - first:
+      213: -3131932407746700149
+    second: lobby_background_2_9
+  - first:
+      213: -3897238524627992329
+    second: lobby_background_2_10
+  - first:
+      213: 4394996233113391158
+    second: lobby_background_2_11
+  - first:
+      213: -6071184398508483265
+    second: lobby_background_2_12
+  - first:
+      213: -8113240707907268393
+    second: lobby_background_2_13
+  - first:
+      213: -8453243678242766949
+    second: lobby_background_2_14
+  - first:
+      213: -1667734233137168795
+    second: lobby_background_2_15
+  - first:
+      213: -9105473976488743567
+    second: lobby_background_2_16
+  - first:
+      213: -3963984047157954561
+    second: lobby_background_2_17
+  - first:
+      213: -5742291003770453054
+    second: lobby_background_2_18
+  - first:
+      213: -2471729086474064764
+    second: lobby_background_2_19
+  - first:
+      213: 5300133822686210037
+    second: lobby_background_2_20
+  - first:
+      213: 8457011811731276453
+    second: lobby_background_2_21
+  - first:
+      213: 640837479162230994
+    second: lobby_background_2_22
+  - first:
+      213: 3866263994154081196
+    second: lobby_background_2_23
+  - first:
+      213: 6049683378969683821
+    second: lobby_background_2_24
+  - first:
+      213: -3554296360533370349
+    second: lobby_background_2_25
+  - first:
+      213: -1588104505287998439
+    second: lobby_background_2_26
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 0
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable: {}
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
