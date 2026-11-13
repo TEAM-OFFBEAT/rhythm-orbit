@@ -239,11 +239,6 @@ MonoBehaviour:
   ghostStaggerSeconds: 0.12
   removeGhostIfRealNoteAppearsOnSameStep: 1
   ghostHitPenalty: 5
-  playSfxOnEnter: 1
-  playSfxOnGhostHit: 1
-  ghostSignalSfx: {fileID: 0}
-  ghostHitSfx: {fileID: 0}
-  sfxVolume: 1
 --- !u!1 &5334492164624232687
 GameObject:
   m_ObjectHideFlags: 0

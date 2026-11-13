@@ -14,12 +14,6 @@ public static class PacketSerializer
     public static void WritePing(BinaryWriter w)
         => w.Write((byte)PacketType.PING);
 
-    public static void WriteGhostSignalArrived(BinaryWriter writer, double phaseStartDspTime)
-    {
-        writer.Write((byte)PacketType.GHOST_SIGNAL_ARRIVED);
-        writer.Write(phaseStartDspTime);
-    }
-
     /// <summary>
     /// 클럭 동기화 응답. 응답 시각의 dspTime을 담는다.
     /// </summary>

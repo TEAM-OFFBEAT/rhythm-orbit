@@ -56,7 +56,6 @@ public class NetworkManager : Singleton<NetworkManager>
     public event Action OnReturnToLobby;
     public event Action OnSceneReady;
     public event Action<double> OnGameClockSet;
-    public event Action<double> OnGhostSignalArrived;
 
     private readonly ConcurrentQueue<Action> mainThreadQueue = new();
     private TcpListener listener;
@@ -280,10 +279,6 @@ public class NetworkManager : Singleton<NetworkManager>
                     case PacketType.GAME_CLOCK_SET:
                         double clockSetTime = PacketSerializer.ReadGameClockSet(reader);
                         mainThreadQueue.Enqueue(() => OnGameClockSet?.Invoke(clockSetTime));
-                        break;
-                    case PacketType.GHOST_SIGNAL_ARRIVED:
-                        double ghostPhaseStart = reader.ReadDouble();
-                        mainThreadQueue.Enqueue(() => OnGhostSignalArrived?.Invoke(ghostPhaseStart));
                         break;
                     default:
                         Debug.LogWarning($"NetworkManager: 알 수 없는 패킷 타입 {type}");

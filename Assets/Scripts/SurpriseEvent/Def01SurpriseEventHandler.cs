@@ -32,13 +32,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     [Tooltip("유령 노트를 타격했을 때 대상 플레이어에게 적용할 정신력 감소량.")]
     [SerializeField, Min(0)] private int ghostHitPenalty = 5;
 
-    [Header("SFX")]
-    [SerializeField] private bool playSfxOnEnter = true;
-    [SerializeField] private bool playSfxOnGhostHit = true;
-    [SerializeField] private AudioClip ghostSignalSfx;
-    [SerializeField] private AudioClip ghostHitSfx;
-    [SerializeField, Range(0f, 1f)] private float sfxVolume = 1f;
-
     private readonly List<GhostNoteData> preparedGhostNotes = new();
     private readonly Dictionary<int, double> ghostFadeStartTimes = new();
     private readonly HashSet<int> realNoteSteps = new();// 이번 이벤트에서 확인한 실제 노트의 칸. 멀티 수신 목록이 방어 전환 시 비워져도 이 기록은 유지한다.   
@@ -47,8 +40,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     private Coroutine fadeInCoroutine;
     private bool isSubscribed;
     private bool ghostSignalActivated;
-    private bool arrivalSoundPlayed;
-    private NetworkManager arrivalSoundNetwork;
     private int nextGhostNoteId;
     private double cachedNoteDuration;
 
@@ -81,7 +72,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
 
     private void OnDisable()
     {
-        UnsubscribeArrivalSound();
         StopFadeIn();
         Unsubscribe();
 
@@ -104,22 +94,10 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     {
         activeContext = context;
         ghostSignalActivated = false;
-        arrivalSoundPlayed = false;
-
-        if (!ShouldApplyToThisScreen(context))
-        {
-            arrivalSoundNetwork = NetworkManager.Instance;
-            arrivalSoundNetwork.OnGhostSignalArrived += HandleRemoteGhostArrival;
-            return;
-        }
+        if (!ShouldApplyToThisScreen(context)) return;
 
         eventEnteredDspTime = AudioSettings.dspTime;
         ghostFadeStartTimes.Clear();
-
-        if (playSfxOnEnter)
-        {
-            PlayClip(ghostSignalSfx);
-        }
 
         PrepareGhostPreviewNotes(context);
         StartGhostFadeIn();
@@ -149,7 +127,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
     /// </summary>
     public void EndEvent(SurpriseEventContext context)
     {
-        UnsubscribeArrivalSound();
         StopFadeIn();
 
         defenseTurn?.DeactivateGhostSignal();
@@ -166,39 +143,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         ghostFadeStartTimes.Clear();
 
         Debug.Log("DEF_01 GhostSignal 종료");
-    }
-
-    private void HandleGhostArrival()
-    {
-        if (!ghostSignalActivated || arrivalSoundPlayed || activeContext == null)
-            return;
-
-        PlayArrivalSound();
-        double phaseStart = activeContext.phaseStartDspTime;
-        NetworkManager.Instance?.Send(writer => PacketSerializer.WriteGhostSignalArrived(writer, phaseStart));
-    }
-
-    private void HandleRemoteGhostArrival(double remotePhaseStart)
-    {
-        if (activeContext == null || arrivalSoundPlayed)
-            return;
-
-        double localPhaseStart = arrivalSoundNetwork.TimeSync?.CorrectTime(remotePhaseStart) ?? remotePhaseStart;
-        if (System.Math.Abs(localPhaseStart - activeContext.phaseStartDspTime) < 0.1)
-            PlayArrivalSound();
-    }
-
-    private void PlayArrivalSound()
-    {
-        arrivalSoundPlayed = true;
-        SoundManager.Instance?.PlaySfx(SfxId.Def01Entry);
-    }
-
-    private void UnsubscribeArrivalSound()
-    {
-        if (arrivalSoundNetwork != null)
-            arrivalSoundNetwork.OnGhostSignalArrived -= HandleRemoteGhostArrival;
-        arrivalSoundNetwork = null;
     }
 
     private void PrepareGhostPreviewNotes(SurpriseEventContext context)
@@ -443,7 +387,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         }
 
         defenseTurn.OnGhostNoteHit += HandleGhostNoteHit;
-        defenseTurn.OnGhostReachedJudgeLine += HandleGhostArrival;
         defenseTurn.OnDefenseBegan += HandleDefenseBegan;
         isSubscribed = true;
     }
@@ -456,7 +399,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
         }
 
         defenseTurn.OnGhostNoteHit -= HandleGhostNoteHit;
-        defenseTurn.OnGhostReachedJudgeLine -= HandleGhostArrival;
         defenseTurn.OnDefenseBegan -= HandleDefenseBegan;
         isSubscribed = false;
     }
@@ -527,15 +469,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
                     penalty));
         }
 
-        if (playSfxOnGhostHit)
-        {
-            AudioClip clip = ghostHitSfx != null
-                ? ghostHitSfx
-                : ghostSignalSfx;
-
-            PlayClip(clip);
-        }
-
         Debug.Log(
             $"DEF_01 Ghost hit penalty / " +
             $"target:P{targetPlayerId}, penalty:{penalty}, " +
@@ -566,20 +499,6 @@ public class Def01SurpriseEventHandler : MonoBehaviour, ISurpriseEventHandler
             int randomIndex = Random.Range(i, values.Count);
             (values[i], values[randomIndex]) = (values[randomIndex], values[i]);
         }
-    }
-
-    private void PlayClip(AudioClip clip)
-    {
-        if (clip == null)
-        {
-            return;
-        }
-
-        float volume = SoundManager.Instance != null
-            ? SoundManager.Instance.GetScaledSfxVolume(sfxVolume)
-            : sfxVolume;
-
-        AudioSource.PlayClipAtPoint(clip, Vector3.zero, volume);
     }
 
     /// <summary>
