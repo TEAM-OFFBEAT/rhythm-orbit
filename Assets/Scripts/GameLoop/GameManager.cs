@@ -175,7 +175,6 @@ public class GameManager : MonoBehaviour
     private Coroutine gameEndCoroutine;
     private CanvasGroup resultCanvasGroup;
     private bool isGameEndPresentationPlaying;
-    private int sessionSeed;
 
     // [임시 모드] 로컬 테스트 시 NetworkManager 없이 박자 모드를 지정한다.
     public static TimeSignatureMode? LocalTestModeOverride;
@@ -460,9 +459,6 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGame()
     {
-        int netSeed = sessionSeed;
-        sessionSeed = netSeed != 0 ? netSeed : System.Environment.TickCount;
-
         pendingRemoteCommunicationSuccess = false;
         ResetGameEndPresentation();
 
@@ -490,7 +486,7 @@ public class GameManager : MonoBehaviour
         defenseTurn?.SetMode(timeSignatureMode);
         parallaxBackground?.ApplyRound(0, animate: false);
         roundTransitionVideoPlayer?.PrepareClip(0);
-        surpriseEventManager?.ResetForNewGame(sessionSeed);
+        surpriseEventManager?.ResetForNewGame(NetworkManager.Instance?.SharedSeed ?? 0);
 
         ApplyCurrentBpm(scheduleBgm: false);
         currentTurnDuration = GetCurrentTurnDuration();
@@ -691,7 +687,7 @@ public class GameManager : MonoBehaviour
 
     private System.Random GetSharedRng(int attackPhaseIdx)
     {
-        int baseSeed = sessionSeed;
+        int baseSeed = NetworkManager.Instance?.SharedSeed ?? 0;
         int seed = unchecked(baseSeed + attackPhaseIdx * 997);
         return new System.Random(seed);
     }
@@ -1308,7 +1304,7 @@ public class GameManager : MonoBehaviour
         p1DefenseJudgmentLabel?.ClearJudgment();
         p2DefenseJudgmentLabel?.ClearJudgment();
 
-        surpriseEventManager?.ResetForNewGame(sessionSeed);
+        surpriseEventManager?.ResetForNewGame(NetworkManager.Instance?.SharedSeed ?? 0);
         resultPanelUI?.HideAll();
 
         SoundManager.Instance?.StopBgm();
