@@ -256,6 +256,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d811ba91d639fc43a3bca4b44807bf5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineUIPlayer
+  idleAnimationName: default_2
 --- !u!1 &1217581982629978685
 GameObject:
   m_ObjectHideFlags: 0
@@ -867,9 +868,9 @@ MonoBehaviour:
   fillImage: {fileID: 4502280808210784159}
   minBpm: 100
   maxBpm: 144
-  animDuration: 1
-  pulseAmplitude: 0.005
-  pulseSpeed: 15
+  animDuration: 10
+  pulseAmplitude: 0.04
+  pulseSpeed: 8
   arcStartOffset: 0.05
   arcSpan: 0.59
 --- !u!1 &3825308499970522640
@@ -1203,6 +1204,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d811ba91d639fc43a3bca4b44807bf5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineUIPlayer
+  idleAnimationName: default_2
 --- !u!1 &4014179360083566950
 GameObject:
   m_ObjectHideFlags: 0
@@ -1428,8 +1430,8 @@ MonoBehaviour:
   - {fileID: 2970570558162018737}
   - {fileID: 8241702730618268343}
   - {fileID: 906138569647718315}
-  minStepDuration: 0.03
-  maxStepDuration: 0.12
+  minStepDuration: 0.05
+  maxStepDuration: 0.2
   slotDurationMultipliers:
   - 9
   - 5
@@ -2644,6 +2646,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d811ba91d639fc43a3bca4b44807bf5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineUIPlayer
+  idleAnimationName: default_2
 --- !u!1 &7918301853968554080
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,14 +14,14 @@ public class BpmGaugeUI : MonoBehaviour
 
     [Header("BPM Range")]
     [SerializeField] private float minBpm = 100f;
-    [SerializeField] private float maxBpm = 144f;
+    [SerializeField] private float maxBpm = 152f;
 
     [Header("Fill Animation")]
     [SerializeField] public float animDuration = 1f;
 
     [Header("Pulse Effect (끝점 흔들림)")]
-    [SerializeField] private float pulseAmplitude = 0.015f;
-    [SerializeField] private float pulseSpeed = 15f;
+    [SerializeField] private float pulseAmplitude = 0.07f;
+    [SerializeField] private float pulseSpeed = 2f;
 
     [Header("Arc Fill Settings")]
     [SerializeField] private float arcStartOffset = 0f;    // Left(9시) 기준 아크 시작점까지 CCW 비율 (0~1)
@@ -46,7 +46,7 @@ public class BpmGaugeUI : MonoBehaviour
     {
         if (fillImage == null) return;
 
-        float pulseOffset = pulseActive ? Mathf.Sin(Time.time * pulseSpeed) * pulseAmplitude : 0f;
+        float pulseOffset = pulseActive ? (Mathf.PerlinNoise(Time.time * pulseSpeed, 0f) * 2f - 1f) * pulseAmplitude : 0f;
         float normalizedFill = Mathf.Clamp01(currentFill + pulseOffset);
         fillImage.fillAmount = arcStartOffset + normalizedFill * arcSpan;
     }

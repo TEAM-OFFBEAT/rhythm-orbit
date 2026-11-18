@@ -15,8 +15,8 @@ public class BpmNumberUI : MonoBehaviour
     [SerializeField] private RectTransform[] digitContainers;
 
     [Header("Animation")]
-    [SerializeField] private float minStepDuration = 0.03f;
-    [SerializeField] private float maxStepDuration = 0.12f;
+    [SerializeField] private float minStepDuration = 0.05f;
+    [SerializeField] private float maxStepDuration = 0.18f;
     // 각 자릿수 스크롤 지속 시간 배율 (hundreds, tens, ones)
     [SerializeField] private float[] slotDurationMultipliers = { 9f, 5f, 1f };
 

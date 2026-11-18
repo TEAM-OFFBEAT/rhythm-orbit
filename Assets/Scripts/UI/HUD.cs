@@ -120,11 +120,6 @@ public class HUD : MonoBehaviour
     /// </summary>
     public void UpdateBpm(float bpm)
     {
-        if (bpmGauge != null && bpmNumber != null)
-        {
-            float dur = bpmNumber.GetAnimationDuration(bpm);
-            if (dur > 0f) bpmGauge.animDuration = dur;
-        }
         bpmGauge?.SetBpm(bpm);
         bpmNumber?.SetBpm(bpm);
     }
