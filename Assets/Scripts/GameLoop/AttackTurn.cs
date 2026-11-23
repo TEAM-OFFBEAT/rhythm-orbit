@@ -452,7 +452,30 @@ public class AttackTurn : MonoBehaviour
                elapsed >= opponentDemoRelativeTimes[nextOpponentDemoIndex].time)
         {
             var entry = opponentDemoRelativeTimes[nextOpponentDemoIndex];
-            CreateAttackNote(entry.time, entry.type);
+            if (doubleTapModeActive)
+            {
+                if (!hasPendingHalfNote)
+                {
+                    HandleDoubleTapInput(entry.type, entry.time);
+                    if (!hasPendingHalfNote)
+                    {
+                        nextOpponentDemoIndex++;
+                        continue;
+                    }
+                    return;
+                }
+
+                // 반쪽 노트를 잠시 표시한 뒤 같은 키를 다시 눌러 완성한다.
+                double secondTapDelay = System.Math.Min(NoteDuration * 0.25, halfNoteTimeoutSeconds * 0.5);
+                if (AudioSettings.dspTime - halfNoteCreatedDspTime < secondTapDelay)
+                    return;
+
+                HandleDoubleTapInput(entry.type, entry.time);
+            }
+            else
+            {
+                CreateAttackNote(entry.time, entry.type);
+            }
             nextOpponentDemoIndex++;
         }
     }
@@ -500,10 +523,10 @@ public class AttackTurn : MonoBehaviour
         Debug.Log($"Attack Note Created / id: {note.noteId}, type: {note.noteType}, relativeTime: {note.noteRelativeTime:0.000}s");
     }
 
-    private void HandleDoubleTapInput(NoteType noteType)
+    private void HandleDoubleTapInput(NoteType noteType, double? scheduledRelativeTime = null)
     {
         double noteDuration = NoteDuration;
-        double relativeTime = GetCorrectedRelativeInputTime();
+        double relativeTime = scheduledRelativeTime ?? GetCorrectedRelativeInputTime();
 
         if (relativeTime < 0.0 || relativeTime > attackDuration)
         {

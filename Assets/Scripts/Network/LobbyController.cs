@@ -25,6 +25,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
     [Header("Main Menu")]
     [SerializeField] private Button createRoomButton;
     [SerializeField] private Button joinRoomButton;
+    [SerializeField] private Button singlePlayerButton;
     [SerializeField] private Button goTutorialButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private SettingsWindowController settingsWindowController;
@@ -60,6 +61,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private const string SynopsisSeenKey = "RhythmOrbit.SynopsisSeen";
 
+    private bool selectingSinglePlayer;
     private TimeSignatureMode pendingMode;
     private int lastScreenWidth;
     private int lastScreenHeight;
@@ -135,6 +137,7 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         if (NetworkManager.Instance != null)
             networkManager = NetworkManager.Instance;
 
+        singlePlayerButton?.onClick.AddListener(OnSinglePlayer);
         createRoomButton.onClick.AddListener(OnCreateRoom);
         joinRoomButton.onClick.AddListener(OnJoinRoom);
         goTutorialButton.onClick.AddListener(GoToTutorial);
@@ -251,6 +254,12 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
 
     private void OnModeButtonClicked(TimeSignatureMode mode)
     {
+        if (selectingSinglePlayer)
+        {
+            GameManager.SinglePlayerRequested = true;
+            LoadLocalTest(mode, autoStart: true);
+            return;
+        }
         pendingMode = mode;
         if (modeButton44 != null) modeButton44.interactable = false;
         if (modeButton34 != null) modeButton34.interactable = false;
@@ -341,8 +350,14 @@ public class LobbyController : MonoBehaviour, IExclusivePanel
         OnCancel();
     }
 
+    private void OnSinglePlayer()
+    {
+        selectingSinglePlayer = true;
+        ShowModeSelect(true, "");
+    }
     private void ShowMainMenu()
     {
+        selectingSinglePlayer = false;
         mainMenuPanel.SetActive(true);
         hostWaitingPanel.SetActive(false);
         joinPanel.SetActive(false);

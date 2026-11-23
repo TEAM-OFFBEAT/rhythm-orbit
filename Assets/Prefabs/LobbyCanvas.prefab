@@ -129,6 +129,7 @@ MonoBehaviour:
   joinPanel: {fileID: 3659558241181190724}
   createRoomButton: {fileID: 4261969321139006133}
   joinRoomButton: {fileID: 8193390957821974497}
+  singlePlayerButton: {fileID: 810000000000000021}
   goTutorialButton: {fileID: 2956076464602378932}
   settingsButton: {fileID: 2709505812833191146}
   settingsWindowController: {fileID: 0}
@@ -1275,4 +1276,16 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+
+--- !u!114 &810000000000000021 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 810000000000000005, guid: 79af9f301a9a7e743a9436468272ca0f, type: 3}
+  m_PrefabInstance: {fileID: 8647114666271464897}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button

@@ -87,6 +87,7 @@ public class DefenseTurn : MonoBehaviour
     private readonly List<Judgment> judgments = new();
     private bool isRunning;
     private bool isAiDefense;
+    private bool playAiHitSfx;
     private double defenseEndDspTime;
     private AttackSide pendingAttackSide;
     private double pendingAttackDuration;
@@ -120,8 +121,8 @@ public class DefenseTurn : MonoBehaviour
             {
                 if (now < pendingNotes[i].judgeTime) continue;
 
-                // AI 자동 PERFECT는 실제 입력이 아니므로 타격음 재생 X
-                ResolveDefenseNote(pendingNotes[i], Judgment.PERFECT, playInputSfx: false);
+                // 싱글모드에서는 자동 방어도 노트 종류에 맞는 타격음을 재생한다.
+                ResolveDefenseNote(pendingNotes[i], Judgment.PERFECT, playInputSfx: playAiHitSfx);
             }
         }
         else
@@ -171,7 +172,8 @@ public class DefenseTurn : MonoBehaviour
     double attackDuration,
     bool isAiDefense = false,
     NetworkManager networkManager = null,
-    double remoteAttackStartDspTime = 0.0)
+    double remoteAttackStartDspTime = 0.0,
+    bool playAiHitSfx = false)
     {
         this.networkManager = networkManager;
 
@@ -185,6 +187,7 @@ public class DefenseTurn : MonoBehaviour
         pendingNotes.Clear();
         judgments.Clear();
         this.isAiDefense = isAiDefense;
+        this.playAiHitSfx = playAiHitSfx;
         isRunning = true;
 
         double defenseStartDspTime;
@@ -412,7 +415,7 @@ public class DefenseTurn : MonoBehaviour
 
         judgments.Add(judgment);
 
-        bool shouldPlayInputSfx = playInputSfx && !isAiDefense;
+        bool shouldPlayInputSfx = playInputSfx && (!isAiDefense || playAiHitSfx);
 
         if (shouldPlayInputSfx)
         {

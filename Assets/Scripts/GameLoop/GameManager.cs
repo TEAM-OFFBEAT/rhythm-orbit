@@ -179,6 +179,8 @@ public class GameManager : MonoBehaviour
     // [임시 모드] 로컬 테스트 시 NetworkManager 없이 박자 모드를 지정한다.
     public static TimeSignatureMode? LocalTestModeOverride;
     internal static bool LocalTestAutoStart;
+    internal static bool SinglePlayerRequested;
+    private bool isSinglePlayer;
     internal TimeSignatureMode CurrentTimeSignatureMode => timeSignatureMode;
     internal bool IsWaitingForLocalTestStart => nextPhaseDspTime == double.MaxValue && !IsGameEnded;
 
@@ -350,6 +352,8 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         resultPanelUI?.HideAll();
+        isSinglePlayer = SinglePlayerRequested;
+        SinglePlayerRequested = false;
         bool autoStartLocalTest = LocalTestAutoStart;
         LocalTestAutoStart = false;
 
@@ -529,6 +533,11 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
+
+        if (isSinglePlayer &&
+            ((currentState == GameState.ATTACK && attackerPlayerId == 2) ||
+             (currentState == GameState.DEFENSE && attackerPlayerId == 1)))
+            return;
 
         if (currentState == GameState.ATTACK)
         {
@@ -736,7 +745,21 @@ public class GameManager : MonoBehaviour
 
         if (isLocalAttacker)
         {
-            attackTurn.StartLocalPlayerAttack(attackerSide, noteCount, msg, phaseStartDspTime, notesPerTurn);
+            if (isSinglePlayer && attackerPlayerId == 2)
+            {
+                var pattern = new NoteType[noteCount];
+                var steps = new int[noteCount];
+                for (int i = 0; i < noteCount; i++)
+                {
+                    pattern[i] = i % 2 == 0 ? NoteType.HIGH : NoteType.LOW;
+                    steps[i] = (i + 1) * notesPerTurn / (noteCount + 1);
+                }
+                attackTurn.StartOpponentAttackDemo(msg, pattern, steps, phaseStartDspTime, notesPerTurn);
+            }
+            else
+            {
+                attackTurn.StartLocalPlayerAttack(attackerSide, noteCount, msg, phaseStartDspTime, notesPerTurn);
+            }
             hud?.UpdateAttackProgress(0, noteCount);
         }
         else
@@ -852,8 +875,9 @@ public class GameManager : MonoBehaviour
             lastLocalAttackResult.Value.Notes,
             judgeLineX, attackStartX, attackEndX,
             currentTurnDuration,
-            isAiDefense: false,
+            isAiDefense: isSinglePlayer && attackerPlayerId == 1,
             networkManager: null,
+            playAiHitSfx: isSinglePlayer && attackerPlayerId == 1,
             remoteAttackStartDspTime: localAttackStartDspTime  // 로컬 모드: DSP 페이즈 루프 기준 정확한 이론 시작 시각
         );
         lastLocalAttackResult = null;
