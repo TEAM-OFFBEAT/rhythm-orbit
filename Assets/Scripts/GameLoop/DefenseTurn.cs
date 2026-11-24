@@ -538,15 +538,19 @@ public class DefenseTurn : MonoBehaviour
     /// <summary>
     /// EVT_DEF_01 유령 신호를 활성화하고 현재 방어 턴의 빈 박자에 유령 노트를 생성한다.
     /// </summary>
-    public bool ConvertDeliveredNotesToGhosts(int minimumCount, float alpha)
+    public bool ConvertDeliveredNotesToGhosts(int minimumCount, float alpha, IReadOnlyList<int> selectedNoteIds = null)
     {
         if (!isRunning || pendingNotes.Count < Mathf.Max(3, minimumCount)) return false;
         ghostConversionActive = true;
         var candidates = new List<NoteData>(pendingNotes);
-        int count = candidates.Count == 3 ? 1 : Random.Range(1, 3);
+        int count = selectedNoteIds != null && selectedNoteIds.Count > 0
+            ? selectedNoteIds.Count : candidates.Count == 3 ? 1 : Random.Range(1, 3);
         for (int i = 0; i < count; i++)
         {
-            int selected = Random.Range(0, candidates.Count);
+            int selected = selectedNoteIds != null && selectedNoteIds.Count > 0
+                ? candidates.FindIndex(note => note.noteId == selectedNoteIds[i])
+                : Random.Range(0, candidates.Count);
+            if (selected < 0) continue;
             NoteData note = candidates[selected];
             candidates.RemoveAt(selected);
             pendingNotes.Remove(note);

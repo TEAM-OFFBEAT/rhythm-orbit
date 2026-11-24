@@ -79,6 +79,7 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     public Transform ConvertNoteToGhost(int noteId, float alpha, double judgeTime)
     {
         if (!activeNotes.TryGetValue(noteId, out var entry)) return null;
+        if (entry.obj.name == $"GhostNote_{noteId}") return entry.obj;
         entry.obj.name = $"GhostNote_{noteId}";
         var animation = entry.obj.GetComponent<GhostNoteAnimation>();
         if (animation != null)
