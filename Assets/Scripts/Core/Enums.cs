@@ -1,4 +1,4 @@
-public enum Judgment { PERFECT, GOOD, MISS }
+public enum Judgment { PERFECT, GOOD, MISS, SKIPPED }
 public enum GameState { ATTACK, DEFENSE, TURN_CHANGE, END }
 public enum NoteType { HIGH, LOW }
 public enum GameResultType { P1Win, P2Win, CommunicationSuccess }

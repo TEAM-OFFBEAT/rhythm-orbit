@@ -65,6 +65,11 @@ public class RandomMessageProvider : MonoBehaviour
 
         for (int i = 0; i < judgeLimit; i++)
         {
+            if (judgments[i] == Judgment.SKIPPED)
+            {
+                chars[i] = ' ';
+                continue;
+            }
             if (judgments[i] == Judgment.MISS)
             {
                 chars[i] = RandomNoteChar();

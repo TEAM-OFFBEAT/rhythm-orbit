@@ -779,6 +779,10 @@ public class GameManager : MonoBehaviour
     private void StartDefensePhase(double phaseStartDspTime)
     {
         currentJudgmentIndex = 0;
+        // 유령 변환 패킷이 로컬 페이즈 전환보다 먼저 도착한 경우도 집계한다.
+        if (NetworkManager.Instance != null && attackerPlayerId == myLocalPlayerId)
+            foreach (Judgment result in remoteJudgmentBuffer)
+                if (result == Judgment.SKIPPED) currentJudgmentIndex++;
         defendingMessage = currentAttackMessage;
         currentDefenderPlayerId = GetDefenderPlayerId();
         hud?.ResetCombo();
@@ -990,13 +994,19 @@ public class GameManager : MonoBehaviour
     {
         if (currentState == GameState.END) return;
 
+        if (judgment == Judgment.SKIPPED)
+        {
+            currentJudgmentIndex++;
+            return;
+        }
+
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
         hud?.ShowJudgment(judgment, attackerSide);
         GetDefenseLabel(GetDefenderPlayerId())?.ShowJudgment(judgment);
 
         if (judgment != Judgment.MISS)
         {
-            hud?.SetStarSuccess(currentJudgmentIndex);
+            hud?.SetStarSuccess(defenseTurn.LastJudgedOriginalIndex);
             hud?.IncrementCombo();
         }
         else
@@ -1091,6 +1101,20 @@ public class GameManager : MonoBehaviour
         if (currentState == GameState.END) return;
 
         Judgment judgment = (Judgment)packet.judgment;
+        if (judgment == Judgment.SKIPPED)
+        {
+            while (remoteJudgmentBuffer.Count <= packet.noteId)
+                remoteJudgmentBuffer.Add(Judgment.MISS);
+            if (remoteJudgmentBuffer[packet.noteId] == Judgment.SKIPPED) return;
+            remoteJudgmentBuffer[packet.noteId] = Judgment.SKIPPED;
+            currentJudgmentIndex++;
+            attackTurnRenderer?.ConvertNoteToGhost(new GhostNoteData
+            {
+                noteId = packet.noteId,
+                noteType = noteTypeByNoteId.TryGetValue(packet.noteId, out NoteType type) ? type : NoteType.HIGH
+            }, 0.7f);
+            return;
+        }
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);
 
         PlayHitResultSfxByNoteId(packet.noteId, judgment);
@@ -1106,7 +1130,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            hud?.SetStarSuccess(currentJudgmentIndex);
+            hud?.SetStarSuccess(packet.noteId);
         }
         currentJudgmentIndex++;
 

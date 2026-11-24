@@ -227,17 +227,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96e13ff5740f07448b8cc5ccb6b5c304, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Def01SurpriseEventHandler
-  attackTurn: {fileID: 0}
-  attackTurnRenderer: {fileID: 0}
   defenseTurn: {fileID: 0}
   sanitySystem: {fileID: 0}
-  ghostNoteCount: 2
-  ghostNoteIdBase: 700000
+  minimumDeliveredNotes: 3
   ghostNoteAlpha: 0.7
-  ghostFadeInSeconds: 0.45
-  appearAfterLinePassSeconds: 0.05
-  ghostStaggerSeconds: 0.12
-  removeGhostIfRealNoteAppearsOnSameStep: 1
   ghostHitPenalty: 5
 --- !u!1 &5334492164624232687
 GameObject:

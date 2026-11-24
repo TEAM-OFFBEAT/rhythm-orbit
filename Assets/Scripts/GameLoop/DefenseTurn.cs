@@ -73,10 +73,8 @@ public class DefenseTurn : MonoBehaviour
     [SerializeField] private Sprite p2DefenseLineSprite34;
 
     [Header("EVT_DEF_01 Ghost Signal")]
-    [SerializeField, Min(1)] private int ghostNoteIdBase = 700000;
     [SerializeField, Min(0f)] private double ghostPassDisappearDelayMs = 80.0;
 
-    private int nextGhostNoteId;
     private double currentDefenseStartDspTime;
     private float currentJudgeLineX;
     private float currentAttackStartX;
@@ -86,6 +84,10 @@ public class DefenseTurn : MonoBehaviour
     private NetworkManager networkManager;
     private readonly List<Judgment> judgments = new();
     private bool isRunning;
+    private readonly Dictionary<int, int> originalNoteIndices = new();
+    private readonly Dictionary<int, Judgment> indexedJudgments = new();
+    public int LastJudgedOriginalIndex { get; private set; }
+    private bool ghostConversionActive;
     private bool isAiDefense;
     private bool playAiHitSfx;
     private double defenseEndDspTime;
@@ -186,6 +188,9 @@ public class DefenseTurn : MonoBehaviour
 
         pendingNotes.Clear();
         judgments.Clear();
+        originalNoteIndices.Clear();
+        indexedJudgments.Clear();
+        ghostConversionActive = false;
         this.isAiDefense = isAiDefense;
         this.playAiHitSfx = playAiHitSfx;
         isRunning = true;
@@ -205,7 +210,6 @@ public class DefenseTurn : MonoBehaviour
         currentAttackStartX = attackStartX;
         currentAttackEndX = attackEndX;
         currentAttackDuration = attackDuration;
-        nextGhostNoteId = ghostNoteIdBase;
 
         ghostNotes.Clear();
 
@@ -233,6 +237,8 @@ public class DefenseTurn : MonoBehaviour
             }
         }
 
+        for (int i = 0; i < pendingNotes.Count; i++)
+            originalNoteIndices[pendingNotes[i].noteId] = i;
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
         OnDefenseBegan?.Invoke();
     }
@@ -265,7 +271,10 @@ public class DefenseTurn : MonoBehaviour
         };
 
         if (isRunning && networkManager != null && localDefenseStart == currentDefenseStartDspTime)
+        {
+            originalNoteIndices[note.noteId] = originalNoteIndices.Count;
             pendingNotes.Add(note);
+        }
         else
             receivedNotes.Add(note);
 
@@ -315,6 +324,9 @@ public class DefenseTurn : MonoBehaviour
 
         pendingNotes.Clear();
         judgments.Clear();
+        originalNoteIndices.Clear();
+        indexedJudgments.Clear();
+        ghostConversionActive = false;
         isRunning = true;
 
         defenseEndDspTime = defenseStartDspTime + attackDuration;
@@ -324,7 +336,6 @@ public class DefenseTurn : MonoBehaviour
         currentAttackStartX = attackStartX;
         currentAttackEndX = attackEndX;
         currentAttackDuration = attackDuration;
-        nextGhostNoteId = ghostNoteIdBase;
 
         ghostNotes.Clear();
 
@@ -346,6 +357,8 @@ public class DefenseTurn : MonoBehaviour
 
         receivedNotes.Clear();
 
+        for (int i = 0; i < pendingNotes.Count; i++)
+            originalNoteIndices[pendingNotes[i].noteId] = i;
         attackTurnRenderer.StartTransfer(judgeLineX, transferSpeed);
         OnDefenseBegan?.Invoke();
     }
@@ -367,20 +380,13 @@ public class DefenseTurn : MonoBehaviour
         NoteData normalTarget = GetNearestNoteByTime(inputTime);
         GhostNoteData ghostTarget = GetNearestGhostNoteByTime(inputTime);
 
-        if (ghostTarget != null && ShouldUseGhostTarget(inputTime, normalTarget, ghostTarget))
-        {
-            ResolveGhostNoteHit(ghostTarget);
-            return;
-        }
-
-        // 방어할 활성 노트가 없는데 누른 경우.
-        // 게임 로직상 추가 감점은 하지 않고 사운드만 Miss로 처리한다.
         if (normalTarget == null)
         {
             OnDefenseInputResolved?.Invoke(inputNoteType, false);
+            if (ghostConversionActive)
+                OnGhostNoteHit?.Invoke(ghostTarget);
             return;
         }
-
         bool isKeySuccess = inputNoteType == normalTarget.noteType;
 
         Judgment result;
@@ -414,6 +420,9 @@ public class DefenseTurn : MonoBehaviour
         if (note == null) return;
 
         judgments.Add(judgment);
+        LastJudgedOriginalIndex = originalNoteIndices.TryGetValue(note.noteId, out int index)
+            ? index : judgments.Count - 1;
+        indexedJudgments[LastJudgedOriginalIndex] = judgment;
 
         bool shouldPlayInputSfx = playInputSfx && (!isAiDefense || playAiHitSfx);
 
@@ -472,7 +481,7 @@ public class DefenseTurn : MonoBehaviour
 
         var result = new DefenseResult
         {
-            Judgments = judgments.ToArray(),
+            Judgments = BuildPositionalJudgments(),
             MissCount = missCount,
         };
 
@@ -529,146 +538,47 @@ public class DefenseTurn : MonoBehaviour
     /// <summary>
     /// EVT_DEF_01 유령 신호를 활성화하고 현재 방어 턴의 빈 박자에 유령 노트를 생성한다.
     /// </summary>
-    public void ActivateGhostSignal(int ghostCount, float ghostAlpha)
+    public bool ConvertDeliveredNotesToGhosts(int minimumCount, float alpha)
     {
-        if (!isRunning || isAiDefense)
+        if (!isRunning || pendingNotes.Count < Mathf.Max(3, minimumCount)) return false;
+        ghostConversionActive = true;
+        var candidates = new List<NoteData>(pendingNotes);
+        int count = candidates.Count == 3 ? 1 : Random.Range(1, 3);
+        for (int i = 0; i < count; i++)
         {
-            return;
-        }
-
-        if (attackTurnRenderer == null)
-        {
-            Debug.LogWarning("DefenseTurn: AttackTurnRenderer가 없어 유령 노트를 생성할 수 없음.");
-            return;
-        }
-
-        ClearGhostNotesInternal();
-
-        List<int> candidateSteps = BuildGhostCandidateGridSteps();
-
-        if (candidateSteps.Count == 0)
-        {
-            Debug.Log("DefenseTurn: 유령 노트를 생성할 빈 박자가 없음.");
-            return;
-        }
-
-        Shuffle(candidateSteps);
-
-        int spawnCount = Mathf.Min(Mathf.Max(0, ghostCount), candidateSteps.Count);
-        double noteDuration = GetCurrentNoteDurationSeconds();
-
-        for (int i = 0; i < spawnCount; i++)
-        {
-            int step = candidateSteps[i];
-            double relativeTime = step * noteDuration;
-
-            GhostNoteData ghostNote = new GhostNoteData
+            int selected = Random.Range(0, candidates.Count);
+            NoteData note = candidates[selected];
+            candidates.RemoveAt(selected);
+            pendingNotes.Remove(note);
+            var ghost = new GhostNoteData
             {
-                noteId = nextGhostNoteId++,
-                noteType = Random.value < 0.5f ? NoteType.HIGH : NoteType.LOW,
-                noteRelativeTime = relativeTime,
-                judgeTime = currentDefenseStartDspTime + relativeTime
+                noteId = note.noteId,
+                noteType = note.noteType,
+                noteRelativeTime = note.noteRelativeTime,
+                judgeTime = note.judgeTime
             };
-
-            ghostNotes.Add(ghostNote);
-
-            attackTurnRenderer.SpawnGhostNote(
-                ghostNote,
-                currentAttackDuration,
-                currentAttackStartX,
-                currentAttackEndX,
-                ghostAlpha
-            );
-
-            Debug.Log(
-                $"DefenseTurn: Ghost note 생성 / " +
-                $"id:{ghostNote.noteId}, type:{ghostNote.noteType}, step:{step}, rel:{relativeTime:0.000}"
-            );
+            ghostNotes.Add(ghost);
+            attackTurnRenderer.ConvertNoteToGhost(ghost, alpha);
+            // 공격자 관찰 화면에도 제외 위치를 전달한다. 별도의 성공/실패 판정은 아니다.
+            networkManager?.Send(w =>
+                PacketSerializer.WriteJudgment(w, note.noteId, Judgment.SKIPPED, false));
         }
+        return true;
     }
 
-    /// <summary>
-    /// EVT_DEF_01 유령 신호를 종료하고 남은 유령 노트를 제거한다.
-    /// </summary>
     public void DeactivateGhostSignal()
     {
         ClearGhostNotesInternal();
+        ghostConversionActive = false;
     }
 
-    /// <summary>
-    /// DEF_01 진입 단계에서 미리 생성된 유령 노트를
-    /// 방어 턴 입력 후보로 등록한다.
-    /// 시각 오브젝트는 이미 AttackTurnRenderer에 생성되어 있으므로 여기서는 새로 Spawn하지 않는다.
-    /// </summary>
-    public void SetGhostSignalNotes(IReadOnlyList<GhostNoteData> preparedNotes)
+    private Judgment[] BuildPositionalJudgments()
     {
-        ghostNotes.Clear();
-
-        if (!isRunning || isAiDefense)
-        {
-            return;
-        }
-
-        if (preparedNotes == null)
-        {
-            return;
-        }
-
-        foreach (GhostNoteData ghostNote in preparedNotes)
-        {
-            if (ghostNote == null)
-            {
-                continue;
-            }
-
-            ghostNotes.Add(ghostNote);
-        }
-
-        Debug.Log($"DefenseTurn: Ghost signal input 등록 / count:{ghostNotes.Count}");
+        var result = new Judgment[originalNoteIndices.Count];
+        for (int i = 0; i < result.Length; i++)
+            result[i] = indexedJudgments.TryGetValue(i, out Judgment value) ? value : Judgment.MISS;
+        return result;
     }
-
-    /// <summary>
-    /// 실제 노트와 겹치지 않는 빈 grid step 목록을 만든다.
-    /// </summary>
-    private List<int> BuildGhostCandidateGridSteps()
-    {
-        List<int> candidates = new List<int>();
-        HashSet<int> occupiedSteps = new HashSet<int>();
-
-        double noteDuration = GetCurrentNoteDurationSeconds();
-
-        if (noteDuration <= 0.0 || currentAttackDuration <= 0.0)
-        {
-            return candidates;
-        }
-
-        foreach (NoteData note in pendingNotes)
-        {
-            if (note == null)
-            {
-                continue;
-            }
-
-            int step = GetNearestGridStep(note.noteRelativeTime, noteDuration);
-            occupiedSteps.Add(step);
-        }
-
-        int maxStep = Mathf.FloorToInt((float)(currentAttackDuration / noteDuration));
-
-        // 0번째 칸과 마지막 칸은 시작/끝 경계라 제외.
-        for (int step = 1; step < maxStep; step++)
-        {
-            if (occupiedSteps.Contains(step))
-            {
-                continue;
-            }
-
-            candidates.Add(step);
-        }
-
-        return candidates;
-    }
-
     private GhostNoteData GetNearestGhostNoteByTime(double inputTime)
     {
         GhostNoteData nearest = null;
@@ -714,50 +624,6 @@ public class DefenseTurn : MonoBehaviour
     }
 
     /// <summary>
-    /// 실제 노트와 유령 노트가 둘 다 입력 후보일 때 어느 쪽으로 처리할지 결정한다.
-    /// 더 가까운 쪽을 우선한다.
-    /// </summary>
-    private bool ShouldUseGhostTarget(double inputTime, NoteData normalTarget, GhostNoteData ghostTarget)
-    {
-        if (ghostTarget == null)
-        {
-            return false;
-        }
-
-        if (normalTarget == null)
-        {
-            return true;
-        }
-
-        double normalDist = System.Math.Abs(JudgeSystem.Instance.CalcOffsetMs(inputTime, normalTarget.judgeTime));
-
-        double ghostDist = System.Math.Abs(JudgeSystem.Instance.CalcOffsetMs(inputTime, ghostTarget.judgeTime));
-
-        return ghostDist <= normalDist;
-    }
-
-    /// <summary>
-    /// 유령 노트를 타격했을 때 처리한다.
-    /// 실제 방어 Judgment에는 포함하지 않는다.
-    /// </summary>
-    private void ResolveGhostNoteHit(GhostNoteData ghostNote)
-    {
-        if (ghostNote == null)
-        {
-            return;
-        }
-
-        // 중복 감점은 막되, 화면의 유령은 판정선까지 계속 이동한다.
-        ghostNotes.Remove(ghostNote);
-        judgments.Add(Judgment.MISS);
-        OnJudgment?.Invoke(Judgment.MISS);
-        OnGhostNoteHit?.Invoke(ghostNote);
-
-        Debug.Log(
-            $"DefenseTurn: Ghost note hit / id:{ghostNote.noteId}, type:{ghostNote.noteType}");
-    }
-
-    /// <summary>
     /// 유령 노트가 판정선을 지난 뒤 자동 소멸하는 처리.
     /// 패널티는 적용하지 않는다.
     /// </summary>
@@ -768,6 +634,10 @@ public class DefenseTurn : MonoBehaviour
             return;
         }
 
+        int index = originalNoteIndices[ghostNote.noteId];
+        indexedJudgments[index] = Judgment.SKIPPED;
+        LastJudgedOriginalIndex = index;
+        OnJudgment?.Invoke(Judgment.SKIPPED);
         RemoveGhostNoteInternal(ghostNote);
         OnGhostNotePassed?.Invoke(ghostNote);
 
@@ -797,12 +667,6 @@ public class DefenseTurn : MonoBehaviour
         }
     }
 
-    internal void RemoveGhostSignalNote(GhostNoteData ghostNote)
-    {
-        ghostNotes.Remove(ghostNote);
-        attackTurnRenderer?.RemoveGhostNote(ghostNote.noteId);
-    }
-
     private void RemoveGhostNoteInternal(GhostNoteData ghostNote)
     {
         if (ghostNote == null)
@@ -830,25 +694,6 @@ public class DefenseTurn : MonoBehaviour
             : 60.0 / 106.0 / System.Math.Max(1, subdivisions);
     }
 
-    private int GetNearestGridStep(double relativeTime, double noteDuration)
-    {
-        if (noteDuration <= 0.0)
-        {
-            return 0;
-        }
-
-        return Mathf.RoundToInt((float)(relativeTime / noteDuration));
-    }
-
-    private void Shuffle(List<int> values)
-    {
-        for (int i = 0; i < values.Count; i++)
-        {
-            int randomIndex = Random.Range(i, values.Count);
-            (values[i], values[randomIndex]) = (values[randomIndex], values[i]);
-        }
-    }
-
     /// <summary>
     /// 재시작 또는 씬 이동을 위해 진행 중인 방어 턴을 강제로 정리한다.
     /// OnDefenseEnded는 호출하지 않는다.
@@ -861,6 +706,9 @@ public class DefenseTurn : MonoBehaviour
         pendingNotes.Clear();
         receivedNotes.Clear();
         judgments.Clear();
+        originalNoteIndices.Clear();
+        indexedJudgments.Clear();
+        ghostConversionActive = false;
 
         ClearGhostNotesInternal();
 

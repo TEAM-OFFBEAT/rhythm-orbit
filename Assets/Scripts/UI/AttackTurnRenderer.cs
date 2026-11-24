@@ -130,19 +130,31 @@ public class AttackTurnRenderer : MonoBehaviour
     /// EVT_DEF_01 유령 신호 노트를 표시한다.
     /// 일반 노트와 같은 경로/속도로 이동하지만, 일반 판정 노트 목록과는 분리된다.
     /// </summary>
+    public void ConvertNoteToGhost(GhostNoteData ghost, float alpha)
+    {
+        for (int i = 0; i < spawnedNotes.Count; i++)
+        {
+            NoteEntry entry = spawnedNotes[i];
+            if (entry.noteId != ghost.noteId) continue;
+            Transform converted = NoteRenderer.Instance?.ConvertNoteToGhost(
+                ghost.noteId, alpha, entry.judgeTime);
+            if (converted == null) return;
+            spawnedNotes.RemoveAt(i);
+            entry.rect = converted;
+            spawnedGhostNotes.Add(entry);
+            return;
+        }
+
+    }
+
     public void SpawnGhostNote(
         GhostNoteData ghostNote,
         double duration,
         float attackStartX,
         float attackEndX,
-        float alpha
-    )
+        float alpha)
     {
-        if (ghostNote == null)
-        {
-            return;
-        }
-
+        if (ghostNote == null) return;
         if (NoteRenderer.Instance == null)
         {
             Debug.LogWarning("NoteRenderer.Instance가 없습니다.");
@@ -346,6 +358,7 @@ public class AttackTurnRenderer : MonoBehaviour
     /// </summary>
     public void SetNoteJudgeTime(int noteId, double judgeTime)
     {
+        SetGhostNoteJudgeTime(noteId, judgeTime);
         for (int i = 0; i < spawnedNotes.Count; i++)
         {
             if (spawnedNotes[i].noteId != noteId) continue;
