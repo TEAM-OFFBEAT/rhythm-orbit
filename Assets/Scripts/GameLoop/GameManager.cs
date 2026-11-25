@@ -1106,13 +1106,16 @@ public class GameManager : MonoBehaviour
             while (remoteJudgmentBuffer.Count <= packet.noteId)
                 remoteJudgmentBuffer.Add(Judgment.MISS);
             if (remoteJudgmentBuffer[packet.noteId] == Judgment.SKIPPED) return;
+            int ghostOrder = 0;
+            foreach (Judgment result in remoteJudgmentBuffer)
+                if (result == Judgment.SKIPPED) ghostOrder++;
             remoteJudgmentBuffer[packet.noteId] = Judgment.SKIPPED;
             currentJudgmentIndex++;
             attackTurnRenderer?.ConvertNoteToGhost(new GhostNoteData
             {
                 noteId = packet.noteId,
                 noteType = noteTypeByNoteId.TryGetValue(packet.noteId, out NoteType type) ? type : NoteType.HIGH
-            }, 0.7f);
+            }, 0.7f, ghostOrder * 0.12f);
             return;
         }
         AttackSide attackerSide = GetAttackSide(attackerPlayerId);

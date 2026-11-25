@@ -229,7 +229,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Def01SurpriseEventHandler
   defenseTurn: {fileID: 0}
   sanitySystem: {fileID: 0}
-  conversionLeadSeconds: 0.45
   conversionStaggerSeconds: 0.12
   minimumDeliveredNotes: 3
   ghostNoteAlpha: 0.7
