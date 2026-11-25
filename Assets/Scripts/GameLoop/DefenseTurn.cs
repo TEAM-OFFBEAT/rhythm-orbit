@@ -538,7 +538,7 @@ public class DefenseTurn : MonoBehaviour
     /// <summary>
     /// EVT_DEF_01 유령 신호를 활성화하고 현재 방어 턴의 빈 박자에 유령 노트를 생성한다.
     /// </summary>
-    public bool ConvertDeliveredNotesToGhosts(int minimumCount, float alpha)
+    public bool ConvertDeliveredNotesToGhosts(int minimumCount, float alpha, float conversionStaggerSeconds = 0f)
     {
         if (!isRunning || pendingNotes.Count < Mathf.Max(3, minimumCount)) return false;
         ghostConversionActive = true;
@@ -558,7 +558,7 @@ public class DefenseTurn : MonoBehaviour
                 judgeTime = note.judgeTime
             };
             ghostNotes.Add(ghost);
-            attackTurnRenderer.ConvertNoteToGhost(ghost, alpha);
+            attackTurnRenderer.ConvertNoteToGhost(ghost, alpha, i * conversionStaggerSeconds);
             // 공격자 관찰 화면에도 제외 위치를 전달한다. 별도의 성공/실패 판정은 아니다.
             networkManager?.Send(w =>
                 PacketSerializer.WriteJudgment(w, note.noteId, Judgment.SKIPPED, false));

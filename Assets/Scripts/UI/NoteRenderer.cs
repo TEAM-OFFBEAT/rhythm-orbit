@@ -76,13 +76,14 @@ public class NoteRenderer : SceneSingleton<NoteRenderer>
     /// <summary>
     /// EVT_DEF_01 유령 노트용으로 기존 노트를 가져오되, 알파값을 낮춰 흐리게 표시한다.
     /// </summary>
-    public Transform ConvertNoteToGhost(int noteId, float alpha, double judgeTime)
+    public Transform ConvertNoteToGhost(int noteId, float alpha, double judgeTime, float delaySeconds = 0f)
     {
         if (!activeNotes.TryGetValue(noteId, out var entry)) return null;
+        if (entry.obj.name == $"GhostNote_{noteId}") return entry.obj;
         entry.obj.name = $"GhostNote_{noteId}";
         var animation = entry.obj.GetComponent<GhostNoteAnimation>();
         if (animation != null)
-            animation.BeginConversion(alpha, judgeTime);
+            animation.BeginConversion(alpha, judgeTime, delaySeconds);
         else
             SetVisualAlpha(entry.obj, alpha);
         return entry.obj;

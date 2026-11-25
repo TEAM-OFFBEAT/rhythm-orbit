@@ -79,6 +79,7 @@ public class SurpriseEventManager : MonoBehaviour
 
     // 이벤트가 실제 적용 페이즈에 들어갔는지 여부.
     private bool activeEventPhaseBegun;
+    private bool ghostEventResolved;
 
     // 게임 전체에서 지금까지 이벤트가 몇 번 선정됐는지.
     private int totalEventCount;
@@ -423,19 +424,21 @@ public class SurpriseEventManager : MonoBehaviour
             return;
         }
 
-        if (!preparedEventCounted)
+        if (!preparedEventCounted && preparedEvent.eventId != SurpriseEventId.EVT_DEF_01_GhostSignal)
         {
             totalEventCount++;
             preparedEventCounted = true;
         }
 
+        ghostEventResolved = false;
         activeEvent = preparedEvent;
         preparedEvent = null;
         preparedEventPreludeBegun = false;
         preparedEventCounted = false;
         activeEventPhaseBegun = false;
 
-        if (definitionMap.TryGetValue(activeEvent.eventId, out SurpriseEventDefinition definition))
+        if (activeEvent.eventId != SurpriseEventId.EVT_DEF_01_GhostSignal &&
+            definitionMap.TryGetValue(activeEvent.eventId, out SurpriseEventDefinition definition))
         {
             if (!string.IsNullOrWhiteSpace(definition.entryMessage))
             {
@@ -556,6 +559,22 @@ public class SurpriseEventManager : MonoBehaviour
     /// <summary>
     /// 이벤트 진입 효과음을 재생한다.
     /// </summary>
+    internal void ConfirmGhostEvent(bool eligible)
+    {
+        if (ghostEventResolved || activeEvent == null ||
+            activeEvent.eventId != SurpriseEventId.EVT_DEF_01_GhostSignal) return;
+        ghostEventResolved = true;
+        if (!eligible)
+        {
+            Log("유령 신호 무효: 실제 전달 수 미달. 발동 횟수 미차감.");
+            return;
+        }
+        totalEventCount++;
+        if (!definitionMap.TryGetValue(activeEvent.eventId, out SurpriseEventDefinition definition)) return;
+        if (!string.IsNullOrWhiteSpace(definition.entryMessage))
+            SetNotification($"{GetPlayerPrefix(activeEvent.targetPlayerId)} {definition.entryMessage}");
+        PlayEntrySfx(definition);
+    }
     private void PlayEntrySfx(SurpriseEventDefinition definition)
     {
         if ((int)definition.entrySfxId >= 0)

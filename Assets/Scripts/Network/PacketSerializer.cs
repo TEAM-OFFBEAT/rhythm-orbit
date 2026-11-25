@@ -11,6 +11,12 @@ public static class PacketSerializer
     /// <summary>
     /// 클럭 동기화 요청. 페이로드 없음.
     /// </summary>
+    public static void WriteAttackCompleted(BinaryWriter writer, double defenseStart, int noteCount)
+    {
+        writer.Write((byte)PacketType.ATTACK_COMPLETED);
+        writer.Write(defenseStart);
+        writer.Write(noteCount);
+    }
     public static void WritePing(BinaryWriter w)
         => w.Write((byte)PacketType.PING);
 

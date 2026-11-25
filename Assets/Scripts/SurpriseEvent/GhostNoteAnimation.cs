@@ -51,7 +51,7 @@ public class GhostNoteAnimation : MonoBehaviour
         animationCoroutine = StartCoroutine(PlayMoveFrames());
     }
 
-    public void BeginConversion(float alpha, double judgeTime)
+    public void BeginConversion(float alpha, double judgeTime, float delaySeconds = 0f)
     {
         Sprite original = spriteRenderer.sprite;
         Color originalColor = spriteRenderer.color;
@@ -80,14 +80,20 @@ public class GhostNoteAnimation : MonoBehaviour
 
         // 첫 노트도 판정선에 도착하기 전에 유령 모습을 식별할 시간을 남긴다.
         double remaining = judgeTime - AudioSettings.dspTime;
+        delaySeconds = remaining > 0.0
+            ? Mathf.Min(Mathf.Max(0f, delaySeconds), (float)remaining * 0.2f)
+            : 0f;
+        remaining -= delaySeconds;
         float duration = remaining > 0.0
             ? Mathf.Min(conversionSeconds, (float)remaining * 0.6f)
             : conversionSeconds;
-        conversionCoroutine = StartCoroutine(CrossFade(duration, originalColor.a));
+        conversionCoroutine = StartCoroutine(CrossFade(duration, originalColor.a, delaySeconds));
     }
 
-    private IEnumerator CrossFade(float duration, float originalAlpha)
+    private IEnumerator CrossFade(float duration, float originalAlpha, float delaySeconds)
     {
+        if (delaySeconds > 0f)
+            yield return new WaitForSecondsRealtime(delaySeconds);
         float elapsed = 0f;
         while (elapsed < duration)
         {
